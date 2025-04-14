@@ -7,8 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\" />
-    <Folder Include="DTOs\" />
+    <Compile Remove="DTOs\Response\NewFolder\**" />
+    <Compile Remove="Interfaces\NewFolder\**" />
+    <EmbeddedResource Remove="DTOs\Response\NewFolder\**" />
+    <EmbeddedResource Remove="Interfaces\NewFolder\**" />
+    <None Remove="DTOs\Response\NewFolder\**" />
+    <None Remove="Interfaces\NewFolder\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="DTOs\Request\" />
+    <Folder Include="DTOs\Response\" />
     <Folder Include="Exeptions\" />
     <Folder Include="ViewModels\" />
   </ItemGroup>

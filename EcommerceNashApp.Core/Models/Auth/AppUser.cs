@@ -3,8 +3,17 @@ using Microsoft.AspNetCore.Identity;
 
 namespace EcommerceNashApp.Core.Models.Identity
 {
+    public enum UserRole
+    {
+        User = 1,
+        Admin = 2
+    }
+
     public class AppUser : IdentityUser<Guid>
     {
+        public string? RefreshToken { get; set; }
+        public DateTime RefreshTokenExpiryTime { get; set; }
+
         // Navigation properties
         public virtual Cart Cart { get; set; } = null!;
         public virtual ICollection<UserProfile> UserProfiles { get; set; } = [];

@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceNashApp.Infrastruc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceNashApp.Test", "EcommerceNashApp.Test\EcommerceNashApp.Test.csproj", "{39CD68D0-CF48-4B74-A862-9AE9A66614E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceNashApp.Web", "..\EcommerceNashApp\EcommerceNashApp.Web\EcommerceNashApp.Web.csproj", "{D66A4172-A980-4189-BFB9-B91AE523DB7C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceNashApp.Web", "EcommerceNashApp.Web\EcommerceNashApp.Web.csproj", "{2FCED403-D390-4B06-B8B4-F7A8F8471997}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +35,10 @@ Global
 		{39CD68D0-CF48-4B74-A862-9AE9A66614E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39CD68D0-CF48-4B74-A862-9AE9A66614E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39CD68D0-CF48-4B74-A862-9AE9A66614E5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D66A4172-A980-4189-BFB9-B91AE523DB7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D66A4172-A980-4189-BFB9-B91AE523DB7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D66A4172-A980-4189-BFB9-B91AE523DB7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D66A4172-A980-4189-BFB9-B91AE523DB7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FCED403-D390-4B06-B8B4-F7A8F8471997}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FCED403-D390-4B06-B8B4-F7A8F8471997}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FCED403-D390-4B06-B8B4-F7A8F8471997}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FCED403-D390-4B06-B8B4-F7A8F8471997}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,66 @@
+﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
+using EcommerceNashApp.Core.DTOs.Auth.Response;
+using EcommerceNashApp.Core.Interfaces.Auth;
+using EcommerceNashApp.Core.Models.Identity;
+using EcommerceNashApp.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+namespace EcommerceNashApp.Infrastructure.Services.Auth
+{
+    public class IdentityService : IIdentityService
+    {
+        private readonly UserManager<AppUser> _userManager;
+        private readonly JwtTokenGenerator _jwt;
+
+        public IdentityService(UserManager<AppUser> userManager, JwtTokenGenerator jwt)
+        {
+            _userManager = userManager;
+            _jwt = jwt;
+        }
+
+        public async Task<AuthResponse> LoginAsync(LoginRequest loginRequest)
+        {
+            var user = await _userManager.FindByEmailAsync(loginRequest.Email);
+            if (user == null || !await _userManager.CheckPasswordAsync(user, loginRequest.Password))
+                throw new UnauthorizedAccessException("Invalid credentials");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var accessToken = _jwt.GenerateToken(user, roles);
+            var refreshToken = _jwt.GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); 
+            await _userManager.UpdateAsync(user);
+
+            return new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+        }
+
+        public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest dto)
+        {
+            var user = await _userManager.Users
+                .FirstOrDefaultAsync(u => u.RefreshToken == dto.RefreshToken);
+
+            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                throw new UnauthorizedAccessException("Invalid or expired refresh token");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var newAccessToken = _jwt.GenerateToken(user, roles);
+            var newRefreshToken = _jwt.GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userManager.UpdateAsync(user);
+
+            return new AuthResponse
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            };
+        }
+    }
+}
