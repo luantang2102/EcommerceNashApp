@@ -1,0 +1,6 @@
+@EcommerceNashApp.Api_HostAddress = http://localhost:5195
+
+GET {{EcommerceNashApp.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
