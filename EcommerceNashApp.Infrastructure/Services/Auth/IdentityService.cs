@@ -2,7 +2,6 @@
 using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.Interfaces.Auth;
 using EcommerceNashApp.Core.Models.Identity;
-using EcommerceNashApp.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
