@@ -1,5 +1,4 @@
 ﻿using EcommerceNashApp.Api.Controllers.Base;
-using EcommerceNashApp.Api.Exceptions;
 using EcommerceNashApp.Core.DTOs.Auth.Request;
 using EcommerceNashApp.Core.Interfaces.Auth;
 using Microsoft.AspNetCore.Mvc;

@@ -14,7 +14,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext _context;//IProductRepository 
         private readonly ICloudinaryService _cloudinaryService;
 
         public ProductService(AppDbContext context, ICloudinaryService cloudinaryService)

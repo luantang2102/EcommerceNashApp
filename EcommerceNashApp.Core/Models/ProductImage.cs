@@ -5,6 +5,7 @@ namespace EcommerceNashApp.Core.Models
     public class ProductImage : BaseEntity
     {
         public required string ImageUrl { get; set; }
+        public required string PublicId { get; set; }
         public bool IsMain { get; set; }
 
         // Foreign key

@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Api.Exceptions
+﻿namespace EcommerceNashApp.Infrastructure.Exceptions
 {
     public class AccessDeniedException : Exception
     {

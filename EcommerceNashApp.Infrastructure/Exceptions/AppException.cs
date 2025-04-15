@@ -1,6 +1,6 @@
 ﻿using EcommerceNashApp.Core.Exeptions;
 
-namespace EcommerceNashApp.Api.Exceptions
+namespace EcommerceNashApp.Infrastructure.Exceptions
 {
     public class AppException : Exception
     {

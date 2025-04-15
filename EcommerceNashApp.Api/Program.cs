@@ -1,10 +1,12 @@
 using EcommerceNashApp.Api.Filters;
 using EcommerceNashApp.Api.SeedData;
+using EcommerceNashApp.Core.Helpers.Configurations;
+using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Interfaces.Auth;
 using EcommerceNashApp.Core.Models.Identity;
 using EcommerceNashApp.Core.Settings;
 using EcommerceNashApp.Infrastructure.Data;
-using EcommerceNashApp.Infrastructure.Identity;
+using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Infrastructure.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +21,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddOpenApiDocument();
 
+builder.Services.Configure<CloudinaryConfig>(builder.Configuration.GetSection("Cloudinary"));
 
 //Config EF
 builder.Services.AddDbContext<AppDbContext>(
@@ -27,7 +30,7 @@ builder.Services.AddDbContext<AppDbContext>(
 
 // Jwt Configuration
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-builder.Services.AddScoped<JwtTokenGenerator>();
+builder.Services.AddScoped<JwtService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
@@ -69,6 +72,9 @@ builder.Services.AddCors();
 
 // Dependency Injection
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

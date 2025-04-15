@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.Exeptions
+﻿namespace EcommerceNashApp.Core.DTOs.Wrapper
 {
     public class ApiResponse<T>
     {
