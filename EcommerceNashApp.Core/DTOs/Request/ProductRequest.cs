@@ -8,6 +8,7 @@ namespace EcommerceNashApp.Core.DTOs.Request
         public required string Description { get; set; }
         public double Price { get; set; }
         public bool InStock { get; set; } = true;
+        public List<ExistingProductImageRequest> Images { get; set; } = [];
         public List<IFormFile> FormImages { get; set; } = [];
 
     }

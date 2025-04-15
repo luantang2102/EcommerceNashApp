@@ -9,6 +9,7 @@ using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extentions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
 using Microsoft.EntityFrameworkCore;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
@@ -34,7 +35,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice)
                 .AsQueryable();
 
-            var projectedQuery = query.Select(x => x.MaptoProductResponse());
+            var projectedQuery = query.Select(x => x.MapProductToProductResponse());
 
             return await PagedList<ProductResponse>.ToPagedList(
                 projectedQuery,
@@ -59,7 +60,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 };
                 throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
             }
-            return product.MaptoProductResponse();
+            return product.MapProductToProductResponse();
         }
 
         public async Task<ProductResponse> CreateProductAsync(ProductRequest productRequest)
@@ -88,7 +89,94 @@ namespace EcommerceNashApp.Infrastructure.Services
             }
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
-            return product.MaptoProductResponse();
+            return product.MapProductToProductResponse();
+        }
+
+        public async Task<ProductResponse> UpdateProductAsync(Guid productId, ProductRequest productRequest)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductImages)
+                .FirstOrDefaultAsync(p => p.Id == productId);
+
+            if (product == null)
+            {
+                var attributes = new Dictionary<string, object>
+                {
+                    { "productId", productId }
+                };
+                throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
+            }
+
+            product.Name = productRequest.Name;
+            product.Description = productRequest.Description;
+            product.Price = productRequest.Price;
+            product.InStock = productRequest.InStock;
+
+            var existingImages = product.ProductImages.ToList();
+            var requestImageUrls = productRequest.Images.Select(i => i.ImageUrl).ToList();
+
+            foreach (var image in existingImages)
+            {
+                if (!requestImageUrls.Contains(image.ImageUrl))
+                {
+                    await _cloudinaryService.DeleteImageAsync(image.PublicId);
+                    _context.ProductImages.Remove(image);
+                }
+            }
+
+            foreach (var existing in product.ProductImages)
+            {
+                var match = productRequest.Images.FirstOrDefault(i => i.ImageUrl == existing.ImageUrl);
+                if (match != null)
+                {
+                    existing.IsMain = match.IsMain;
+                }
+            }
+
+            if (productRequest.FormImages?.Count > 0)
+            {
+                foreach (var image in productRequest.FormImages)
+                {
+                    var uploadResult = await _cloudinaryService.AddImageAsync(image);
+                    var productImage = new ProductImage
+                    {
+                        PublicId = uploadResult.PublicId,
+                        ImageUrl = uploadResult.SecureUrl.AbsoluteUri,
+                        IsMain = false, 
+                        Product = product
+                    };
+                    product.ProductImages.Add(productImage);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return product.MapProductToProductResponse();
+        }
+
+        public async Task DeleteProductAsync(Guid productId)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductImages)
+                .FirstOrDefaultAsync(p => p.Id == productId);
+
+            if (product == null)
+            {
+                var attributes = new Dictionary<string, object>
+                {
+                    { "productId", productId }
+                };
+                throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
+            }
+
+            foreach (var image in product.ProductImages)
+            {
+                await _cloudinaryService.DeleteImageAsync(image.PublicId);
+            }
+
+            _context.ProductImages.RemoveRange(product.ProductImages);
+
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
         }
 
     }

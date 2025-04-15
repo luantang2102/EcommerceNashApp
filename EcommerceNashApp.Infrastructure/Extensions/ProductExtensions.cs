@@ -1,4 +1,5 @@
-﻿using EcommerceNashApp.Core.DTOs.Response;
+﻿using EcommerceNashApp.Core.DTOs.Request;
+using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Models;
 
 namespace EcommerceNashApp.Infrastructure.Extentions
@@ -52,7 +53,7 @@ namespace EcommerceNashApp.Infrastructure.Extentions
             return query;
         }
 
-        public static ProductResponse MaptoProductResponse(this Product product)
+        public static ProductResponse MapProductToProductResponse(this Product product)
         {
             var averageRating = product.Ratings.Count > 0 ? product.Ratings.Average(x => x.Value) : 0;
             return new ProductResponse
