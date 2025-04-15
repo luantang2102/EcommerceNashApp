@@ -1,9 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Core.Exeptions
 {
@@ -15,7 +10,7 @@ namespace EcommerceNashApp.Core.Exeptions
         // Token related errors (300-399)
 
         // Access related errors (400-499)
-        public static readonly ErrorCode ACCESS_DENIED = new (403, "Access denied to view or modify this resource", StatusCodes.Status403Forbidden);
+        public static readonly ErrorCode ACCESS_DENIED = new(403, "Access denied to view or modify this resource", StatusCodes.Status403Forbidden);
 
         // Product related errors (500-599)
 
