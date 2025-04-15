@@ -1,7 +1,6 @@
 ﻿using EcommerceNashApp.Core.Models.Identity;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
-using EcommerceNashApp.Core.Models.Extended;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EcommerceNashApp.Infrastructure.Data.Configuration.Identity
 {

@@ -30,7 +30,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             var refreshToken = _jwt.GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); 
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
 
             return new AuthResponse
@@ -62,5 +62,42 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                 RefreshToken = newRefreshToken
             };
         }
+
+        public async Task<AuthResponse> RegisterAsync(RegisterRequest dto)
+        {
+            if (dto.Password != dto.ConfirmPassword)
+                throw new ArgumentException("Passwords do not match");
+
+            var user = new AppUser
+            {
+                UserName = dto.Email,
+                Email = dto.Email
+            };
+
+            var result = await _userManager.CreateAsync(user, dto.Password);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException(errors);
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var accessToken = _jwt.GenerateToken(user, roles);
+            var refreshToken = _jwt.GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userManager.UpdateAsync(user);
+
+            return new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+        }
+
     }
 }

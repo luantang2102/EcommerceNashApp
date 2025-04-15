@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using EcommerceNashApp.Core.Models.Identity;
-using EcommerceNashApp.Core.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
+﻿using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Extended;
+using EcommerceNashApp.Core.Models.Identity;
 using EcommerceNashApp.Infrastructure.Data.Configuration;
-using EcommerceNashApp.Infrastructure.Data.Configuration.Identity;
 using EcommerceNashApp.Infrastructure.Data.Configuration.Extended;
+using EcommerceNashApp.Infrastructure.Data.Configuration.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Data
 {

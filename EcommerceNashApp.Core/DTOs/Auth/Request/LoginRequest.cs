@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EcommerceNashApp.Core.DTOs.Auth.Request
+﻿namespace EcommerceNashApp.Core.DTOs.Auth.Request
 {
     public class LoginRequest
     {

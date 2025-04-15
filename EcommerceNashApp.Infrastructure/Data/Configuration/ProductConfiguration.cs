@@ -1,8 +1,7 @@
 ﻿using EcommerceNashApp.Core.Models;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 using EcommerceNashApp.Infrastructure.Data.Configuration.Base;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EcommerceNashApp.Infrastructure.Data.Configuration
 {
@@ -10,8 +9,8 @@ namespace EcommerceNashApp.Infrastructure.Data.Configuration
     {
         public override void Configure(EntityTypeBuilder<Product> builder)
         {
-            base.Configure(builder); 
-            
+            base.Configure(builder);
+
             builder.HasMany(p => p.Categories)
                    .WithMany(c => c.Products)
                    .UsingEntity(j => j.ToTable("ProductCategories"));

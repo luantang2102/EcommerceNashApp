@@ -1,3 +1,4 @@
+using EcommerceNashApp.Api.Filters;
 using EcommerceNashApp.Api.SeedData;
 using EcommerceNashApp.Core.Interfaces.Auth;
 using EcommerceNashApp.Core.Models.Identity;
@@ -17,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddOpenApiDocument();
+
 
 //Config EF
 builder.Services.AddDbContext<AppDbContext>(
@@ -58,8 +60,8 @@ builder.Services.AddAuthentication(opt =>
 // Policy-based Authorization
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin")); 
-    options.AddPolicy("RequireUserRole", policy => policy.RequireRole("User"));   
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("RequireUserRole", policy => policy.RequireRole("User"));
 });
 
 // Enable Cors
@@ -67,6 +69,9 @@ builder.Services.AddCors();
 
 // Dependency Injection
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -80,6 +85,8 @@ if (app.Environment.IsDevelopment())
 // Add authentication and authorization middleware.
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseExceptionHandler();
 
 app.MapControllers();
 

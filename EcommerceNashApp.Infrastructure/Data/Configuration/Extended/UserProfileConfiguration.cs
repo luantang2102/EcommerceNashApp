@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using EcommerceNashApp.Core.Models.Extended;
+﻿using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Data.Configuration.Base;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EcommerceNashApp.Infrastructure.Data.Configuration.Extended
 {
