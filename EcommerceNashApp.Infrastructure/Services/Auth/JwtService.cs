@@ -1,4 +1,5 @@
-﻿using EcommerceNashApp.Core.Models.Identity;
+﻿using EcommerceNashApp.Core.Interfaces.Auth;
+using EcommerceNashApp.Core.Models.Identity;
 using EcommerceNashApp.Core.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -9,11 +10,11 @@ using System.Text;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
-    public class JwtTokenGenerator
+    public class JwtService : IJwtService
     {
         private readonly JwtSettings _jwt;
 
-        public JwtTokenGenerator(IOptions<JwtSettings> jwtOptions)
+        public JwtService(IOptions<JwtSettings> jwtOptions)
         {
             _jwt = jwtOptions.Value;
         }
