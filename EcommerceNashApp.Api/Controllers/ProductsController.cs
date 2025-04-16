@@ -35,6 +35,14 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<ProductResponse>(200, "Product retrieved successfully", product));
         }
 
+        [HttpGet("category/{categoryId}")]
+        public async Task<IActionResult> GetProductsByCategoryId(Guid categoryId, [FromQuery] ProductParams productParams)
+        {
+            var products = await _productService.GetProductsByCategoryIdAsync(categoryId, productParams);
+            Response.AddPaginationHeader(products.Metadata);
+            return Ok(new ApiResponse<IEnumerable<ProductResponse>>(200, "Products retrieved successfully", products));
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromForm] ProductRequest productRequest)
         {

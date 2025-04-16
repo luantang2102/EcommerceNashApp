@@ -32,6 +32,7 @@ namespace EcommerceNashApp.Core.Exeptions
 
         // Rating related errors (800-899)
         public static readonly ErrorCode RATING_NOT_FOUND = new(800, "Rating not found", StatusCodes.Status404NotFound);
+        public static readonly ErrorCode RATING_ALREADY_EXISTS = new(801, "Rating already exists", StatusCodes.Status409Conflict);
 
         /// <summary>
         /// Atributes for error code, message, and status. 

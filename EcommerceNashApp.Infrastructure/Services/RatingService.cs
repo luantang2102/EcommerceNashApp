@@ -3,10 +3,13 @@ using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers;
 using EcommerceNashApp.Core.Helpers.Params;
+using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Models;
+using EcommerceNashApp.Core.Models.Identity;
 using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -16,13 +19,15 @@ using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
-    public class RatingService
+    public class RatingService : IRatingService
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public RatingService(AppDbContext context)
+        public RatingService(AppDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<PagedList<RatingResponse>> GetRatingsAsync(RatingParams ratingParams)
@@ -61,13 +66,50 @@ namespace EcommerceNashApp.Infrastructure.Services
             return rating.MapModelToReponse();
         }
 
+        public async Task<RatingResponse> GetRatingsByProductIdAsync(Guid productId)
+        {
+            var rating = await _context.Ratings
+                .Include(x => x.User)
+                .Include(x => x.Product)
+                .FirstOrDefaultAsync(x => x.ProductId == productId);
+
+            if (rating == null)
+            {
+                var attributes = new Dictionary<string, object>
+                {
+                    { "productId", productId }
+                };
+                throw new AppException(ErrorCode.RATING_NOT_FOUND, attributes);
+            }
+
+            return rating.MapModelToReponse();
+        }
+
         public async Task<RatingResponse> CreateRatingAsync(RatingRequest ratingRequest, Guid userId)
         {
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
+            {
+                throw new AppException(ErrorCode.USER_NOT_FOUND, new Dictionary<string, object> { { "userId", userId } });
+            }
+
+            var existingRating = await _context.Ratings
+                .FirstOrDefaultAsync(x => x.ProductId == ratingRequest.ProductId && x.UserId == userId);
+
+            if (existingRating != null)
+            {
+                throw new AppException(ErrorCode.RATING_ALREADY_EXISTS, new Dictionary<string, object>
+                {
+                    { "productId", ratingRequest.ProductId },
+                    { "userId", userId }
+                });
+            }
+
             var rating = new Rating
             {
                 Value = ratingRequest.Value,
                 Comment = ratingRequest.Comment,
-                UserId = userId,
+                User = user,
                 ProductId = ratingRequest.ProductId
             };
 
@@ -121,4 +163,5 @@ namespace EcommerceNashApp.Infrastructure.Services
             _context.Ratings.Remove(rating);
             await _context.SaveChangesAsync();
         }
+    }
 }

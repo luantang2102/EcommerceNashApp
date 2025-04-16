@@ -7,10 +7,12 @@ namespace EcommerceNashApp.Core.Interfaces
 {
     public interface IProductService
     {
-        Task<ProductResponse> CreateProductAsync(ProductRequest productRequest);
-        Task DeleteProductAsync(Guid productId);
-        Task<ProductResponse> GetProductByIdAsync(Guid productId);
         Task<PagedList<ProductResponse>> GetProductsAsync(ProductParams productParams);
+        Task<ProductResponse> GetProductByIdAsync(Guid productId);
+        Task<PagedList<ProductResponse>> GetProductsByCategoryIdAsync(Guid categoryId, ProductParams productParams);
+        Task<ProductResponse> CreateProductAsync(ProductRequest productRequest);
         Task<ProductResponse> UpdateProductAsync(Guid productId, ProductRequest productRequest);
+        Task DeleteProductAsync(Guid productId);
+
     }
 }

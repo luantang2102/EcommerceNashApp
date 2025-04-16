@@ -63,6 +63,27 @@ namespace EcommerceNashApp.Infrastructure.Services
             return product.MapModelToResponse();
         }
 
+        public async Task<PagedList<ProductResponse>> GetProductsByCategoryIdAsync(Guid categoryId, ProductParams productParams)
+        {
+            var query = _context.Products
+                .Include(x => x.Categories)
+                .Include(x => x.Ratings)
+                .Include(x => x.ProductImages)
+                .Where(x => x.Categories.Any(c => c.Id == categoryId))
+                .Sort(productParams.OrderBy)
+                .Search(productParams.SearchTerm)
+                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice)
+                .AsQueryable();
+
+            var projectedQuery = query.Select(x => x.MapModelToResponse());
+
+            return await PagedList<ProductResponse>.ToPagedList(
+                projectedQuery,
+                productParams.PageNumber,
+                productParams.PageSize
+            );
+        }
+
         public async Task<ProductResponse> CreateProductAsync(ProductRequest productRequest)
         {
             var product = new Product
