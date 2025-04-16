@@ -9,13 +9,12 @@ using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extentions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context;//IProductRepository 
+        private readonly AppDbContext _context;
         private readonly ICloudinaryService _cloudinaryService;
 
         public ProductService(AppDbContext context, ICloudinaryService cloudinaryService)
@@ -35,7 +34,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice)
                 .AsQueryable();
 
-            var projectedQuery = query.Select(x => x.MapProductToProductResponse());
+            var projectedQuery = query.Select(x => x.MapModelToResponse());
 
             return await PagedList<ProductResponse>.ToPagedList(
                 projectedQuery,
@@ -60,7 +59,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 };
                 throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
             }
-            return product.MapProductToProductResponse();
+            return product.MapModelToResponse();
         }
 
         public async Task<ProductResponse> CreateProductAsync(ProductRequest productRequest)
@@ -71,7 +70,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 Description = productRequest.Description,
                 Price = productRequest.Price,
                 InStock = productRequest.InStock,
-                
+                StockQuantity = productRequest.StockQuantity,
             };
             if (productRequest.FormImages.Count > 0)
             {
@@ -89,7 +88,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             }
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
-            return product.MapProductToProductResponse();
+            return product.MapModelToResponse();
         }
 
         public async Task<ProductResponse> UpdateProductAsync(Guid productId, ProductRequest productRequest)
@@ -150,7 +149,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             }
 
             await _context.SaveChangesAsync();
-            return product.MapProductToProductResponse();
+            return product.MapModelToResponse();
         }
 
         public async Task DeleteProductAsync(Guid productId)

@@ -1,4 +1,5 @@
 ﻿using EcommerceNashApp.Api.Controllers.Base;
+using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Core.DTOs.Request;
 using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
@@ -23,6 +24,7 @@ namespace EcommerceNashApp.Api.Controllers
         public async Task<IActionResult> GetProducts([FromQuery] ProductParams productParams)
         {
             var products = await _productService.GetProductsAsync(productParams);
+            Response.AddPaginationHeader(products.Metadata);
             return Ok(new ApiResponse<IEnumerable<ProductResponse>>(200, "Products retrieved successfully", products));
         }
 

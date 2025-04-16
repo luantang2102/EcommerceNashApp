@@ -1,6 +1,7 @@
 ﻿using EcommerceNashApp.Core.DTOs.Request;
 using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Models;
+using EcommerceNashApp.Infrastructure.Extensions;
 
 namespace EcommerceNashApp.Infrastructure.Extentions
 {
@@ -28,32 +29,37 @@ namespace EcommerceNashApp.Infrastructure.Extentions
         {
             var categoryList = new List<string>();
             var ratingList = new List<double>();
+
             if (!string.IsNullOrEmpty(categories))
             {
                 categoryList.AddRange(categories.ToLower().Split(",").ToList());
+                query = query.Where(x => x.Categories.Any(c => categoryList.Contains(c.Name.ToLower())));
             }
+
             if (!string.IsNullOrEmpty(ratings))
             {
                 ratingList.AddRange(ratings.ToLower().Split(",")
                     .Select(r => double.TryParse(r, out var parsedRating) ? parsedRating : 0)
                     .ToList());
+                query = query.Where(x => ratingList.Contains(Math.Floor(x.AvarageRating)));
             }
-            query = query.Where(x => x.Categories.Any(c => categoryList.Contains(c.Name.ToLower())));
-            query = query.Where(x => ratingList.Contains(Math.Floor(x.AvarageRating)));
+
             if (!string.IsNullOrEmpty(minPrice))
             {
                 var minPriceValue = double.TryParse(minPrice, out var parsedMinPrice) ? parsedMinPrice : 0;
                 query = query.Where(x => x.Price >= minPriceValue);
             }
+
             if (!string.IsNullOrEmpty(maxPrice))
             {
                 var maxPriceValue = double.TryParse(maxPrice, out var parsedMaxPrice) ? parsedMaxPrice : 0;
                 query = query.Where(x => x.Price <= maxPriceValue);
             }
+
             return query;
         }
 
-        public static ProductResponse MapProductToProductResponse(this Product product)
+        public static ProductResponse MapModelToResponse(this Product product)
         {
             var averageRating = product.Ratings.Count > 0 ? product.Ratings.Average(x => x.Value) : 0;
             return new ProductResponse
@@ -65,8 +71,9 @@ namespace EcommerceNashApp.Infrastructure.Extentions
                 InStock = product.InStock,
                 StockQuantity = product.StockQuantity,
                 AverageRating = averageRating,
-                ProductImages = product.ProductImages.ToList(),
-                Categories = product.Categories.ToList(),
+                // Use the extension methods to map to proper DTOs
+                ProductImages = product.ProductImages.Select(pi => pi.MapModelToResponse()).ToList(),
+                Categories = product.Categories.Select(c => c.MapModelToResponse()).ToList(),
                 CreatedDate = product.CreatedDate,
                 UpdatedDate = product.UpdatedDate
             };
