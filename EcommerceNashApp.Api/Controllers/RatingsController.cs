@@ -35,10 +35,10 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpGet("product/{productId}")]
-        public async Task<IActionResult> GetRatingsByProductId(Guid productId)
+        public async Task<IActionResult> GetRatingsByProductId([FromQuery] RatingParams ratingParams, Guid productId)
         {
-            var ratings = await _ratingService.GetRatingsByProductIdAsync(productId);
-            return Ok(new ApiResponse<RatingResponse>(200, "Ratings retrieved successfully", ratings));
+            var ratings = await _ratingService.GetRatingsByProductIdAsync(ratingParams, productId);
+            return Ok(new ApiResponse<IEnumerable<RatingResponse>>(200, "Ratings retrieved successfully", ratings));
         }
 
         [Authorize(Roles = "User")]
@@ -47,7 +47,7 @@ namespace EcommerceNashApp.Api.Controllers
         {
             var userId = User.GetUserId();
             var createdRating = await _ratingService.CreateRatingAsync(ratingRequest, userId);
-            return Ok(new ApiResponse<RatingResponse>(201, "Rating created successfully", createdRating));
+            return CreatedAtAction(nameof(GetRatingById), new { id = createdRating.Id }, new ApiResponse<RatingResponse>(201, "Rating created successfully", createdRating));
         }
 
         [Authorize(Roles = "User")]

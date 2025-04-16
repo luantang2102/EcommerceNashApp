@@ -47,7 +47,7 @@ namespace EcommerceNashApp.Api.Controllers
         public async Task<IActionResult> CreateProduct([FromForm] ProductRequest productRequest)
         {
             var createdProduct = await _productService.CreateProductAsync(productRequest);
-            return Ok(new ApiResponse<ProductResponse>(201, "Product created successfully", createdProduct));
+            return CreatedAtAction(nameof(GetProductById), new { id = createdProduct.Id }, new ApiResponse<ProductResponse>(201, "Product created successfully", createdProduct));
         }
 
         [HttpPut("{id}")]

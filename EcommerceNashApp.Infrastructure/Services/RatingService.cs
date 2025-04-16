@@ -66,23 +66,23 @@ namespace EcommerceNashApp.Infrastructure.Services
             return rating.MapModelToReponse();
         }
 
-        public async Task<RatingResponse> GetRatingsByProductIdAsync(Guid productId)
+        public async Task<PagedList<RatingResponse>> GetRatingsByProductIdAsync(RatingParams ratingParams, Guid productId)
         {
-            var rating = await _context.Ratings
+            var query = _context.Ratings
                 .Include(x => x.User)
                 .Include(x => x.Product)
-                .FirstOrDefaultAsync(x => x.ProductId == productId);
+                .Where(x => x.ProductId == productId)
+                .Filter(ratingParams.Value, ratingParams.HasComment)
+                .AsQueryable();
 
-            if (rating == null)
-            {
-                var attributes = new Dictionary<string, object>
-                {
-                    { "productId", productId }
-                };
-                throw new AppException(ErrorCode.RATING_NOT_FOUND, attributes);
-            }
+            var projectedQuery = query.Select(x => x.MapModelToReponse());
 
-            return rating.MapModelToReponse();
+            return await PagedList<RatingResponse>.ToPagedList(
+                projectedQuery,
+                ratingParams.PageNumber,
+                ratingParams.PageSize
+            );
+
         }
 
         public async Task<RatingResponse> CreateRatingAsync(RatingRequest ratingRequest, Guid userId)

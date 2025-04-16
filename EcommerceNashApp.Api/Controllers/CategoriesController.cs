@@ -5,6 +5,7 @@ using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Helpers.Params;
 using EcommerceNashApp.Core.Interfaces;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
@@ -36,7 +37,7 @@ namespace EcommerceNashApp.Api.Controllers
         public async Task<IActionResult> CreateCategory([FromBody] CategoryRequest categoryRequest)
         {
             var createdCategory = await CategoryService.CreateCategoryAsync(categoryRequest);
-            return Ok(new ApiResponse<CategoryResponse>(201, "Category created successfully", createdCategory));
+            return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, new ApiResponse<CategoryResponse>(201, "Category created successfully", createdCategory));
         }
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] CategoryRequest categoryRequest)

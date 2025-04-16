@@ -14,10 +14,9 @@ namespace EcommerceNashApp.Core.Interfaces
     {
         Task<PagedList<RatingResponse>> GetRatingsAsync(RatingParams ratingParams);
         Task<RatingResponse> GetRatingByIdAsync(Guid ratingId);
-        Task<RatingResponse> GetRatingsByProductIdAsync(Guid productId);
+        Task<PagedList<RatingResponse>> GetRatingsByProductIdAsync(RatingParams ratingParams, Guid productId);
         Task<RatingResponse> CreateRatingAsync(RatingRequest ratingRequest, Guid userId);
         Task<RatingResponse> UpdateRatingAsync(Guid ratingId, RatingRequest ratingRequest);
         Task DeleteRatingAsync(Guid ratingId);
-
     }
 }

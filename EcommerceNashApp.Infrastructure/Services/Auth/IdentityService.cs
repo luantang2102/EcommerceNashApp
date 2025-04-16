@@ -2,6 +2,7 @@
 using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.Interfaces.Auth;
 using EcommerceNashApp.Core.Models.Identity;
+using EcommerceNashApp.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +36,8 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                User = user.MapModelToResponse()
             };
         }
 
@@ -58,22 +60,23 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken
+                RefreshToken = newRefreshToken,
+                User = user.MapModelToResponse()
             };
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest dto)
+        public async Task<AuthResponse> RegisterAsync(RegisterRequest registerRequest)
         {
-            if (dto.Password != dto.ConfirmPassword)
+            if (registerRequest.Password != registerRequest.ConfirmPassword)
                 throw new ArgumentException("Passwords do not match");
 
             var user = new AppUser
             {
-                UserName = dto.Email,
-                Email = dto.Email
+                UserName = registerRequest.Email,
+                Email = registerRequest.Email
             };
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
+            var result = await _userManager.CreateAsync(user, registerRequest.Password);
 
             if (!result.Succeeded)
             {
@@ -94,7 +97,8 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                User = user.MapModelToResponse()
             };
         }
 
