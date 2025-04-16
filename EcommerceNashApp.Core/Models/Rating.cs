@@ -6,7 +6,7 @@ namespace EcommerceNashApp.Core.Models
     public class Rating : BaseEntity
     {
         public int Value { get; set; }
-        public required string Comment { get; set; }
+        public string? Comment { get; set; } = string.Empty;
 
         // Foreign key
         public Guid ProductId { get; set; }
