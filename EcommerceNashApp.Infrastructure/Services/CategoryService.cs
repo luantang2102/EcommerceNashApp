@@ -3,6 +3,7 @@ using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers;
 using EcommerceNashApp.Core.Helpers.Params;
+using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
-    class CategoryService
+    public class CategoryService : ICategoryService
     {
         private readonly AppDbContext _context;
 
