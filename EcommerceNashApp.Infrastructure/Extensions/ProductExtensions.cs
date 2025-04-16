@@ -70,7 +70,6 @@ namespace EcommerceNashApp.Infrastructure.Extentions
                 InStock = product.InStock,
                 StockQuantity = product.StockQuantity,
                 AverageRating = averageRating,
-                // Use the extension methods to map to proper DTOs
                 ProductImages = product.ProductImages.Select(pi => pi.MapModelToResponse()).ToList(),
                 Categories = product.Categories.Select(c => c.MapModelToResponse()).ToList(),
                 CreatedDate = product.CreatedDate,

@@ -30,6 +30,9 @@ namespace EcommerceNashApp.Core.Exeptions
         public static readonly ErrorCode CATEGORY_CIRCULAR_REFERENCE = new(703, "Category circular reference", StatusCodes.Status400BadRequest);
         public static readonly ErrorCode CATEGORY_HAS_SUBCATEGORIES = new(704, "Category has subcategories, cannot delete", StatusCodes.Status400BadRequest);
 
+        // Rating related errors (800-899)
+        public static readonly ErrorCode RATING_NOT_FOUND = new(800, "Rating not found", StatusCodes.Status404NotFound);
+
         /// <summary>
         /// Atributes for error code, message, and status. 
         /// </summary>
