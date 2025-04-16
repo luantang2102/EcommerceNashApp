@@ -59,6 +59,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 };
                 throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
             }
+
             return product.MapModelToResponse();
         }
 
@@ -72,9 +73,10 @@ namespace EcommerceNashApp.Infrastructure.Services
                 InStock = productRequest.InStock,
                 StockQuantity = productRequest.StockQuantity,
             };
+
             if (productRequest.FormImages.Count > 0)
             {
-                foreach(var image in productRequest.FormImages)
+                foreach (var image in productRequest.FormImages)
                 {
                     var uploadResult = await _cloudinaryService.AddImageAsync(image);
                     var productImage = new ProductImage
@@ -86,6 +88,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                     product.ProductImages.Add(productImage);
                 }
             }
+
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
             return product.MapModelToResponse();
@@ -141,7 +144,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                     {
                         PublicId = uploadResult.PublicId,
                         ImageUrl = uploadResult.SecureUrl.AbsoluteUri,
-                        IsMain = false, 
+                        IsMain = false,
                         Product = product
                     };
                     product.ProductImages.Add(productImage);
@@ -173,7 +176,6 @@ namespace EcommerceNashApp.Infrastructure.Services
             }
 
             _context.ProductImages.RemoveRange(product.ProductImages);
-
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
         }

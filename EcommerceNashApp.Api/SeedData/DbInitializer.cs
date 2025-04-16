@@ -25,8 +25,8 @@ namespace EcommerceNashApp.Api.SeedData
                 ?? throw new InvalidOperationException("Failed to retrieve app db context");
 
             await SeedCategory(dbContext);
-            await SeedSubCategories(dbContext); 
-            await SeedProducts(dbContext); 
+            await SeedSubCategories(dbContext);
+            await SeedProducts(dbContext);
         }
 
         private static async Task SeedUsersAndRoles(UserManager<AppUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
@@ -80,7 +80,7 @@ namespace EcommerceNashApp.Api.SeedData
                     new Category { Name = "Category 1", Description = "Description 1" },
                     new Category { Name = "Category 2", Description = "Description 2" },
                     new Category { Name = "Category 3", Description = "Description 3" }
-                };  
+                };
 
                 await context.Categories.AddRangeAsync(categories);
                 await context.SaveChangesAsync();

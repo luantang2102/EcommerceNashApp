@@ -1,6 +1,4 @@
-﻿using EcommerceNashApp.Core.Models;
-
-namespace EcommerceNashApp.Core.DTOs.Response
+﻿namespace EcommerceNashApp.Core.DTOs.Response
 {
     public class ProductResponse
     {

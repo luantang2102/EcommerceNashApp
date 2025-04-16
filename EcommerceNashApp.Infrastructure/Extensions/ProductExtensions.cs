@@ -1,5 +1,4 @@
-﻿using EcommerceNashApp.Core.DTOs.Request;
-using EcommerceNashApp.Core.DTOs.Response;
+﻿using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Extensions;
 
