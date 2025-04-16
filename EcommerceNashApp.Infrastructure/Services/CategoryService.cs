@@ -74,6 +74,24 @@ namespace EcommerceNashApp.Infrastructure.Services
             return category.MapModelToResponse();
         }
 
+        public async Task<List<CategoryResponse>> GetCategoriesByIdsAsync(List<Guid> categoryIds)
+        {
+            var categories = await _context.Categories
+                .Where(x => categoryIds.Contains(x.Id))
+                .ToListAsync();
+
+            if (categories.Count == 0)
+            {
+                var attributes = new Dictionary<string, object>
+                {
+                    { "categoryIds", string.Join(", ", categoryIds) }
+                };
+                throw new AppException(ErrorCode.CATEGORY_NOT_FOUND, attributes);
+            }
+
+            return categories.Select(c => c.MapModelToResponse()).ToList();
+        }
+
         public async Task<CategoryResponse> CreateCategoryAsync(CategoryRequest categoryRequest)
         {
             int level = 1; // Default level 

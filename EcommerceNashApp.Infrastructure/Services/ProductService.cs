@@ -74,6 +74,22 @@ namespace EcommerceNashApp.Infrastructure.Services
                 StockQuantity = productRequest.StockQuantity,
             };
 
+            if (productRequest.CategoryIds.Count > 0)
+            {
+                var categories = await _context.Categories
+                    .Where(c => productRequest.CategoryIds.Contains(c.Id))
+                    .ToListAsync();
+                if (categories.Count != productRequest.CategoryIds.Count)
+                {
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "categoryIds", productRequest.CategoryIds }
+                    };
+                    throw new AppException(ErrorCode.CATEGORY_NOT_FOUND, attributes);
+                }
+                product.Categories = categories;
+            }
+
             if (productRequest.FormImages.Count > 0)
             {
                 foreach (var image in productRequest.FormImages)

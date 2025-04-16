@@ -11,6 +11,6 @@ namespace EcommerceNashApp.Core.DTOs.Request
         public int StockQuantity { get; set; }
         public List<ExistingProductImageRequest> Images { get; set; } = [];
         public List<IFormFile> FormImages { get; set; } = [];
-
+        public List<Guid> CategoryIds { get; set; } = [];
     }
 }
