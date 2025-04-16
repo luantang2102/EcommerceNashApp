@@ -12,7 +12,7 @@ namespace EcommerceNashApp.Infrastructure.Data.Configuration.Identity
 
             builder.Property(e => e.Id)
                 .ValueGeneratedOnAdd();
-
+         
         }
     }
 }

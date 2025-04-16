@@ -11,6 +11,9 @@ namespace EcommerceNashApp.Core.Models.Identity
 
     public class AppUser : IdentityUser<Guid>
     {
+        public override string? UserName { get; set; } = "Anonymous";
+        public string? ImageUrl { get; set; } = string.Empty;
+        public string? PublicId { get; set; } = string.Empty;
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }
 
