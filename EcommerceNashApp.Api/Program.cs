@@ -97,6 +97,14 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Enable CORS
+app.UseCors(cors =>
+{
+    cors.AllowAnyMethod()
+        .AllowAnyHeader()
+        .WithOrigins("https://localhost:3000");
+});
+    
 // Map controller routes
 app.MapControllers();
 

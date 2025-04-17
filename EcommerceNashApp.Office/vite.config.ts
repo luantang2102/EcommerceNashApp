@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
 import plugin from '@vitejs/plugin-react';
+import mkcert from 'vite-plugin-mkcert';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [plugin()],
+    plugins: [plugin(), mkcert()],
     server: {
-        port: 54610,
+        port: 3000,
     }
 })
