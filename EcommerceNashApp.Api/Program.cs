@@ -1,4 +1,4 @@
-using System.Text;
+using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Api.Filters;
 using EcommerceNashApp.Api.SeedData;
 using EcommerceNashApp.Core.Helpers.Configurations;
@@ -12,12 +12,10 @@ using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Infrastructure.Services.Auth;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,41 +34,8 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 // Swagger/OpenAPI 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Ecommerce Nash API",
-        Version = "v1"
-    });
+builder.Services.AddCustomSwagger();
 
-    // Configure JWT authentication in Swagger UI
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter 'Bearer' followed by your JWT token.\n\nExample: Bearer eyJhbGciOi..."
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
 
 // Bind settings from appsettings.json
 builder.Services.Configure<CloudinaryConfig>(builder.Configuration.GetSection("Cloudinary"));
@@ -87,27 +52,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
-
-// JWT authentication scheme
-builder.Services.AddAuthentication(opt =>
-{
-    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(opt =>
-{
-    opt.SaveToken = true;
-    opt.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings.Issuer,
-        ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(key)
-    };
-});
 
 // Role-based authorization policies
 builder.Services.AddAuthorization(options =>
@@ -127,9 +71,9 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 
-// Global exception handler
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
+// Exception handling and authentication
+builder.Services.AddGlobalExceptionHandling();
+builder.Services.AddCustomJwtAuthentication(jwtSettings);
 
 // FluentValidation setup
 builder.Services.AddFluentValidationAutoValidation();
@@ -149,9 +93,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // Middleware pipeline
+app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseExceptionHandler();
 
 // Map controller routes
 app.MapControllers();

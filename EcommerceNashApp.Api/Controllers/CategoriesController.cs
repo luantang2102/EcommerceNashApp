@@ -5,6 +5,7 @@ using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Helpers.Params;
 using EcommerceNashApp.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
@@ -19,6 +20,7 @@ namespace EcommerceNashApp.Api.Controllers
         {
             _categoryService = categoryService;
         }
+
         [HttpGet]
         public async Task<IActionResult> GetCategories([FromQuery] CategoryParams categoryParams)
         {
@@ -26,24 +28,31 @@ namespace EcommerceNashApp.Api.Controllers
             Response.AddPaginationHeader(categories.Metadata);
             return Ok(new ApiResponse<IEnumerable<CategoryResponse>>(200, "Categories retrieved successfully", categories));
         }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCategoryById(Guid id)
         {
             var category = await CategoryService.GetCategoryByIdAsync(id);
             return Ok(new ApiResponse<CategoryResponse>(200, "Category retrieved successfully", category));
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromBody] CategoryRequest categoryRequest)
         {
             var createdCategory = await CategoryService.CreateCategoryAsync(categoryRequest);
             return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, new ApiResponse<CategoryResponse>(201, "Category created successfully", createdCategory));
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] CategoryRequest categoryRequest)
         {
             var updatedCategory = await CategoryService.UpdateCategoryAsync(id, categoryRequest);
             return Ok(new ApiResponse<CategoryResponse>(200, "Category updated successfully", updatedCategory));
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {

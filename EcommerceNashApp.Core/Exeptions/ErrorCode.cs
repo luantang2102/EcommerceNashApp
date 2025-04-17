@@ -16,6 +16,7 @@ namespace EcommerceNashApp.Core.Exeptions
 
 
         // Access related errors (400-499)
+        public static readonly ErrorCode UNAUTHORIZED_ACCESS = new(401, "Unauthorized access", StatusCodes.Status401Unauthorized);
         public static readonly ErrorCode ACCESS_DENIED = new(403, "Access denied to view or modify this resource", StatusCodes.Status403Forbidden);
 
         // Product related errors (600-699)

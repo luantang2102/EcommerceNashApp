@@ -23,7 +23,7 @@ namespace EcommerceNashApp.Api.Filters
             {
                 ValidationException validationException => await HandleValidationExceptionAsync(httpContext, validationException, cancellationToken),
                 AppException appException => await HandleAppExceptionAsync(httpContext, appException, cancellationToken),
-                AccessDeniedException => await HandleAccessDeniedExceptionAsync(httpContext, cancellationToken),
+                AccessDeniedException accessDeniedException => await HandleAccessDeniedExceptionAsync(httpContext, accessDeniedException, cancellationToken),
                 _ => await HandleGenericExceptionAsync(httpContext, exception, cancellationToken)
             };
         }
@@ -54,10 +54,14 @@ namespace EcommerceNashApp.Api.Filters
             return true;
         }
 
-        private async Task<bool> HandleAccessDeniedExceptionAsync(HttpContext httpContext, CancellationToken cancellationToken)
+        private async Task<bool> HandleAccessDeniedExceptionAsync(HttpContext httpContext, AccessDeniedException exception, CancellationToken cancellationToken)
         {
-            var errorCode = ErrorCode.ACCESS_DENIED;
-            var response = new ApiResponse<object>(errorCode.GetCode(), errorCode.GetMessage());
+            var errorCode = exception.GetErrorCode();
+
+            var response = new ApiResponse<object>(
+                errorCode.GetCode(),
+                errorCode.GetMessage()
+            );
 
             httpContext.Response.StatusCode = errorCode.GetStatus();
             await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);

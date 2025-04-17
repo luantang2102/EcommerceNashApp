@@ -1,7 +1,21 @@
-﻿namespace EcommerceNashApp.Infrastructure.Exceptions
+﻿using EcommerceNashApp.Core.Exeptions;
+
+namespace EcommerceNashApp.Infrastructure.Exceptions
 {
     public class AccessDeniedException : Exception
     {
-        public AccessDeniedException(string message) : base(message) { }
+        private readonly ErrorCode _errorCode;
+
+        public AccessDeniedException(ErrorCode errorCode) : base(errorCode.GetMessage())
+        {
+            _errorCode = errorCode;
+        }
+
+        public ErrorCode GetErrorCode()
+        {
+            return _errorCode;
+        }
+
+
     }
 }

@@ -13,9 +13,9 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
     public class IdentityService : IIdentityService
     {
         private readonly UserManager<AppUser> _userManager;
-        private readonly JwtService _jwt;
+        private readonly IJwtService _jwt;
 
-        public IdentityService(UserManager<AppUser> userManager, JwtService jwt)
+        public IdentityService(UserManager<AppUser> userManager, IJwtService jwt)
         {
             _userManager = userManager;
             _jwt = jwt;
