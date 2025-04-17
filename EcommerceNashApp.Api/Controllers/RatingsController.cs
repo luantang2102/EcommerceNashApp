@@ -1,4 +1,5 @@
-﻿using EcommerceNashApp.Api.Controllers.Base;
+﻿using Azure;
+using EcommerceNashApp.Api.Controllers.Base;
 using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Core.DTOs.Request;
 using EcommerceNashApp.Core.DTOs.Response;

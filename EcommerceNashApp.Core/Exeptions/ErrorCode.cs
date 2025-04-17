@@ -9,6 +9,10 @@ namespace EcommerceNashApp.Core.Exeptions
         /// </summary>
         // User related errors (100-199)
         public static readonly ErrorCode USER_NOT_FOUND = new(100, "User not found", StatusCodes.Status404NotFound);
+        public static readonly ErrorCode INVALID_CREDENTIALS = new(101, "Invalid credentials", StatusCodes.Status401Unauthorized);
+        public static readonly ErrorCode DUPLICATE_EMAIL = new(101, "Email already exists", StatusCodes.Status409Conflict);
+        public static readonly ErrorCode PASSWORDS_DO_NOT_MATCH = new(102, "Passwords do not match", StatusCodes.Status400BadRequest);
+        public static readonly ErrorCode IDENTITY_CREATION_FAILED = new(103, "Identity creation failed", StatusCodes.Status500InternalServerError);
 
 
         // Access related errors (400-499)
@@ -32,6 +36,9 @@ namespace EcommerceNashApp.Core.Exeptions
         // Rating related errors (900-999)
         public static readonly ErrorCode RATING_NOT_FOUND = new(900, "Rating not found", StatusCodes.Status404NotFound);
         public static readonly ErrorCode RATING_ALREADY_EXISTS = new(901, "Rating already exists", StatusCodes.Status409Conflict);
+
+        // Token related errors (1000-1099)
+        public static readonly ErrorCode INVALID_OR_EXPIRED_REFRESH_TOKEN = new(1000, "Invalid or expired refresh token", StatusCodes.Status401Unauthorized);
 
         /// <summary>
         /// Atributes for error code, message, and status. 
