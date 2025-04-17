@@ -1,6 +1,6 @@
-﻿using EcommerceNashApp.Infrastructure.Exceptions;
+﻿using EcommerceNashApp.Core.Exeptions;
 
-namespace EcommerceNashApp.Core.Exeptions
+namespace EcommerceNashApp.Infrastructure.Exceptions
 {
     public class ValidationException : AppException
     {
