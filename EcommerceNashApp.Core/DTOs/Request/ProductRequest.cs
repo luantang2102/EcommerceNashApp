@@ -4,8 +4,8 @@ namespace EcommerceNashApp.Core.DTOs.Request
 {
     public class ProductRequest
     {
-        public required string Name { get; set; }
-        public required string Description { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public double Price { get; set; }
         public bool InStock { get; set; } = true;
         public int StockQuantity { get; set; }

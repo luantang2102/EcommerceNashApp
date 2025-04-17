@@ -20,7 +20,8 @@ namespace EcommerceNashApp.Core.Validators
                 .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative.");
 
             RuleForEach(product => product.Images)
-                .SetValidator(new ExistingProductImageRequestValidator());
+                .SetValidator(new ExistingProductImageRequestValidator())
+                .When(product => product.Images != null && product.Images.Count != 0);
         }
     }
 
