@@ -31,7 +31,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
-                    Folder = "memos-images"
+                    Folder = "ecommerce-nash-app-images"
                 };
                 uploadResult = await _cloudinary.UploadAsync(uploadParams);
             }

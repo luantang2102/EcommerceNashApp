@@ -21,6 +21,7 @@ namespace EcommerceNashApp.Api.Filters
 
             return exception switch
             {
+                ValidationException validationException => await HandleValidationExceptionAsync(httpContext, validationException, cancellationToken),
                 AppException appException => await HandleAppExceptionAsync(httpContext, appException, cancellationToken),
                 AccessDeniedException => await HandleAccessDeniedExceptionAsync(httpContext, cancellationToken),
                 _ => await HandleGenericExceptionAsync(httpContext, exception, cancellationToken)
@@ -35,6 +36,18 @@ namespace EcommerceNashApp.Api.Filters
             var response = attributes.Count > 0
                 ? new ApiResponse<Dictionary<string, object>>(errorCode.GetCode(), errorCode.GetMessage(), attributes)
                 : new ApiResponse<Dictionary<string, object>>(errorCode.GetCode(), errorCode.GetMessage());
+
+            httpContext.Response.StatusCode = errorCode.GetStatus();
+            await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);
+            return true;
+        }
+        private async Task<bool> HandleValidationExceptionAsync(HttpContext httpContext, ValidationException exception, CancellationToken cancellationToken)
+        {
+            var errorCode = exception.GetErrorCode();
+            var response = new ApiResponse<Dictionary<string, object>>(
+                errorCode.GetCode(),
+                errorCode.GetMessage(),
+                exception.GetAttributes());
 
             httpContext.Response.StatusCode = errorCode.GetStatus();
             await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);

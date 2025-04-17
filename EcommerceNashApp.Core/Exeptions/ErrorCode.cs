@@ -40,6 +40,9 @@ namespace EcommerceNashApp.Core.Exeptions
         // Token related errors (1000-1099)
         public static readonly ErrorCode INVALID_OR_EXPIRED_REFRESH_TOKEN = new(1000, "Invalid or expired refresh token", StatusCodes.Status401Unauthorized);
 
+        // Validation related errors (1100-1199)
+        public static readonly ErrorCode VALIDATION_ERROR = new(1100, "Validation error", StatusCodes.Status400BadRequest);
+
         /// <summary>
         /// Atributes for error code, message, and status. 
         /// </summary>
