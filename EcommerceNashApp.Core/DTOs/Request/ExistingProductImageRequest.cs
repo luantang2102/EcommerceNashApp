@@ -2,7 +2,7 @@
 {
     public class ExistingProductImageRequest
     {
-        public string ImageUrl { get; set; } = string.Empty;
+        public Guid Id { get; set; }
         public bool IsMain { get; set; }
     }
 }

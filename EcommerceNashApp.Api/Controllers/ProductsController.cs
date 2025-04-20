@@ -44,7 +44,6 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<IEnumerable<ProductResponse>>(200, "Products retrieved successfully", products));
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromForm] ProductRequest productRequest)
         {
@@ -52,7 +51,6 @@ namespace EcommerceNashApp.Api.Controllers
             return CreatedAtAction(nameof(GetProductById), new { id = createdProduct.Id }, new ApiResponse<ProductResponse>(201, "Product created successfully", createdProduct));
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(Guid id, [FromForm] ProductRequest productRequest)
         {
@@ -60,7 +58,6 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<ProductResponse>(200, "Product updated successfully", updatedProduct));
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(Guid id)
         {

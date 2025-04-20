@@ -133,9 +133,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<ProductResponse> UpdateProductAsync(Guid productId, ProductRequest productRequest)
         {
-            var product = await _context.Products
-                .Include(p => p.ProductImages)
-                .FirstOrDefaultAsync(p => p.Id == productId);
+            var product = await _context.Products.Include(p => p.ProductImages).FirstOrDefaultAsync(p => p.Id == productId);
 
             if (product == null)
             {
@@ -152,20 +150,21 @@ namespace EcommerceNashApp.Infrastructure.Services
             product.InStock = productRequest.InStock;
 
             var existingImages = product.ProductImages.ToList();
-            var requestImageUrls = productRequest.Images.Select(i => i.ImageUrl).ToList();
+            var requestImageIds = productRequest.Images.Select(i => i.Id).ToList();
 
             foreach (var image in existingImages)
             {
-                if (!requestImageUrls.Contains(image.ImageUrl))
+                if (!requestImageIds.Contains(image.Id))
                 {
                     await _cloudinaryService.DeleteImageAsync(image.PublicId);
                     _context.ProductImages.Remove(image);
                 }
             }
 
+            // Update IsMain for existing images
             foreach (var existing in product.ProductImages)
             {
-                var match = productRequest.Images.FirstOrDefault(i => i.ImageUrl == existing.ImageUrl);
+                var match = productRequest.Images.FirstOrDefault(i => i.Id == existing.Id);
                 if (match != null)
                 {
                     existing.IsMain = match.IsMain;

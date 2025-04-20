@@ -29,8 +29,8 @@ namespace EcommerceNashApp.Core.Validators
     {
         public ExistingProductImageRequestValidator()
         {
-            RuleFor(image => image.ImageUrl)
-                .NotEmpty().WithMessage("Image URL is required.");
+            RuleFor(image => image.Id)
+                .NotEmpty().WithMessage("Existing image ID is required.");
 
             RuleFor(image => image.IsMain)
                 .NotNull().WithMessage("IsMain must be specified.");

@@ -198,6 +198,22 @@ export default function ProductList() {
         }
       }
       
+      // Log FormData contents
+      console.log('FormData being sent to API:');
+      const formDataEntries: { [key: string]: unknown } = {};
+      for (const [key, value] of productFormData.entries()) {
+        if (value instanceof File) {
+          formDataEntries[key] = {
+            name: value.name,
+            size: value.size,
+            type: value.type,
+          };
+        } else {
+          formDataEntries[key] = value;
+        }
+      }
+      console.log(JSON.stringify(formDataEntries, null, 2));
+
       // Create or update
       if (selectedProductId) {
         await updateProduct({ id: selectedProductId, data: productFormData }).unwrap();
