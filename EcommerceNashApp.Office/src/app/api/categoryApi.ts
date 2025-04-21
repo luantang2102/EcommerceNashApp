@@ -27,6 +27,16 @@ export const categoryApi = createApi({
       providesTags: ["Categories"],
     }),
 
+    fetchCategoriesTree: builder.query<Category[], void>({
+      query: () => ({
+        url: "categories/tree",
+      }),
+      transformResponse: (response: ApiResponse<Category[]>) => {
+        return response.body;
+      },
+      providesTags: ["Categories"],
+    }),
+    
     fetchCategoryById: builder.query<Category, string>({
       query: (categoryId) => `categories/${categoryId}`,
       transformResponse: (response: ApiResponse<Category>) => {
@@ -66,6 +76,7 @@ export const categoryApi = createApi({
 export const {
   useFetchCategoriesQuery,
   useFetchCategoryByIdQuery,
+  useFetchCategoriesTreeQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,

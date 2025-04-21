@@ -64,7 +64,7 @@ import {
   useUpdateProductMutation,
   useDeleteProductMutation,
 } from "../../app/api/productApi";
-import { useFetchCategoriesQuery } from "../../app/api/categoryApi";
+import { useFetchCategoriesTreeQuery } from "../../app/api/categoryApi";
 import { format } from "date-fns";
 import { Product } from "../../app/models/product";
 import { PaginationParams } from "../../app/models/params/pagination";
@@ -172,10 +172,7 @@ export default function ProductList() {
     }
   );
 
-  const { data: categoriesData, isLoading: isLoadingCategories } = useFetchCategoriesQuery({
-    pageNumber: 1,
-    pageSize: 1000, // Fetch all categories to ensure we get the full hierarchy
-  });
+  const { data: categoriesData, isLoading: isLoadingCategories } = useFetchCategoriesTreeQuery();
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
@@ -210,17 +207,9 @@ export default function ProductList() {
 
   // Filter level 0 categories
   const level0Categories = useMemo(
-    () => categoriesData?.items.filter((category) => category.level === 0) || [],
+    () => categoriesData?.filter((category) => category.level === 0) || [],
     [categoriesData]
   );
-
-  // Debugging log for category data
-  useEffect(() => {
-    if (categoriesData?.items) {
-      console.log("Fetched categories:", categoriesData.items);
-      console.log("Level 0 categories:", level0Categories);
-    }
-  }, [categoriesData, level0Categories]);
 
   // Reset form when dialog opens/closes or selected product changes
   useEffect(() => {
@@ -286,7 +275,7 @@ export default function ProductList() {
     });
 
     // Update formData categories
-    const selectedCategories = categoriesData?.items.filter((category) =>
+    const selectedCategories = categoriesData?.filter((category) =>
       selectedCategoryIds.includes(category.id)
     ) || [];
     setFormData((prev) => ({
@@ -849,7 +838,7 @@ export default function ProductList() {
                     renderValue={(selected) => (
                       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {selected.map((categoryId) => {
-                          const category = categoriesData?.items.find((c) => c.id === categoryId);
+                          const category = categoriesData?.find((c) => c.id === categoryId);
                           return category ? (
                             <Chip key={category.id} label={category.name} size="small" />
                           ) : null;
