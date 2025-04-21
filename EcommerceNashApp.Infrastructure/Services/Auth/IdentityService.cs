@@ -5,8 +5,10 @@ using EcommerceNashApp.Core.Interfaces.Auth;
 using EcommerceNashApp.Core.Models.Identity;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
@@ -14,11 +16,13 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly IJwtService _jwt;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public IdentityService(UserManager<AppUser> userManager, IJwtService jwt)
+        public IdentityService(UserManager<AppUser> userManager, IJwtService jwt, IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _jwt = jwt;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest loginRequest)
@@ -36,15 +40,45 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             var roles = await _userManager.GetRolesAsync(user);
             var accessToken = _jwt.GenerateToken(user, roles);
             var refreshToken = _jwt.GenerateRefreshToken();
+            var csrfToken = Guid.NewGuid().ToString();
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
 
+            // Set JWT cookie
+            var jwtCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1) // Match access token expiration
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("jwt", accessToken, jwtCookieOptions);
+
+            // Set refresh token cookie
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(7) // Match refresh token expiration
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh", refreshToken, refreshCookieOptions);
+
+            // Set CSRF cookie
+            var csrfCookieOptions = new CookieOptions
+            {
+                HttpOnly = false, // Accessible by JavaScript
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("csrf", csrfToken, csrfCookieOptions);
+
             return new AuthResponse
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
+                CsrfToken = csrfToken,
                 User = user.MapModelToResponse()
             };
         }
@@ -66,15 +100,45 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             var roles = await _userManager.GetRolesAsync(user);
             var newAccessToken = _jwt.GenerateToken(user, roles);
             var newRefreshToken = _jwt.GenerateRefreshToken();
+            var newCsrfToken = Guid.NewGuid().ToString();
 
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
 
+            // Set new JWT cookie
+            var jwtCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("jwt", newAccessToken, jwtCookieOptions);
+
+            // Set new refresh token cookie
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh", newRefreshToken, refreshCookieOptions);
+
+            // Set new CSRF cookie
+            var csrfCookieOptions = new CookieOptions
+            {
+                HttpOnly = false,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("csrf", newCsrfToken, csrfCookieOptions);
+
             return new AuthResponse
             {
-                AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken,
+                CsrfToken = newCsrfToken,
                 User = user.MapModelToResponse()
             };
         }
@@ -123,15 +187,45 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             var roles = await _userManager.GetRolesAsync(user);
             var accessToken = _jwt.GenerateToken(user, roles);
             var refreshToken = _jwt.GenerateRefreshToken();
+            var csrfToken = Guid.NewGuid().ToString();
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
 
+            // Set JWT cookie
+            var jwtCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("jwt", accessToken, jwtCookieOptions);
+
+            // Set refresh token cookie
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh", refreshToken, refreshCookieOptions);
+
+            // Set CSRF cookie
+            var csrfCookieOptions = new CookieOptions
+            {
+                HttpOnly = false,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("csrf", csrfToken, csrfCookieOptions);
+
             return new AuthResponse
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
+                CsrfToken = csrfToken,
                 User = user.MapModelToResponse()
             };
         }

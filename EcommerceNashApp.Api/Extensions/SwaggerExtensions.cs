@@ -15,15 +15,12 @@ namespace EcommerceNashApp.Api.Extensions
                     Version = "v1"
                 });
 
-                // Configure JWT authentication in Swagger UI
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                options.AddSecurityDefinition("CookieAuth", new OpenApiSecurityScheme
                 {
-                    Name = "Authorization",
+                    Name = "jwt",
                     Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "Enter 'Bearer' followed by your JWT token.\n\nExample: Bearer eyJhbGciOi..."
+                    In = ParameterLocation.Cookie,
+                    Description = "JWT token is stored in an HTTP-only cookie named 'jwt'."
                 });
 
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -34,7 +31,7 @@ namespace EcommerceNashApp.Api.Extensions
                             Reference = new OpenApiReference
                             {
                                 Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
+                                Id = "CookieAuth"
                             }
                         },
                         Array.Empty<string>()
