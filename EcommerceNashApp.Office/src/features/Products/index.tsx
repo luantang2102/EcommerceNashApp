@@ -86,8 +86,8 @@ export default function ProductList() {
     categories: [],
   });
   
-  // File uploads
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  // File uploads (use array of File instead of FileList)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   // Track deleted image IDs
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
@@ -110,9 +110,9 @@ export default function ProductList() {
         stockQuantity: selectedProduct.stockQuantity,
         categories: selectedProduct.categories
       });
-      setDeletedImageIds([]); // Reset deleted images
+      setSelectedFiles([]);
+      setDeletedImageIds([]);
     } else if (isCreateFormOpen && !selectedProductId) {
-      // Reset form for new product
       setFormData({
         name: '',
         description: '',
@@ -121,7 +121,7 @@ export default function ProductList() {
         stockQuantity: 0,
         categories: [],
       });
-      setSelectedFiles(null);
+      setSelectedFiles([]);
       setDeletedImageIds([]);
     }
   }, [isCreateFormOpen, selectedProductId, selectedProduct]);
@@ -153,16 +153,16 @@ export default function ProductList() {
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFiles(e.target.files);
+      const newFiles = Array.from(e.target.files);
+      console.log('Selected files:', newFiles.map(file => file.name));
+      setSelectedFiles(prev => [...prev, ...newFiles]); // Append new files
     }
   };
   
-  // Handle deleting an existing image
   const handleDeleteExistingImage = (imageId: string) => {
     setDeletedImageIds((prev) => [...prev, imageId]);
   };
   
-  // Copy ID handler
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id).then(() => {
       setNotification({
@@ -180,21 +180,20 @@ export default function ProductList() {
     });
   };
   
-  // Form submission
   const handleSaveProduct = async () => {
     try {
       const productFormData = new FormData();
       
       // Add text fields
-      if (formData.name) productFormData.append('name', formData.name);
-      if (formData.description) productFormData.append('description', formData.description);
-      if (formData.price !== undefined) productFormData.append('price', formData.price.toString());
-      productFormData.append('inStock', (formData.inStock ?? true).toString());
-      if (formData.stockQuantity !== undefined) productFormData.append('stockQuantity', formData.stockQuantity.toString());
+      if (formData.name) productFormData.append('Name', formData.name);
+      if (formData.description) productFormData.append('Description', formData.description);
+      if (formData.price !== undefined) productFormData.append('Price', formData.price.toString());
+      productFormData.append('InStock', (formData.inStock ?? true).toString());
+      if (formData.stockQuantity !== undefined) productFormData.append('StockQuantity', formData.stockQuantity.toString());
       
       // Add category IDs
-      formData.categories?.forEach((category) => {
-        productFormData.append('categoryIds', category.id);
+      formData.categories?.forEach((category, index) => {
+        productFormData.append(`CategoryIds[${index}]`, category.id);
       });
       
       // Add existing images (only those not deleted)
@@ -203,15 +202,15 @@ export default function ProductList() {
           (image) => !deletedImageIds.includes(image.id)
         );
         retainedImages.forEach((image, index) => {
-          productFormData.append(`images[${index}].id`, image.id);
-          productFormData.append(`images[${index}].isMain`, image.isMain.toString());
+          productFormData.append(`Images[${index}].Id`, image.id);
+          productFormData.append(`Images[${index}].IsMain`, image.isMain.toString());
         });
       }
       
       // Add new files
-      if (selectedFiles) {
-        Array.from(selectedFiles).forEach((file) => {
-          productFormData.append('formImages', file);
+      if (selectedFiles.length > 0) {
+        selectedFiles.forEach((file) => {
+          productFormData.append('FormImages', file);
         });
       }
       
@@ -222,7 +221,7 @@ export default function ProductList() {
         formDataEntries[key] = value instanceof File ? { name: value.name, size: value.size, type: value.type } : value;
       }
       console.log(JSON.stringify(formDataEntries, null, 2));
-
+  
       // Create or update
       if (selectedProductId) {
         await updateProduct({ id: selectedProductId, data: productFormData }).unwrap();
@@ -317,7 +316,7 @@ export default function ProductList() {
       stockQuantity: 0,
       categories: [],
     });
-    setSelectedFiles(null);
+    setSelectedFiles([]);
     setDeletedImageIds([]);
   };
   
@@ -476,7 +475,7 @@ export default function ProductList() {
                       <Typography 
                         variant="body1"
                         sx={{
-                          maxWidth: "150px",
+                          maxWidth: "5vw",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -491,7 +490,7 @@ export default function ProductList() {
                       <Typography 
                         variant="body2" 
                         sx={{ 
-                          maxWidth: "200px", 
+                          maxWidth: "7vw", 
                           overflow: "hidden", 
                           textOverflow: "ellipsis", 
                           whiteSpace: "nowrap" 
@@ -734,24 +733,19 @@ export default function ProductList() {
                     onChange={handleFileChange}
                   />
                 </Button>
-                {selectedFiles && (
+                {selectedFiles.length > 0 && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2">
                       {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                      {Array.from(selectedFiles).map((file, index) => (
+                      {selectedFiles.map((file, index) => (
                         <Chip 
                           key={index}
                           label={file.name}
                           size="small"
                           onDelete={() => {
-                            // Remove file from selection
-                            const dt = new DataTransfer();
-                            Array.from(selectedFiles).forEach((f, i) => {
-                              if (i !== index) dt.items.add(f);
-                            });
-                            setSelectedFiles(dt.files.length > 0 ? dt.files : null);
+                            setSelectedFiles(prev => prev.filter((_, i) => i !== index));
                           }}
                         />
                       ))}
