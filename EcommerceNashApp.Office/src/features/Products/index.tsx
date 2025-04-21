@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   TextField,
@@ -74,8 +74,8 @@ import { Category } from "../../app/models/category";
 interface CategoryMenuProps {
   categories: Category[];
   depth: number;
-  selectedCategoryIds: string[];
-  onSelect: (categoryId: string) => void;
+  selectedCategoryIds: { id: string; name: string }[];
+  onSelect: (categoryId: string, categoryName: string) => void;
 }
 
 const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: CategoryMenuProps) => {
@@ -94,10 +94,7 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
       {categories.map((category) => {
         const hasChildren = category.subCategories && category.subCategories.length > 0;
         const isLeaf = !hasChildren;
-        const isSelected = selectedCategoryIds.includes(category.id);
-
-        // Debugging log to verify category data
-        console.log(`Rendering category: ${category.name} (ID: ${category.id}, Level: ${category.level}, Subcategories: ${category.subCategories.length})`);
+        const isSelected = selectedCategoryIds.some((item) => item.id === category.id);
 
         return (
           <Box key={category.id}>
@@ -106,12 +103,13 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
                 pl: 2 + depth * 2,
                 color: isLeaf ? "text.primary" : "text.secondary",
                 fontStyle: isLeaf ? "normal" : "italic",
+                backgroundColor: isSelected ? "action.selected" : "inherit",
               }}
               selected={isSelected}
               onClick={() => {
                 if (isLeaf) {
                   console.log(`Selecting leaf category: ${category.name} (ID: ${category.id})`);
-                  onSelect(category.id);
+                  onSelect(category.id, category.name);
                 } else {
                   console.log(`Expanding non-leaf category: ${category.name} (ID: ${category.id})`);
                   toggleMenu(category.id);
@@ -203,13 +201,7 @@ export default function ProductList() {
 
   // Category selection state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-
-  // Filter level 0 categories
-  const level0Categories = useMemo(
-    () => categoriesData?.filter((category) => category.level === 0) || [],
-    [categoriesData]
-  );
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<{ id: string; name: string }[]>([]);
 
   // Reset form when dialog opens/closes or selected product changes
   useEffect(() => {
@@ -222,7 +214,9 @@ export default function ProductList() {
         stockQuantity: selectedProduct.stockQuantity,
         categories: selectedProduct.categories,
       });
-      setSelectedCategoryIds(selectedProduct.categories.map((c) => c.id));
+      setSelectedCategoryIds(
+        selectedProduct.categories.map((c) => ({ id: c.id, name: c.name }))
+      );
       setSelectedFiles([]);
       setDeletedImageIds([]);
     } else if (isCreateFormOpen && !selectedProductId) {
@@ -265,23 +259,51 @@ export default function ProductList() {
     }));
   };
 
-  const handleCategorySelect = (categoryId: string) => {
+  const handleCategorySelect = (categoryId: string, categoryName: string) => {
     setSelectedCategoryIds((prev) => {
-      if (prev.includes(categoryId)) {
-        return prev.filter((id) => id !== categoryId);
+      const isSelected = prev.some((item) => item.id === categoryId);
+      if (isSelected) {
+        // Remove the category
+        return prev.filter((item) => item.id !== categoryId);
       } else {
-        return [...prev, categoryId];
+        // Add the category with both id and name
+        return [...prev, { id: categoryId, name: categoryName }];
       }
     });
 
-    // Update formData categories
-    const selectedCategories = categoriesData?.filter((category) =>
-      selectedCategoryIds.includes(category.id)
-    ) || [];
-    setFormData((prev) => ({
-      ...prev,
-      categories: selectedCategories,
-    }));
+    // Update formData.categories (still need to store full Category objects for API)
+    setFormData((prev) => {
+      const currentCategoryIds = prev.categories?.map((c) => c.id) || [];
+      let updatedCategories: Category[] = prev.categories ? [...prev.categories] : [];
+
+      if (currentCategoryIds.includes(categoryId)) {
+        // Remove category
+        updatedCategories = updatedCategories.filter((c) => c.id !== categoryId);
+      } else {
+        // Add category (find the full Category object from categoriesData)
+        const category = findCategoryById(categoriesData || [], categoryId);
+        if (category) {
+          updatedCategories.push(category);
+        }
+      }
+
+      return {
+        ...prev,
+        categories: updatedCategories,
+      };
+    });
+  };
+
+  // Helper function to find a category by ID in the nested categoriesData
+  const findCategoryById = (categories: Category[], id: string): Category | undefined => {
+    for (const category of categories) {
+      if (category.id === id) return category;
+      if (category.subCategories && category.subCategories.length > 0) {
+        const found = findCategoryById(category.subCategories, id);
+        if (found) return found;
+      }
+    }
+    return undefined;
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,8 +348,8 @@ export default function ProductList() {
         productFormData.append("StockQuantity", formData.stockQuantity.toString());
 
       // Add category IDs
-      selectedCategoryIds.forEach((categoryId, index) => {
-        productFormData.append(`CategoryIds[${index}]`, categoryId);
+      selectedCategoryIds.forEach((category, index) => {
+        productFormData.append(`CategoryIds[${index}]`, category.id);
       });
 
       // Add existing images
@@ -833,21 +855,23 @@ export default function ProductList() {
                     open={Boolean(anchorEl)}
                     onOpen={(event) => setAnchorEl(event.currentTarget as HTMLElement)}
                     onClose={() => setAnchorEl(null)}
-                    value={selectedCategoryIds}
+                    value={selectedCategoryIds.map((item) => item.id)}
                     multiple
-                    renderValue={(selected) => (
+                    renderValue={() => (
                       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                        {selected.map((categoryId) => {
-                          const category = categoriesData?.find((c) => c.id === categoryId);
-                          return category ? (
-                            <Chip key={category.id} label={category.name} size="small" />
-                          ) : null;
-                        })}
+                        {selectedCategoryIds.map((category) => (
+                          <Chip
+                            key={category.id}
+                            label={`${category.name}`}
+                            size="small"
+                            sx={{ bgcolor: "grey.200", color: "text.primary" }}
+                          />
+                        ))}
                       </Box>
                     )}
                   >
                     <CategoryMenu
-                      categories={level0Categories}
+                      categories={categoriesData || []}
                       depth={0}
                       selectedCategoryIds={selectedCategoryIds}
                       onSelect={handleCategorySelect}
