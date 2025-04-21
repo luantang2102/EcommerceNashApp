@@ -149,6 +149,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             product.Price = productRequest.Price;
             product.InStock = productRequest.InStock;
             product.StockQuantity = productRequest.StockQuantity;
+            product.UpdatedDate = DateTime.UtcNow;
 
             var existingImages = product.ProductImages.ToList();
             var requestImageIds = productRequest.Images.Select(i => i.Id).ToList();

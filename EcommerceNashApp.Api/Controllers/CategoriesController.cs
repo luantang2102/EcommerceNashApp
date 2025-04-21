@@ -36,23 +36,20 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<CategoryResponse>(200, "Category retrieved successfully", category));
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<IActionResult> CreateCategory([FromBody] CategoryRequest categoryRequest)
+        public async Task<IActionResult> CreateCategory([FromForm] CategoryRequest categoryRequest)
         {
             var createdCategory = await CategoryService.CreateCategoryAsync(categoryRequest);
             return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, new ApiResponse<CategoryResponse>(201, "Category created successfully", createdCategory));
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] CategoryRequest categoryRequest)
+        public async Task<IActionResult> UpdateCategory(Guid id, [FromForm] CategoryRequest categoryRequest)
         {
             var updatedCategory = await CategoryService.UpdateCategoryAsync(id, categoryRequest);
             return Ok(new ApiResponse<CategoryResponse>(200, "Category updated successfully", updatedCategory));
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {

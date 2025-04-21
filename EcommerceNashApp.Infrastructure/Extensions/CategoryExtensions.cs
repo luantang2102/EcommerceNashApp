@@ -32,7 +32,8 @@ namespace EcommerceNashApp.Infrastructure.Extensions
                 Level = category.Level,
                 IsActive = category.IsActive,
                 CreatedDate = category.CreatedDate,
-                UpdatedDate = category.UpdatedDate
+                UpdatedDate = category.UpdatedDate,
+                ParentCategory = category.ParentCategory?.MapModelToResponse()
             };
         }
     }

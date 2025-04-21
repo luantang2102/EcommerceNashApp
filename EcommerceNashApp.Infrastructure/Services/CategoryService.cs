@@ -24,7 +24,7 @@ namespace EcommerceNashApp.Infrastructure.Services
         public async Task<PagedList<CategoryResponse>> GetCategoriesAsync(CategoryParams categoryParams)
         {
             var query = _context.Categories
-                .Include(x => x.SubCategories)
+                .Include(x => x.ParentCategory)
                 .AsQueryable();
 
             if (categoryParams.ParentCategoryId.HasValue)
@@ -59,7 +59,7 @@ namespace EcommerceNashApp.Infrastructure.Services
         public async Task<CategoryResponse> GetCategoryByIdAsync(Guid categoryId)
         {
             var category = await _context.Categories
-                .Include(x => x.SubCategories)
+                .Include(x => x.ParentCategory)
                 .FirstOrDefaultAsync(x => x.Id == categoryId);
 
             if (category == null)
@@ -78,6 +78,7 @@ namespace EcommerceNashApp.Infrastructure.Services
         {
             var categories = await _context.Categories
                 .Where(x => categoryIds.Contains(x.Id))
+                .Include(x => x.ParentCategory)
                 .ToListAsync();
 
             if (categories.Count == 0)
@@ -94,7 +95,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<CategoryResponse> CreateCategoryAsync(CategoryRequest categoryRequest)
         {
-            int level = 1; // Default level 
+            int level = 0; // Default level 
 
             if (categoryRequest.ParentCategoryId.HasValue)
             {
@@ -131,6 +132,7 @@ namespace EcommerceNashApp.Infrastructure.Services
         public async Task<CategoryResponse> UpdateCategoryAsync(Guid categoryId, CategoryRequest categoryRequest)
         {
             var category = await _context.Categories
+                .Include(c => c.ParentCategory)
                 .FirstOrDefaultAsync(c => c.Id == categoryId);
 
             if (category == null)
@@ -142,9 +144,31 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.CATEGORY_NOT_FOUND, attributes);
             }
 
+            if (categoryRequest.ParentCategoryId.HasValue)
+            {
+                var parentCategory = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Id == categoryRequest.ParentCategoryId.Value);
+
+                if (parentCategory == null)
+                {
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "parentCategoryId", categoryRequest.ParentCategoryId.Value }
+                    };
+                    throw new AppException(ErrorCode.PARENT_CATEGORY_NOT_FOUND, attributes);
+                }
+
+                category.Level = parentCategory.Level + 1;
+            }
+            else
+            {
+                category.Level = 0; // Default level if no parent category
+            }
+
             category.Name = categoryRequest.Name;
             category.Description = categoryRequest.Description;
             category.IsActive = categoryRequest.IsActive;
+            category.ParentCategoryId = categoryRequest.ParentCategoryId;
             category.UpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
