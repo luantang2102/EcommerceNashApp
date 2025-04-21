@@ -25,8 +25,14 @@ namespace EcommerceNashApp.Api.Controllers
         public async Task<IActionResult> GetCategories([FromQuery] CategoryParams categoryParams)
         {
             var categories = await CategoryService.GetCategoriesAsync(categoryParams);
-            Response.AddPaginationHeader(categories.Metadata);
             return Ok(new ApiResponse<IEnumerable<CategoryResponse>>(200, "Categories retrieved successfully", categories));
+        }
+
+        [HttpGet("tree")]
+        public async Task<IActionResult> GetCategoriesTree()
+        {
+            var categories = await CategoryService.GetCategoriesTreeAsync();
+            return Ok(new ApiResponse<IEnumerable<CategoryResponse>>(200, "Categories tree retrieved successfully", categories));
         }
 
         [HttpGet("{id}")]

@@ -13,6 +13,6 @@ namespace EcommerceNashApp.Core.Interfaces
         Task<CategoryResponse> CreateCategoryAsync(CategoryRequest categoryRequest);
         Task<CategoryResponse> UpdateCategoryAsync(Guid categoryId, CategoryRequest categoryRequest);
         Task<bool> DeleteCategoryAsync(Guid categoryId);
-
+        Task<List<CategoryResponse>> GetCategoriesTreeAsync();
     }
 }

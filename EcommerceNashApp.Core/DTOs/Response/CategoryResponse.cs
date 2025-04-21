@@ -9,7 +9,7 @@
         public bool IsActive { get; set; } = true;
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public Guid? ParentCategoryId { get; set; } = null;
+        public Guid? ParentCategoryId { get; set; } 
         public string? ParentCategoryName { get; set; } = string.Empty;
         public List<CategoryResponse> SubCategories { get; set; } = [];
     }

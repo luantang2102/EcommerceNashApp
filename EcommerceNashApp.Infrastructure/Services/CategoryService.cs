@@ -23,10 +23,9 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<PagedList<CategoryResponse>> GetCategoriesAsync(CategoryParams categoryParams)
         {
-            var query = _context.Categories.AsQueryable();
-
-            // Dynamically include all subcategories recursively
-            query = IncludeSubcategoriesRecursively(query);
+            var query = _context.Categories
+                .Include(x => x.ParentCategory)
+                .AsQueryable();
 
             if (categoryParams.ParentCategoryId.HasValue)
             {
@@ -36,9 +35,9 @@ namespace EcommerceNashApp.Infrastructure.Services
                 if (!parentExists)
                 {
                     var attributes = new Dictionary<string, object>
-            {
-                { "parentCategoryId", categoryParams.ParentCategoryId.Value }
-            };
+                    {
+                        { "parentCategoryId", categoryParams.ParentCategoryId.Value }
+                    };
                     throw new AppException(ErrorCode.PARENT_CATEGORY_NOT_FOUND, attributes);
                 }
                 query = query.Where(c => c.ParentCategoryId == categoryParams.ParentCategoryId);
@@ -58,10 +57,29 @@ namespace EcommerceNashApp.Infrastructure.Services
             );
         }
 
-        private IQueryable<Category> IncludeSubcategoriesRecursively(IQueryable<Category> query)
+        public async Task<List<CategoryResponse>> GetCategoriesTreeAsync()
         {
-            return query.Include(c => c.SubCategories)
-                        .ThenInclude(sc => sc.SubCategories); // Recursively include subcategories
+            // Fetch only root categories (ParentCategoryId is null) and include their subcategories
+            var rootCategories = await _context.Categories
+                .Include(c => c.ParentCategory)
+                .Include(c => c.SubCategories) // Include subcategories
+                    .ThenInclude(sc => sc.SubCategories) // Include nested subcategories (Level 2)
+                        .ThenInclude(ssc => ssc.SubCategories) // Include deeper nested subcategories (Level 3)
+                .Where(c => c.ParentCategoryId == null) // Only root categories
+                .ToListAsync();
+
+            // Map to CategoryResponse
+            var categoryResponses = rootCategories.Select(c => MapCategoryToResponse(c)).ToList();
+
+            return categoryResponses;
+        }
+
+        private CategoryResponse MapCategoryToResponse(Category category)
+        {
+            var response = category.MapModelToResponse();
+            response.ParentCategoryName = category.ParentCategory?.Name;
+            response.SubCategories = category.SubCategories?.Select(sc => MapCategoryToResponse(sc)).ToList() ?? new List<CategoryResponse>();
+            return response;
         }
 
         public async Task<CategoryResponse> GetCategoryByIdAsync(Guid categoryId)

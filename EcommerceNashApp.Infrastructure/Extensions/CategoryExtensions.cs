@@ -1,5 +1,6 @@
 ﻿using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Extensions
 {
@@ -44,7 +45,7 @@ namespace EcommerceNashApp.Infrastructure.Extensions
                 IsActive = category.IsActive,
                 CreatedDate = category.CreatedDate,
                 UpdatedDate = category.UpdatedDate,
-                ParentCategoryId = category.ParentCategoryId,
+                ParentCategoryId = category.ParentCategory?.Id,
                 ParentCategoryName = category.ParentCategory?.Name,
                 SubCategories = category.SubCategories.Select(c => c.MapModelToResponse()).ToList()
             };
