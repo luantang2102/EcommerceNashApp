@@ -12,7 +12,7 @@ export default function SideBar() {
   const { openSideBar } = useAppSelector((state) => state.ui);
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("xl"));
 
   const handleToggleSidebar = () => {
     dispatch(setSidebarOpen(!openSideBar));

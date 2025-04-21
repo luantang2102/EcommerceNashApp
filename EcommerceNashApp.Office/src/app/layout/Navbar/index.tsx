@@ -1,6 +1,6 @@
-import { DarkMode, LightMode, Menu, Notifications } from "@mui/icons-material";
+import { DarkMode, LightMode, Menu } from "@mui/icons-material";
 import { styled } from '@mui/material/styles';
-import { Avatar, Badge, Box, IconButton, LinearProgress, Toolbar } from "@mui/material";
+import { Avatar, Box, IconButton, LinearProgress, Toolbar } from "@mui/material";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import { NavLink } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
@@ -75,11 +75,6 @@ export default function NavBar() {
                 </Box>
 
                 <Box display='flex' alignItems='center'>
-                    <IconButton size='large' sx={{ color: 'inherit' }}>
-                        <Badge badgeContent='4' color='secondary'>
-                            <Notifications />
-                        </Badge>
-                    </IconButton>
                     <IconButton>
                         <Avatar src='' />
                     </IconButton>

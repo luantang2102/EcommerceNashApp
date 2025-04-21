@@ -3,5 +3,6 @@ export interface CategoryParams {
     pageSize: number;
     search?: string;
     isActive?: boolean;
+    level?: number;
     parentCategoryId?: string;
   }

@@ -424,7 +424,7 @@ export default function CategoryList() {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {category.parentCategory?.name ? category.parentCategory.name : "None"}
+                      {category.parentCategoryName ? category.parentCategoryName : "None"}
                     </Typography>
                   </TableCell>
                   <TableCell>

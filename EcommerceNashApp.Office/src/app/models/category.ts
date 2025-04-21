@@ -6,6 +6,7 @@ export interface Category {
     isActive: boolean;
     createdDate: string;
     updatedDate: string;
-    parentCategoryId?: string | null;
-    parentCategory: Category | null;
+    parentCategoryId: string | null;
+    parentCategoryName: string | null;
+    subCategories: Category[];
   }
