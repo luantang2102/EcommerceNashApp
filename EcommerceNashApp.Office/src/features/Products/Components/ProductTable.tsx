@@ -85,7 +85,17 @@ import useProductManagement from "../useProductManagement";
                           <InventoryIcon color="disabled" fontSize="small" />
                         </Box>
                       )}
-                      <Typography variant="body1">{product.name}</Typography>
+                      <Typography 
+                        variant="body1"
+                        sx={{
+                          maxWidth: "150px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {product.name}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>

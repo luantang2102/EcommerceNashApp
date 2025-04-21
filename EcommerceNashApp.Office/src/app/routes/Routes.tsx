@@ -4,6 +4,7 @@ import ServerError from "../errors/ServerError";
 import NotFound from "../errors/NotFound";
 import Dashboard from "../../features/Dashboard";
 import Products from "../../features/Products";
+import Categories from "../../features/Categories";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
       {
         path: 'products',
         element: <Products />
+      },
+      {
+        path: 'categories',
+        element: <Categories />
       },
       {
         path: '/server-error',

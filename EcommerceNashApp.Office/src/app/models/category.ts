@@ -5,5 +5,7 @@ export interface Category {
     level: number;
     isActive: boolean;
     createdDate: string;
-    updatedDate: string | null;
-}
+    updatedDate: string;
+    parentCategoryId?: string | null;
+    parentCategory: Category | null;
+  }

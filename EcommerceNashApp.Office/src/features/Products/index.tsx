@@ -40,7 +40,8 @@ import {
   Inventory as InventoryIcon,
   Close as CloseIcon,
   Save as SaveIcon,
-  Upload as UploadIcon
+  Upload as UploadIcon,
+  ContentCopy as ContentCopyIcon
 } from "@mui/icons-material";
 import {
   setParams,
@@ -161,6 +162,24 @@ export default function ProductList() {
     setDeletedImageIds((prev) => [...prev, imageId]);
   };
   
+  // Copy ID handler
+  const handleCopyId = (id: string) => {
+    navigator.clipboard.writeText(id).then(() => {
+      setNotification({
+        open: true,
+        message: 'Product ID copied to clipboard',
+        severity: 'info'
+      });
+    }).catch((err) => {
+      console.error('Failed to copy ID:', err);
+      setNotification({
+        open: true,
+        message: 'Failed to copy ID',
+        severity: 'error'
+      });
+    });
+  };
+  
   // Form submission
   const handleSaveProduct = async () => {
     try {
@@ -170,15 +189,13 @@ export default function ProductList() {
       if (formData.name) productFormData.append('name', formData.name);
       if (formData.description) productFormData.append('description', formData.description);
       if (formData.price !== undefined) productFormData.append('price', formData.price.toString());
-      if (formData.inStock !== undefined) productFormData.append('inStock', formData.inStock.toString());
+      productFormData.append('inStock', (formData.inStock ?? true).toString());
       if (formData.stockQuantity !== undefined) productFormData.append('stockQuantity', formData.stockQuantity.toString());
       
       // Add category IDs
-      if (formData.categories && formData.categories.length > 0) {
-        formData.categories.forEach((category) => {
-          productFormData.append('categoryIds', category.id);
-        });
-      }
+      formData.categories?.forEach((category) => {
+        productFormData.append('categoryIds', category.id);
+      });
       
       // Add existing images (only those not deleted)
       if (selectedProductId && selectedProduct?.productImages) {
@@ -193,24 +210,16 @@ export default function ProductList() {
       
       // Add new files
       if (selectedFiles) {
-        for (let i = 0; i < selectedFiles.length; i++) {
-          productFormData.append('formImages', selectedFiles[i]);
-        }
+        Array.from(selectedFiles).forEach((file) => {
+          productFormData.append('formImages', file);
+        });
       }
       
       // Log FormData contents
       console.log('FormData being sent to API:');
       const formDataEntries: { [key: string]: unknown } = {};
       for (const [key, value] of productFormData.entries()) {
-        if (value instanceof File) {
-          formDataEntries[key] = {
-            name: value.name,
-            size: value.size,
-            type: value.type,
-          };
-        } else {
-          formDataEntries[key] = value;
-        }
+        formDataEntries[key] = value instanceof File ? { name: value.name, size: value.size, type: value.type } : value;
       }
       console.log(JSON.stringify(formDataEntries, null, 2));
 
@@ -464,7 +473,17 @@ export default function ProductList() {
                           <InventoryIcon color="disabled" fontSize="small" />
                         </Box>
                       )}
-                      <Typography variant="body1">{product.name}</Typography>
+                      <Typography 
+                        variant="body1"
+                        sx={{
+                          maxWidth: "150px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {product.name}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -536,7 +555,16 @@ export default function ProductList() {
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Box sx={{ display: "flex", justifyContent: "center" }}>
+                    <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+                      <Tooltip title="Copy ID">
+                        <IconButton 
+                          size="small" 
+                          color="inherit" 
+                          onClick={() => handleCopyId(product.id)}
+                        >
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Edit">
                         <IconButton 
                           size="small" 
@@ -614,6 +642,19 @@ export default function ProductList() {
             </Box>
           ) : (
             <Grid container spacing={3}>
+              {selectedProductId && (
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    label="Product ID"
+                    fullWidth
+                    value={selectedProductId}
+                    margin="normal"
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                  />
+                </Grid>
+              )}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   name="name"
