@@ -7,5 +7,6 @@ namespace EcommerceNashApp.Core.Helpers.Params
         public string? OrderBy { get; set; }
         public string? SearchTerm { get; set; }
         public Guid? ParentCategoryId { get; set; }
+        public string? Level { get; set; }
     }
 }

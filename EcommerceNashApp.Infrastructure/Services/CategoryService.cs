@@ -23,9 +23,10 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<PagedList<CategoryResponse>> GetCategoriesAsync(CategoryParams categoryParams)
         {
-            var query = _context.Categories
-                .Include(x => x.ParentCategory)
-                .AsQueryable();
+            var query = _context.Categories.AsQueryable();
+
+            // Dynamically include all subcategories recursively
+            query = IncludeSubcategoriesRecursively(query);
 
             if (categoryParams.ParentCategoryId.HasValue)
             {
@@ -35,9 +36,9 @@ namespace EcommerceNashApp.Infrastructure.Services
                 if (!parentExists)
                 {
                     var attributes = new Dictionary<string, object>
-                    {
-                        { "parentCategoryId", categoryParams.ParentCategoryId.Value }
-                    };
+            {
+                { "parentCategoryId", categoryParams.ParentCategoryId.Value }
+            };
                     throw new AppException(ErrorCode.PARENT_CATEGORY_NOT_FOUND, attributes);
                 }
                 query = query.Where(c => c.ParentCategoryId == categoryParams.ParentCategoryId);
@@ -45,7 +46,8 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             query = query
                 .Sort(categoryParams.OrderBy)
-                .Search(categoryParams.SearchTerm);
+                .Search(categoryParams.SearchTerm)
+                .Filter(categoryParams.Level);
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
@@ -54,6 +56,12 @@ namespace EcommerceNashApp.Infrastructure.Services
                 categoryParams.PageNumber,
                 categoryParams.PageSize
             );
+        }
+
+        private IQueryable<Category> IncludeSubcategoriesRecursively(IQueryable<Category> query)
+        {
+            return query.Include(c => c.SubCategories)
+                        .ThenInclude(sc => sc.SubCategories); // Recursively include subcategories
         }
 
         public async Task<CategoryResponse> GetCategoryByIdAsync(Guid categoryId)

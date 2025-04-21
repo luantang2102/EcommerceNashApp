@@ -15,11 +15,22 @@ namespace EcommerceNashApp.Infrastructure.Extensions
             return query;
         }
 
+
         public static IQueryable<Category> Search(this IQueryable<Category> query, string? searchTerm)
         {
             if (string.IsNullOrEmpty(searchTerm)) return query;
             var lowerCaseTerm = searchTerm.Trim().ToLower();
             return query.Where(x => x.Name.ToLower().Contains(lowerCaseTerm) || x.Description.ToLower().Contains(lowerCaseTerm));
+        }
+
+        public static IQueryable<Category> Filter(this IQueryable<Category> query, string? level)
+        {
+            if (!string.IsNullOrEmpty(level))
+            {
+                var levelValue = int.TryParse(level, out var parsedLevel) ? parsedLevel : 0;
+                query = query.Where(x => x.Level == levelValue);
+            }
+            return query;
         }
 
         public static CategoryResponse MapModelToResponse(this Category category)
@@ -33,7 +44,9 @@ namespace EcommerceNashApp.Infrastructure.Extensions
                 IsActive = category.IsActive,
                 CreatedDate = category.CreatedDate,
                 UpdatedDate = category.UpdatedDate,
-                ParentCategory = category.ParentCategory?.MapModelToResponse()
+                ParentCategoryId = category.ParentCategoryId,
+                ParentCategoryName = category.ParentCategory?.Name,
+                SubCategories = category.SubCategories.Select(c => c.MapModelToResponse()).ToList()
             };
         }
     }
