@@ -37,7 +37,6 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 // Swagger/OpenAPI 
 builder.Services.AddCustomSwagger();
 
-
 // Bind settings from appsettings.json
 builder.Services.Configure<CloudinaryConfig>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -62,7 +61,7 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddHttpContextAccessor();
 
-// Enable CORS (configure in middleware if needed)
+// Enable CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -108,14 +107,9 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Enable CORS
-app.UseCors(cors =>
-{
-    cors.AllowAnyMethod()
-        .AllowAnyHeader()
-        .WithOrigins("https://localhost:3000");
-});
-    
+// Enable CORS using the default policy
+app.UseCors();
+
 // Map controller routes
 app.MapControllers();
 

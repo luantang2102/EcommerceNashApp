@@ -163,6 +163,66 @@ namespace EcommerceNashApp.Infrastructure.Services
                 }
             }
 
+            // Update Categories
+            if (productRequest.CategoryIds.Count > 0)
+            {
+                var requestCategoryIds = productRequest.CategoryIds.ToHashSet();
+
+                // Fetch all categories match the requested IDs
+                var categories = await _context.Categories
+                    .Where(c => requestCategoryIds.Contains(c.Id))
+                    .ToListAsync();
+
+                if (categories.Count != requestCategoryIds.Count)
+                {
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "categoryIds", productRequest.CategoryIds }
+                    };
+                    throw new AppException(ErrorCode.CATEGORY_NOT_FOUND, attributes);
+                }
+
+                // Reload the product with its current categories
+                var productWithCategories = await _context.Products
+                    .Include(p => p.Categories)
+                    .FirstOrDefaultAsync(p => p.Id == productId);
+
+                if (productWithCategories == null)
+                {
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "productId", productId }
+                    };
+                    throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
+                }
+
+                // Clear existing categories
+                productWithCategories.Categories.Clear();
+
+                foreach (var category in categories)
+                {
+                    productWithCategories.Categories.Add(category);
+                }
+            }
+            else
+            {
+                // If no categories are provided, remove all existing category associations
+                var productWithCategories = await _context.Products
+                    .Include(p => p.Categories)
+                    .FirstOrDefaultAsync(p => p.Id == productId);
+
+                if (productWithCategories == null)
+                {
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "productId", productId }
+                    };
+                    throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
+                }
+
+                productWithCategories.Categories.Clear();
+            }
+
             // Update IsMain for existing images
             foreach (var existing in product.ProductImages)
             {
