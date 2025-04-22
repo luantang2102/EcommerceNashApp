@@ -8,7 +8,7 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
+using System.Security.Claims;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
@@ -227,6 +227,30 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             {
                 CsrfToken = csrfToken,
                 User = user.MapModelToResponse()
+            };
+        }
+
+        public async Task<AuthResponse> GetCurrentUserAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                throw new AppException(ErrorCode.UNAUTHORIZED_ACCESS);
+                throw new AppException(ErrorCode.UNAUTHORIZED_ACCESS);
+            }
+            var user = await _userManager.Users
+                .Include(u => u.Cart)
+                .Include(u => u.UserProfiles)
+                .FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            if (user == null)
+            {
+                throw new AppException(ErrorCode.USER_NOT_FOUND);
+            }
+            var roles = await _userManager.GetRolesAsync(user);
+            return new AuthResponse
+            {
+                User = user.MapModelToResponse(),
+                CsrfToken = _httpContextAccessor.HttpContext.Request.Cookies["csrf"]
             };
         }
     }

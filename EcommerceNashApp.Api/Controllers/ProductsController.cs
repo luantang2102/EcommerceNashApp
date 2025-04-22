@@ -5,7 +5,6 @@ using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers

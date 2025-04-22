@@ -4,6 +4,7 @@ using EcommerceNashApp.Core.DTOs.Auth.Request;
 using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Interfaces.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers.Auth
@@ -19,13 +20,13 @@ namespace EcommerceNashApp.Api.Controllers.Auth
 
         [HttpPost("login")]
         [SkipCsrfValidation]
-        public async Task<IActionResult> Login(LoginRequest loginRequest)
+        public async Task<IActionResult> Login([FromForm] LoginRequest loginRequest)
         {
             var token = await _identityService.LoginAsync(loginRequest);
             return Ok(new ApiResponse<AuthResponse>(200, "Login successful", token));
         }
 
-        [HttpPost("refresh-token")]
+        [HttpGet("refresh-token")]
         public async Task<IActionResult> RefreshToken()
         {
             var refreshToken = Request.Cookies["refresh"];
@@ -40,11 +41,20 @@ namespace EcommerceNashApp.Api.Controllers.Auth
 
         [HttpPost("register")]
         [SkipCsrfValidation]
-        public async Task<IActionResult> Register(RegisterRequest registerRequest)
+        public async Task<IActionResult> Register([FromForm] RegisterRequest registerRequest)
         {
             var result = await _identityService.RegisterAsync(registerRequest);
             return CreatedAtAction(nameof(Register), new { id = result.User.Id },
                 new ApiResponse<AuthResponse>(201, "User registered successfully", result));
+        }
+
+        [HttpGet("check")]
+        [Authorize]
+        [SkipCsrfValidation]
+        public async Task<IActionResult> CheckAuth()
+        {
+            var authResponse = await _identityService.GetCurrentUserAsync();
+            return Ok(new ApiResponse<AuthResponse>(200, "User authenticated", authResponse));
         }
 
         [HttpPost("logout")]
