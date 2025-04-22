@@ -1,6 +1,6 @@
 export interface ProductParams {
     pageNumber?: number;
     pageSize?: number;
-    search?: string;
+    searchTerm?: string;
     categoryId?: string;
 }

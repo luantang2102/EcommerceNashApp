@@ -8,6 +8,7 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Security.Claims;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
@@ -193,7 +194,6 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
 
-            // Set JWT cookie
             var jwtCookieOptions = new CookieOptions
             {
                 HttpOnly = true,
@@ -203,7 +203,6 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             };
             _httpContextAccessor.HttpContext.Response.Cookies.Append("jwt", accessToken, jwtCookieOptions);
 
-            // Set refresh token cookie
             var refreshCookieOptions = new CookieOptions
             {
                 HttpOnly = true,
@@ -213,7 +212,6 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             };
             _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh", refreshToken, refreshCookieOptions);
 
-            // Set CSRF cookie
             var csrfCookieOptions = new CookieOptions
             {
                 HttpOnly = false,

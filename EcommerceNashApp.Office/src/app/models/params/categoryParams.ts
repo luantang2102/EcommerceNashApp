@@ -1,7 +1,7 @@
 export interface CategoryParams {
     pageNumber: number;
     pageSize: number;
-    search?: string;
+    searchTerm?: string;
     isActive?: boolean;
     level?: number;
     parentCategoryId?: string;

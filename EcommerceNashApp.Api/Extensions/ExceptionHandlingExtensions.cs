@@ -1,10 +1,10 @@
-﻿using EcommerceNashApp.Api.Filters;
-using EcommerceNashApp.Core.Exeptions;
-using EcommerceNashApp.Core.Settings;
-using EcommerceNashApp.Infrastructure.Exceptions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using EcommerceNashApp.Core.Exeptions;
+using EcommerceNashApp.Core.Settings;
+using EcommerceNashApp.Api.Filters;
+using EcommerceNashApp.Infrastructure.Exceptions;
 
 namespace EcommerceNashApp.Api.Extensions
 {

@@ -45,8 +45,7 @@ namespace EcommerceNashApp.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRating([FromBody] RatingRequest ratingRequest)
         {
-            var userId = User.GetUserId();
-            var createdRating = await _ratingService.CreateRatingAsync(ratingRequest, userId);
+            var createdRating = await _ratingService.CreateRatingAsync(ratingRequest);
             return CreatedAtAction(nameof(GetRatingById), new { id = createdRating.Id }, new ApiResponse<RatingResponse>(201, "Rating created successfully", createdRating));
         }
 

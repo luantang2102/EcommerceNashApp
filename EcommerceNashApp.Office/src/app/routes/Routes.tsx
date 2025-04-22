@@ -5,40 +5,53 @@ import NotFound from "../errors/NotFound";
 import Dashboard from "../../features/Dashboard";
 import Products from "../../features/Products";
 import Categories from "../../features/Categories";
+import ProtectedRoute from "./ProtectedRoute";
+import AuthLayout from "../layout/Auth";
+import SignIn from "../../features/Auth/SignIn";
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <App />,
     children: [
       {
-        path: '',
-        element: <Navigate replace to='/dashboard' />
+        path: "",
+        element: <Navigate replace to="/dashboard" />,
       },
       {
-        path: 'dashboard',
-        element: <Dashboard />
+        path: "dashboard",
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
       },
       {
-        path: 'products',
-        element: <Products />
+        path: "products",
+        element: <ProtectedRoute><Products /></ProtectedRoute>,
       },
       {
-        path: 'categories',
-        element: <Categories />
+        path: "categories",
+        element: <ProtectedRoute><Categories /></ProtectedRoute>,
       },
       {
-        path: '/server-error',
-        element: <ServerError />
+        path: "server-error",
+        element: <ServerError />,
       },
       {
-        path: '/not-found',
-        element: <NotFound />
+        path: "not-found",
+        element: <NotFound />,
       },
       {
-        path: '/*',
-        element: <Navigate replace to='/not-found' />
+        path: "/*",
+        element: <Navigate replace to="/not-found" />,
       },
-    ]
-  }
-])
+    ],
+  },
+  {
+    path: "/",
+    element: <AuthLayout />,
+    children: [
+      {
+        path: "signin",
+        element: <SignIn />,
+      }
+    ],
+  },
+]);

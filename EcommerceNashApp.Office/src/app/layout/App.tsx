@@ -1,13 +1,18 @@
+// layout/App.tsx
 import { Box, Container, createTheme, CssBaseline, Fab, ThemeProvider } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { useAppSelector } from "../store/store";
 import SideBar from "./Sidebar";
 import NavBar from "./Navbar";
+import { useCheckAuthQuery } from "../api/authApi";
 
 function App() {
   const { darkMode } = useAppSelector((state) => state.ui);
   const paletteType = darkMode ? "dark" : "light";
+
+  // Trigger checkAuth on app load
+  useCheckAuthQuery();
 
   const theme = createTheme({
     palette: {
@@ -22,9 +27,9 @@ function App() {
           sx: {
             backgroundColor: paletteType === "light" ? "#f5f5f5" : "#424242",
           },
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   const scrollToTop = () => {

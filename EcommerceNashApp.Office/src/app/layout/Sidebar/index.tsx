@@ -1,10 +1,12 @@
 import { Box, Drawer, List, Divider, IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
-import { Category, Group, Inventory, Settings, ChevronLeft, ChevronRight } from "@mui/icons-material";
-import { NavLink } from "react-router-dom";
+import { Category, Group, Inventory, ChevronLeft, ChevronRight, Logout } from "@mui/icons-material";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { setSidebarOpen } from "../uiSlice";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { useLogoutMutation } from "../../api/authApi";
+import { clearAuth } from "../../../features/Auth/authSlice";
 
 const drawerWidth = 240;
 
@@ -13,9 +15,24 @@ export default function SideBar() {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("xl"));
+  const navigate = useNavigate();
+  const [logout] = useLogoutMutation();
 
   const handleToggleSidebar = () => {
     dispatch(setSidebarOpen(!openSideBar));
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      dispatch(clearAuth());
+      navigate("/signin");
+      if (isSmallScreen) {
+        dispatch(setSidebarOpen(false));
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -71,11 +88,14 @@ export default function SideBar() {
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton sx={{ justifyContent: openSideBar ? "initial" : "center" }}>
+          <ListItemButton 
+            sx={{ justifyContent: openSideBar ? "initial" : "center" }}
+            onClick={handleLogout}
+          >
             <ListItemIcon sx={{ minWidth: 0, mr: openSideBar ? 3 : "auto" }}>
-              <Settings />
+              <Logout />
             </ListItemIcon>
-            <ListItemText primary="Settings" sx={{ opacity: openSideBar ? 1 : 0 }} />
+            <ListItemText primary="Logout" sx={{ opacity: openSideBar ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
       </List>

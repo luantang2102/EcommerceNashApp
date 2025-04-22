@@ -9,8 +9,10 @@ using EcommerceNashApp.Core.Models.Identity;
 using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
@@ -18,11 +20,13 @@ namespace EcommerceNashApp.Infrastructure.Services
     {
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public RatingService(AppDbContext context, UserManager<AppUser> userManager)
+        public RatingService(AppDbContext context, UserManager<AppUser> userManager, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _userManager = userManager;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<PagedList<RatingResponse>> GetRatingsAsync(RatingParams ratingParams)
@@ -80,23 +84,24 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         }
 
-        public async Task<RatingResponse> CreateRatingAsync(RatingRequest ratingRequest, Guid userId)
+        public async Task<RatingResponse> CreateRatingAsync(RatingRequest ratingRequest)
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id.ToString() == userId);
             if (user == null)
             {
-                throw new AppException(ErrorCode.USER_NOT_FOUND, new Dictionary<string, object> { { "userId", userId } });
+                throw new AppException(ErrorCode.USER_NOT_FOUND, new Dictionary<string, object> { { "userId", userId! } });
             }
 
             var existingRating = await _context.Ratings
-                .FirstOrDefaultAsync(x => x.ProductId == ratingRequest.ProductId && x.UserId == userId);
+                .FirstOrDefaultAsync(x => x.ProductId == ratingRequest.ProductId && x.UserId.ToString() == userId);
 
             if (existingRating != null)
             {
                 throw new AppException(ErrorCode.RATING_ALREADY_EXISTS, new Dictionary<string, object>
                 {
                     { "productId", ratingRequest.ProductId },
-                    { "userId", userId }
+                    { "userId", userId! }
                 });
             }
 

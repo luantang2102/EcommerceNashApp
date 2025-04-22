@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -28,7 +28,7 @@ import {
   Grid,
   CircularProgress,
   Alert,
-  Snackbar
+  Snackbar,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -38,7 +38,8 @@ import {
   Refresh as RefreshIcon,
   Close as CloseIcon,
   Save as SaveIcon,
-  ContentCopy as ContentCopyIcon
+  ContentCopy as ContentCopyIcon,
+  Clear as ClearIcon,
 } from "@mui/icons-material";
 import {
   setParams,
@@ -48,46 +49,62 @@ import {
   setDeleteDialogOpen,
 } from "./categoriesSlice";
 import { useAppDispatch, useAppSelector } from "../../app/store/store";
-import { 
+import {
   useFetchCategoriesQuery,
   useFetchCategoryByIdQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
-  useDeleteCategoryMutation
+  useDeleteCategoryMutation,
 } from "../../app/api/categoryApi";
 import { format } from "date-fns";
 import { Category } from "../../app/models/category";
 import { PaginationParams } from "../../app/models/params/pagination";
+import { debounce } from "lodash";
 
 export default function CategoryList() {
   const dispatch = useAppDispatch();
-  const { params, selectedCategoryId, isCreateFormOpen, isDeleteDialogOpen } = useAppSelector((state) => state.category);
-  const { data, isLoading, error, refetch } = useFetchCategoriesQuery(params);
-  const [search, setSearch] = useState(params.search || "");
-  
-  const { data: selectedCategory, isLoading: isLoadingCategory } = useFetchCategoryByIdQuery(selectedCategoryId || '', {
-    skip: !selectedCategoryId || isDeleteDialogOpen,
-  });
-  
+  const { params, selectedCategoryId, isCreateFormOpen, isDeleteDialogOpen } = useAppSelector(
+    (state) => state.category
+  );
+  const { data, isLoading, error, refetch, isFetching } = useFetchCategoriesQuery(params);
+  const [search, setSearch] = useState(params.searchTerm || "");
+
+  const { data: selectedCategory, isLoading: isLoadingCategory } = useFetchCategoryByIdQuery(
+    selectedCategoryId || "",
+    {
+      skip: !selectedCategoryId || isDeleteDialogOpen,
+    }
+  );
+
   const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
-  
+
   // Form state
   const [formData, setFormData] = useState<Partial<Category>>({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     isActive: true,
     parentCategoryId: null,
   });
-  
+
   // Notification state
   const [notification, setNotification] = useState({
     open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error' | 'info' | 'warning'
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
   });
-  
+
+  // Debounced search handler
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      dispatch(setParams({ searchTerm: value.trim() || undefined }));
+      dispatch(setPageNumber(1)); // Reset to first page on new search
+    }, 500),
+    [dispatch]
+  );
+
   // Reset form when dialog opens/closes or selected category changes
   useEffect(() => {
     if (isCreateFormOpen && selectedCategoryId && selectedCategory) {
@@ -95,134 +112,129 @@ export default function CategoryList() {
         name: selectedCategory.name,
         description: selectedCategory.description,
         isActive: selectedCategory.isActive,
-        parentCategoryId: selectedCategory.parentCategoryId
+        parentCategoryId: selectedCategory.parentCategoryId,
       });
     } else if (isCreateFormOpen && !selectedCategoryId) {
-      // Reset form for new category
       setFormData({
-        name: '',
-        description: '',
+        name: "",
+        description: "",
         isActive: true,
         parentCategoryId: null,
       });
     }
   }, [isCreateFormOpen, selectedCategoryId, selectedCategory]);
-  
+
+  // Sync search input with params.search
+  useEffect(() => {
+    setSearch(params.searchTerm || "");
+  }, [params.searchTerm]);
+
   // Form handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
-  
+
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: checked
+      [name]: checked,
     }));
   };
-  
+
   // Copy ID handler
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id).then(() => {
       setNotification({
         open: true,
-        message: 'Category ID copied to clipboard',
-        severity: 'info'
+        message: "Category ID copied to clipboard",
+        severity: "info",
       });
     }).catch((err) => {
-      console.error('Failed to copy ID:', err);
+      console.error("Failed to copy ID:", err);
       setNotification({
         open: true,
-        message: 'Failed to copy ID',
-        severity: 'error'
+        message: "Failed to copy ID",
+        severity: "error",
       });
     });
   };
-  
+
   // Form submission
   const handleSaveCategory = async () => {
     try {
       const categoryFormData = new FormData();
-      
-      // Add text fields
-      if (formData.name) categoryFormData.append('name', formData.name);
-      if (formData.description) categoryFormData.append('description', formData.description);
-      categoryFormData.append('isActive', (formData.isActive ?? true).toString());
-      if (formData.parentCategoryId) categoryFormData.append('parentCategoryId', formData.parentCategoryId);
-      
-      // Log FormData contents
-      console.log('FormData being sent to API:');
-      const formDataEntries: { [key: string]: unknown } = {};
-      for (const [key, value] of categoryFormData.entries()) {
-        formDataEntries[key] = value;
-      }
-      console.log(JSON.stringify(formDataEntries, null, 2));
 
-      // Create or update
+      if (formData.name) categoryFormData.append("name", formData.name);
+      if (formData.description) categoryFormData.append("description", formData.description);
+      categoryFormData.append("isActive", (formData.isActive ?? true).toString());
+      if (formData.parentCategoryId) categoryFormData.append("parentCategoryId", formData.parentCategoryId);
+
       if (selectedCategoryId) {
         await updateCategory({ id: selectedCategoryId, data: categoryFormData }).unwrap();
         setNotification({
           open: true,
-          message: 'Category updated successfully',
-          severity: 'success'
+          message: "Category updated successfully",
+          severity: "success",
         });
       } else {
         await createCategory(categoryFormData).unwrap();
         setNotification({
           open: true,
-          message: 'Category created successfully',
-          severity: 'success'
+          message: "Category created successfully",
+          severity: "success",
         });
       }
-      
-      // Close form
+
       handleCloseForm();
     } catch (err) {
-      console.error('Failed to save category:', err);
+      console.error("Failed to save category:", err);
       setNotification({
         open: true,
-        message: 'Failed to save category',
-        severity: 'error'
+        message: "Failed to save category",
+        severity: "error",
       });
     }
   };
-  
+
   // Delete confirmation
   const handleConfirmDelete = async () => {
     if (selectedCategoryId) {
       try {
-        const idToDelete = selectedCategoryId;
-        
-        await deleteCategory(idToDelete).unwrap();
-        
+        await deleteCategory(selectedCategoryId).unwrap();
         dispatch(setSelectedCategoryId(null));
-        
         setNotification({
           open: true,
-          message: 'Category deleted successfully',
-          severity: 'success'
+          message: "Category deleted successfully",
+          severity: "success",
         });
-        
         handleCloseDeleteDialog();
       } catch (err) {
-        console.error('Failed to delete category:', err);
+        console.error("Failed to delete category:", err);
         setNotification({
           open: true,
-          message: 'Failed to delete category',
-          severity: 'error'
+          message: "Failed to delete category",
+          severity: "error",
         });
       }
     }
   };
-  
+
   // Search and pagination
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    dispatch(setParams({ search: e.target.value }));
+    const value = e.target.value;
+    setSearch(value);
+    debouncedSearch(value);
+  };
+
+  const handleClearSearch = () => {
+    setSearch("");
+    dispatch(setParams({ searchTerm: undefined }));
+    dispatch(setPageNumber(1));
   };
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, page: number) => {
@@ -244,23 +256,23 @@ export default function CategoryList() {
     dispatch(setSelectedCategoryId(id));
     dispatch(setDeleteDialogOpen(true));
   };
-  
+
   const handleCloseForm = () => {
     dispatch(setCreateFormOpen(false));
     dispatch(setSelectedCategoryId(null));
     setFormData({
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       isActive: true,
       parentCategoryId: null,
     });
   };
-  
+
   const handleCloseDeleteDialog = () => {
     dispatch(setDeleteDialogOpen(false));
     dispatch(setSelectedCategoryId(null));
   };
-  
+
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
   };
@@ -270,7 +282,6 @@ export default function CategoryList() {
     return format(new Date(dateString), "MMM dd, yyyy HH:mm");
   };
 
-  // Calculate pagination values
   const calculateStartIndex = (pagination: PaginationParams) => {
     return (pagination.currentPage - 1) * pagination.pageSize + 1;
   };
@@ -280,54 +291,64 @@ export default function CategoryList() {
     return endIndex > pagination.totalCount ? pagination.totalCount : endIndex;
   };
 
-  if (isLoading) return (
-    <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
-      <CircularProgress />
-      <Typography variant="h6" sx={{ ml: 2 }}>Loading categories...</Typography>
-    </Box>
-  );
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
+        <CircularProgress />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Loading categories...
+        </Typography>
+      </Box>
+    );
+  }
 
-  if (error) return (
-    <Card sx={{ p: 3, m: 2, bgcolor: "#fff4f4" }}>
-      <CardContent>
-        <Typography variant="h6" color="error">Error loading categories</Typography>
-        <Typography variant="body2" sx={{ mt: 1 }}>Please try again later or contact support.</Typography>
-        <Button 
-          startIcon={<RefreshIcon />} 
-          variant="outlined" 
-          color="primary" 
-          sx={{ mt: 2 }}
-          onClick={() => refetch()}
-        >
-          Retry
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  if (error) {
+    return (
+      <Card sx={{ p: 3, m: 2, bgcolor: "#fff4f4" }}>
+        <CardContent>
+          <Typography variant="h6" color="error">
+            Error loading categories
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Please try again later or contact support.
+          </Typography>
+          <Button
+            startIcon={<RefreshIcon />}
+            variant="outlined"
+            color="primary"
+            sx={{ mt: 2 }}
+            onClick={() => refetch()}
+          >
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
       {/* Notification */}
-      <Snackbar 
-        open={notification.open} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert 
-          onClose={handleCloseNotification} 
-          severity={notification.severity} 
-          sx={{ width: '100%' }}
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          sx={{ width: "100%" }}
         >
           {notification.message}
         </Alert>
       </Snackbar>
-      
+
       {/* Page Header */}
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 500 }}>
         Category Management
       </Typography>
-      
+
       {/* Main Content */}
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         {/* Search and Add Button */}
@@ -345,11 +366,19 @@ export default function CategoryList() {
                   <SearchIcon />
                 </InputAdornment>
               ),
+              endAdornment: search && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClearSearch}>
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
+            disabled={isFetching}
           />
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={handleCreateClick}
             startIcon={<AddCircleIcon />}
             sx={{ borderRadius: "8px", textTransform: "none" }}
@@ -357,9 +386,9 @@ export default function CategoryList() {
             Add New Category
           </Button>
         </Box>
-        
+
         <Divider sx={{ mb: 2 }} />
-        
+
         {/* Categories Table */}
         <TableContainer component={Paper} elevation={0} sx={{ mb: 2 }}>
           <Table sx={{ minWidth: 650 }}>
@@ -377,12 +406,15 @@ export default function CategoryList() {
             </TableHead>
             <TableBody>
               {data?.items.map((category) => (
-                <TableRow key={category.id} sx={{ 
-                  '&:hover': { backgroundColor: '#f9f9f9' },
-                  transition: 'background-color 0.2s'
-                }}>
+                <TableRow
+                  key={category.id}
+                  sx={{
+                    "&:hover": { backgroundColor: "#f9f9f9" },
+                    transition: "background-color 0.2s",
+                  }}
+                >
                   <TableCell>
-                    <Typography 
+                    <Typography
                       variant="body1"
                       sx={{
                         maxWidth: "150px",
@@ -396,13 +428,13 @@ export default function CategoryList() {
                   </TableCell>
                   <TableCell>
                     <Tooltip title={category.description}>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          maxWidth: "200px", 
-                          overflow: "hidden", 
-                          textOverflow: "ellipsis", 
-                          whiteSpace: "nowrap" 
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          maxWidth: "200px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {category.description}
@@ -410,13 +442,11 @@ export default function CategoryList() {
                     </Tooltip>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">
-                      {category.level}
-                    </Typography>
+                    <Typography variant="body2">{category.level}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={category.isActive ? "Active" : "Inactive"} 
+                    <Chip
+                      label={category.isActive ? "Active" : "Inactive"}
                       size="small"
                       color={category.isActive ? "success" : "error"}
                       variant="outlined"
@@ -428,39 +458,35 @@ export default function CategoryList() {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">
-                      {formatDate(category.createdDate)}
-                    </Typography>
+                    <Typography variant="body2">{formatDate(category.createdDate)}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">
-                      {formatDate(category.updatedDate)}
-                    </Typography>
+                    <Typography variant="body2">{formatDate(category.updatedDate)}</Typography>
                   </TableCell>
                   <TableCell align="center">
                     <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
                       <Tooltip title="Copy ID">
-                        <IconButton 
-                          size="small" 
-                          color="inherit" 
+                        <IconButton
+                          size="small"
+                          color="inherit"
                           onClick={() => handleCopyId(category.id)}
                         >
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Edit">
-                        <IconButton 
-                          size="small" 
-                          color="primary" 
+                        <IconButton
+                          size="small"
+                          color="primary"
                           onClick={() => handleEditClick(category.id)}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton 
-                          size="small" 
-                          color="error" 
+                        <IconButton
+                          size="small"
+                          color="error"
                           onClick={() => handleDeleteClick(category.id)}
                         >
                           <DeleteIcon fontSize="small" />
@@ -470,25 +496,35 @@ export default function CategoryList() {
                   </TableCell>
                 </TableRow>
               ))}
-              
+
               {(!data?.items || data.items.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
                     <Typography variant="body1" color="textSecondary">
-                      No categories found
+                      {search ? `No categories found for "${search}"` : "No categories found"}
                     </Typography>
+                    {search && (
+                      <Button
+                        startIcon={<ClearIcon />}
+                        onClick={handleClearSearch}
+                        sx={{ mt: 2 }}
+                      >
+                        Clear Search
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         {/* Pagination */}
-        {data?.pagination && (
+        {data?.pagination && data.items.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3 }}>
             <Typography variant="body2" color="textSecondary">
-              Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of {data.pagination.totalCount} categories
+              Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of{" "}
+              {data.pagination.totalCount} categories
             </Typography>
             <Pagination
               count={data.pagination.totalPages}
@@ -500,27 +536,22 @@ export default function CategoryList() {
           </Box>
         )}
       </Paper>
-      
+
       {/* Create/Edit Form Dialog */}
-      <Dialog 
-        open={isCreateFormOpen} 
-        onClose={handleCloseForm}
-        fullWidth
-        maxWidth="md"
-      >
+      <Dialog open={isCreateFormOpen} onClose={handleCloseForm} fullWidth maxWidth="md">
         <DialogTitle>
-          {selectedCategoryId ? 'Edit Category' : 'Create New Category'}
+          {selectedCategoryId ? "Edit Category" : "Create New Category"}
           <IconButton
             aria-label="close"
             onClick={handleCloseForm}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            sx={{ position: "absolute", right: 8, top: 8 }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
           {isLoadingCategory ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
               <CircularProgress />
             </Box>
           ) : (
@@ -544,7 +575,7 @@ export default function CategoryList() {
                   label="Category Name"
                   fullWidth
                   required
-                  value={formData.name || ''}
+                  value={formData.name || ""}
                   onChange={handleInputChange}
                   margin="normal"
                 />
@@ -569,7 +600,7 @@ export default function CategoryList() {
                   fullWidth
                   multiline
                   rows={4}
-                  value={formData.description || ''}
+                  value={formData.description || ""}
                   onChange={handleInputChange}
                   margin="normal"
                 />
@@ -579,7 +610,7 @@ export default function CategoryList() {
                   name="parentCategoryId"
                   label="Parent Category ID (Optional)"
                   fullWidth
-                  value={formData.parentCategoryId || ''}
+                  value={formData.parentCategoryId || ""}
                   onChange={handleInputChange}
                   margin="normal"
                 />
@@ -589,26 +620,25 @@ export default function CategoryList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseForm}>Cancel</Button>
-          <Button 
-            onClick={handleSaveCategory} 
-            variant="contained" 
+          <Button
+            onClick={handleSaveCategory}
+            variant="contained"
             startIcon={<SaveIcon />}
             disabled={isCreating || isUpdating || !formData.name}
           >
             {(isCreating || isUpdating) ? (
               <CircularProgress size={24} color="inherit" />
+            ) : selectedCategoryId ? (
+              "Update"
             ) : (
-              selectedCategoryId ? 'Update' : 'Create'
+              "Create"
             )}
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={isDeleteDialogOpen} 
-        onClose={handleCloseDeleteDialog}
-      >
+      <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
@@ -617,13 +647,13 @@ export default function CategoryList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            color="error" 
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
             variant="contained"
             disabled={isDeleting}
           >
-            {isDeleting ? <CircularProgress size={24} color="inherit" /> : 'Delete'}
+            {isDeleting ? <CircularProgress size={24} color="inherit" /> : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

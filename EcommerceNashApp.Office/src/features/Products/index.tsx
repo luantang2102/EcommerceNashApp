@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -48,6 +48,7 @@ import {
   Upload as UploadIcon,
   ContentCopy as ContentCopyIcon,
   ExpandMore as ExpandMoreIcon,
+  Clear as ClearIcon,
 } from "@mui/icons-material";
 import {
   setParams,
@@ -69,6 +70,7 @@ import { format } from "date-fns";
 import { Product } from "../../app/models/product";
 import { PaginationParams } from "../../app/models/params/pagination";
 import { Category } from "../../app/models/category";
+import { debounce } from "lodash";
 
 // Recursive Category Menu Component
 interface CategoryMenuProps {
@@ -82,11 +84,10 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 
   const toggleMenu = (categoryId: string) => {
-    setOpenMenus((prev) => {
-      const newState = { ...prev, [categoryId]: !prev[categoryId] };
-      console.log(`Toggling menu for category ${categoryId}: ${newState[categoryId]}`);
-      return newState;
-    });
+    setOpenMenus((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
   };
 
   return (
@@ -108,10 +109,8 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
               selected={isSelected}
               onClick={() => {
                 if (isLeaf) {
-                  console.log(`Selecting leaf category: ${category.name} (ID: ${category.id})`);
                   onSelect(category.id, category.name);
                 } else {
-                  console.log(`Expanding non-leaf category: ${category.name} (ID: ${category.id})`);
                   toggleMenu(category.id);
                 }
               }}
@@ -123,7 +122,6 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log(`Icon button clicked for category: ${category.name} (ID: ${category.id})`);
                       toggleMenu(category.id);
                     }}
                     sx={{ ml: "auto" }}
@@ -160,8 +158,8 @@ export default function ProductList() {
   const { params, selectedProductId, isCreateFormOpen, isDeleteDialogOpen } = useAppSelector(
     (state) => state.product
   );
-  const { data, isLoading, error, refetch } = useFetchProductsQuery(params);
-  const [search, setSearch] = useState(params.search || "");
+  const { data, isLoading, error, refetch, isFetching } = useFetchProductsQuery(params);
+  const [search, setSearch] = useState(params.searchTerm || "");
 
   const { data: selectedProduct, isLoading: isLoadingProduct } = useFetchProductByIdQuery(
     selectedProductId || "",
@@ -203,6 +201,16 @@ export default function ProductList() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<{ id: string; name: string }[]>([]);
 
+  // Debounced search handler
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      dispatch(setParams({ searchTerm: value.trim() || undefined }));
+      dispatch(setPageNumber(1)); // Reset to first page on new search
+    }, 500),
+    [dispatch]
+  );
+
   // Reset form when dialog opens/closes or selected product changes
   useEffect(() => {
     if (isCreateFormOpen && selectedProductId && selectedProduct) {
@@ -234,6 +242,11 @@ export default function ProductList() {
     }
   }, [isCreateFormOpen, selectedProductId, selectedProduct]);
 
+  // Sync search input with params.search
+  useEffect(() => {
+    setSearch(params.searchTerm || "");
+  }, [params.searchTerm]);
+
   // Form handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -263,24 +276,19 @@ export default function ProductList() {
     setSelectedCategoryIds((prev) => {
       const isSelected = prev.some((item) => item.id === categoryId);
       if (isSelected) {
-        // Remove the category
         return prev.filter((item) => item.id !== categoryId);
       } else {
-        // Add the category with both id and name
         return [...prev, { id: categoryId, name: categoryName }];
       }
     });
 
-    // Update formData.categories (still need to store full Category objects for API)
     setFormData((prev) => {
       const currentCategoryIds = prev.categories?.map((c) => c.id) || [];
       let updatedCategories: Category[] = prev.categories ? [...prev.categories] : [];
 
       if (currentCategoryIds.includes(categoryId)) {
-        // Remove category
         updatedCategories = updatedCategories.filter((c) => c.id !== categoryId);
       } else {
-        // Add category (find the full Category object from categoriesData)
         const category = findCategoryById(categoriesData || [], categoryId);
         if (category) {
           updatedCategories.push(category);
@@ -294,7 +302,6 @@ export default function ProductList() {
     });
   };
 
-  // Helper function to find a category by ID in the nested categoriesData
   const findCategoryById = (categories: Category[], id: string): Category | undefined => {
     for (const category of categories) {
       if (category.id === id) return category;
@@ -309,7 +316,6 @@ export default function ProductList() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      console.log("Selected files:", newFiles.map((file) => file.name));
       setSelectedFiles((prev) => [...prev, ...newFiles]);
     }
   };
@@ -338,8 +344,6 @@ export default function ProductList() {
   const handleSaveProduct = async () => {
     try {
       const productFormData = new FormData();
-
-      // Add text fields
       if (formData.name) productFormData.append("Name", formData.name);
       if (formData.description) productFormData.append("Description", formData.description);
       if (formData.price !== undefined) productFormData.append("Price", formData.price.toString());
@@ -347,12 +351,10 @@ export default function ProductList() {
       if (formData.stockQuantity !== undefined)
         productFormData.append("StockQuantity", formData.stockQuantity.toString());
 
-      // Add category IDs
       selectedCategoryIds.forEach((category, index) => {
         productFormData.append(`CategoryIds[${index}]`, category.id);
       });
 
-      // Add existing images
       if (selectedProductId && selectedProduct?.productImages) {
         const retainedImages = selectedProduct.productImages.filter(
           (image) => !deletedImageIds.includes(image.id)
@@ -363,22 +365,12 @@ export default function ProductList() {
         });
       }
 
-      // Add new files
       if (selectedFiles.length > 0) {
         selectedFiles.forEach((file) => {
           productFormData.append("FormImages", file);
         });
       }
 
-      // Log FormData contents
-      console.log("FormData being sent to API:");
-      const formDataEntries: { [key: string]: unknown } = {};
-      for (const [key, value] of productFormData.entries()) {
-        formDataEntries[key] = value instanceof File ? { name: value.name, size: value.size, type: value.type } : value;
-      }
-      console.log(JSON.stringify(formDataEntries, null, 2));
-
-      // Create or update
       if (selectedProductId) {
         await updateProduct({ id: selectedProductId, data: productFormData }).unwrap();
         setNotification({
@@ -395,7 +387,6 @@ export default function ProductList() {
         });
       }
 
-      // Close form
       handleCloseForm();
     } catch (err) {
       console.error("Failed to save product:", err);
@@ -407,12 +398,10 @@ export default function ProductList() {
     }
   };
 
-  // Delete confirmation
   const handleConfirmDelete = async () => {
     if (selectedProductId) {
       try {
-        const idToDelete = selectedProductId;
-        await deleteProduct(idToDelete).unwrap();
+        await deleteProduct(selectedProductId).unwrap();
         dispatch(setSelectedProductId(null));
         setNotification({
           open: true,
@@ -431,17 +420,22 @@ export default function ProductList() {
     }
   };
 
-  // Search and pagination
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    dispatch(setParams({ search: e.target.value }));
+    const value = e.target.value;
+    setSearch(value);
+    debouncedSearch(value);
+  };
+
+  const handleClearSearch = () => {
+    setSearch("");
+    dispatch(setParams({ searchTerm: undefined }));
+    dispatch(setPageNumber(1));
   };
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, page: number) => {
     dispatch(setPageNumber(page));
   };
 
-  // Dialog controls
   const handleCreateClick = () => {
     dispatch(setCreateFormOpen(true));
     dispatch(setSelectedProductId(null));
@@ -488,7 +482,6 @@ export default function ProductList() {
     return format(new Date(dateString), "MMM dd, yyyy HH:mm");
   };
 
-  // Calculate pagination values
   const calculateStartIndex = (pagination: PaginationParams) => {
     return (pagination.currentPage - 1) * pagination.pageSize + 1;
   };
@@ -498,7 +491,7 @@ export default function ProductList() {
     return endIndex > pagination.totalCount ? pagination.totalCount : endIndex;
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
         <CircularProgress />
@@ -507,8 +500,9 @@ export default function ProductList() {
         </Typography>
       </Box>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <Card sx={{ p: 3, m: 2, bgcolor: "#fff4f4" }}>
         <CardContent>
@@ -530,6 +524,7 @@ export default function ProductList() {
         </CardContent>
       </Card>
     );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -571,7 +566,15 @@ export default function ProductList() {
                   <SearchIcon />
                 </InputAdornment>
               ),
+              endAdornment: search && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClearSearch}>
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
+            disabled={isFetching}
           />
           <Button
             variant="contained"
@@ -750,8 +753,17 @@ export default function ProductList() {
                 <TableRow>
                   <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                     <Typography variant="body1" color="textSecondary">
-                      No products found
+                      {search ? `No products found for "${search}"` : "No products found"}
                     </Typography>
+                    {search && (
+                      <Button
+                        startIcon={<ClearIcon />}
+                        onClick={handleClearSearch}
+                        sx={{ mt: 2 }}
+                      >
+                        Clear Search
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               )}
@@ -760,7 +772,7 @@ export default function ProductList() {
         </TableContainer>
 
         {/* Pagination */}
-        {data?.pagination && (
+        {data?.pagination && data.items.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3 }}>
             <Typography variant="body2" color="textSecondary">
               Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of{" "}

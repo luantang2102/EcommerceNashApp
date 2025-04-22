@@ -29,24 +29,33 @@ export const authApi = createApi({
       },
     }),
 
-    refreshToken: builder.mutation<AuthResponse, FormData>({
-      query: (formData) => ({
+    refreshToken: builder.query<AuthResponse, void>({
+      query: () => ({
         url: "auth/refresh-token",
-        method: "POST",
-        body: formData,
+        method: "GET",
       }),
       transformResponse: (response: ApiResponse<AuthResponse>) => {
         return response.body;
       },
     }),
 
-    logout: builder.mutation<void, void>({
+    checkAuth: builder.query<AuthResponse, void>({
+      query: () => ({
+        url: "auth/check",
+        method: "GET",
+      }),
+      transformResponse: (response: ApiResponse<AuthResponse>) => {
+        return response.body;
+      },
+    }),
+
+    logout: builder.mutation<string, void>({
       query: () => ({
         url: "auth/logout",
         method: "POST",
       }),
-      transformResponse: () => {
-        return undefined;
+      transformResponse: (response: ApiResponse<string>) => {
+        return response.body;
       },
     }),
   }),
@@ -55,6 +64,7 @@ export const authApi = createApi({
 export const {
   useLoginMutation,
   useRegisterMutation,
-  useRefreshTokenMutation,
+  useRefreshTokenQuery,
+  useCheckAuthQuery,
   useLogoutMutation,
 } = authApi;
