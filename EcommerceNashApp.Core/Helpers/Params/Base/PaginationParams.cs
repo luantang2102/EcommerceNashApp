@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Infrastructure.Helpers.Params.Base
+﻿namespace EcommerceNashApp.Core.Helpers.Params.Base
 {
     public class PaginationParams
     {

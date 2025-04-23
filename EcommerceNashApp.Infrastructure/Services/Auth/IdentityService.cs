@@ -8,8 +8,6 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Security.Claims;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
@@ -80,7 +78,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 CsrfToken = csrfToken,
-                User = user.MapModelToResponse()
+                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result)
             };
         }
 
@@ -140,7 +138,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 CsrfToken = newCsrfToken,
-                User = user.MapModelToResponse()
+                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result)
             };
         }
 
@@ -224,30 +222,26 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 CsrfToken = csrfToken,
-                User = user.MapModelToResponse()
+                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result)
             };
         }
 
-        public async Task<AuthResponse> GetCurrentUserAsync()
+        public async Task<AuthResponse> GetCurrentUserAsync(Guid userId)
         {
-            var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                throw new AppException(ErrorCode.UNAUTHORIZED_ACCESS);
-                throw new AppException(ErrorCode.UNAUTHORIZED_ACCESS);
-            }
-            var user = await _userManager.Users
-                .Include(u => u.Cart)
-                .Include(u => u.UserProfiles)
-                .FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
             if (user == null)
             {
-                throw new AppException(ErrorCode.USER_NOT_FOUND);
+                var attribute = new Dictionary<string, object>
+                {
+                    { "userId", userId }
+                };
+                throw new AppException(ErrorCode.USER_NOT_FOUND, attribute);
             }
-            var roles = await _userManager.GetRolesAsync(user);
+
             return new AuthResponse
             {
-                User = user.MapModelToResponse(),
+                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result),
                 CsrfToken = _httpContextAccessor.HttpContext.Request.Cookies["csrf"]
             };
         }

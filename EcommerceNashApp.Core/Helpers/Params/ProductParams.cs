@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Infrastructure.Helpers.Params.Base;
+﻿using EcommerceNashApp.Core.Helpers.Params.Base;
 
 namespace EcommerceNashApp.Infrastructure.Helpers.Params
 {

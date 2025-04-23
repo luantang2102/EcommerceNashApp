@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EcommerceNashApp.Core.Exeptions;
+using EcommerceNashApp.Infrastructure.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace EcommerceNashApp.Api.Filters
@@ -18,8 +20,7 @@ namespace EcommerceNashApp.Api.Filters
                 var cookieCsrfToken = context.HttpContext.Request.Cookies["csrf"];
                 if (string.IsNullOrEmpty(csrfToken) || csrfToken != cookieCsrfToken)
                 {
-                    context.Result = new StatusCodeResult(403);
-                    return;
+                    throw new AccessDeniedException(ErrorCode.INVALID_CSRF_TOKEN);
                 }
             }
         }

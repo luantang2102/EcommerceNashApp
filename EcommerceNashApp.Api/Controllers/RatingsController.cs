@@ -3,13 +3,18 @@ using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Core.DTOs.Request;
 using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
+using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers.Params;
 using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Infrastructure.Exceptions;
+using EcommerceNashApp.Infrastructure.Helpers.Params;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class RatingsController : BaseApiController
     {
         private readonly IRatingService _ratingService;
@@ -35,33 +40,38 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpGet("product/{productId}")]
-        public async Task<IActionResult> GetRatingsByProductId([FromQuery] RatingParams ratingParams, Guid productId)
+        public async Task<IActionResult> GetRatingsByProductId(Guid productId, [FromQuery] RatingParams ratingParams)
         {
             var ratings = await _ratingService.GetRatingsByProductIdAsync(ratingParams, productId);
+            Response.AddPaginationHeader(ratings.Metadata);
             return Ok(new ApiResponse<IEnumerable<RatingResponse>>(200, "Ratings retrieved successfully", ratings));
         }
 
-        [Authorize(Roles = "User")]
         [HttpPost]
+        [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> CreateRating([FromBody] RatingRequest ratingRequest)
         {
-            var createdRating = await _ratingService.CreateRatingAsync(ratingRequest);
-            return CreatedAtAction(nameof(GetRatingById), new { id = createdRating.Id }, new ApiResponse<RatingResponse>(201, "Rating created successfully", createdRating));
+            var userId = User.GetUserId();
+            var createdRating = await _ratingService.CreateRatingAsync(userId, ratingRequest);
+            return CreatedAtAction(nameof(GetRatingById), new { id = createdRating.Id },
+                new ApiResponse<RatingResponse>(201, "Rating created successfully", createdRating));
         }
 
-        [Authorize(Roles = "User")]
         [HttpPut("{id}")]
+        [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> UpdateRating(Guid id, [FromBody] RatingRequest ratingRequest)
         {
-            var updatedRating = await _ratingService.UpdateRatingAsync(id, ratingRequest);
+            var userId = User.GetUserId();
+            var updatedRating = await _ratingService.UpdateRatingAsync(userId, id, ratingRequest);
             return Ok(new ApiResponse<RatingResponse>(200, "Rating updated successfully", updatedRating));
         }
 
-        [Authorize(Roles = "User")]
         [HttpDelete("{id}")]
+        [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> DeleteRating(Guid id)
         {
-            await _ratingService.DeleteRatingAsync(id);
+            var userId = User.GetUserId();
+            await _ratingService.DeleteRatingAsync(userId, id);
             return Ok(new ApiResponse<string>(200, "Rating deleted successfully", "Deleted"));
         }
     }

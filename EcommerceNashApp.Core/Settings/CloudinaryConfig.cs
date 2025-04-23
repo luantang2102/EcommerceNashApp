@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.Helpers.Configurations
+﻿namespace EcommerceNashApp.Core.Settings
 {
     public class CloudinaryConfig
     {

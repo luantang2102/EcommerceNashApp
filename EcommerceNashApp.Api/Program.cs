@@ -1,7 +1,6 @@
 using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Api.Filters;
 using EcommerceNashApp.Api.SeedData;
-using EcommerceNashApp.Core.Helpers.Configurations;
 using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Interfaces.Auth;
 using EcommerceNashApp.Core.Models.Auth;
@@ -15,6 +14,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,8 +56,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>()
 // Role-based authorization policies
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("RequireUserRole", policy => policy.RequireRole("User"));
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRole.Admin.ToString()));
+    options.AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRole.User.ToString()));
 });
 builder.Services.AddHttpContextAccessor();
 
@@ -98,6 +98,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecommerce Nash API v1");
+        c.DocumentTitle = "EcommerceNashApp API";
         c.RoutePrefix = string.Empty;
     });
 }

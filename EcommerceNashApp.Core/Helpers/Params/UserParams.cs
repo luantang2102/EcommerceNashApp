@@ -1,5 +1,5 @@
 ﻿using CloudinaryDotNet.Actions;
-using EcommerceNashApp.Infrastructure.Helpers.Params.Base;
+using EcommerceNashApp.Core.Helpers.Params.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;

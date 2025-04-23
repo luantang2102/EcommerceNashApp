@@ -22,8 +22,9 @@ namespace EcommerceNashApp.Infrastructure.Extensions
             return query.Where(x => x.UserName!.ToLower().Contains(lowerCaseTerm) || x.Email!.ToLower().Contains(lowerCaseTerm));
         }
 
-        public static UserResponse MapModelToResponse(this AppUser user)
+        public static UserResponse MapModelToResponse(this AppUser user, IList<string> roles = null!)
         {
+            roles ??= [];
             return new UserResponse
             {
                 Id = user.Id,
@@ -33,6 +34,7 @@ namespace EcommerceNashApp.Infrastructure.Extensions
                 Email = user.Email,
                 CreatedDate = user.CreatedDate,
                 UpdatedDate = user.UpdatedDate,
+                Roles = roles.ToList(),
                 UserProfiles = user.UserProfiles.Select(x => x.MapModelToResponse()).ToList()
             };
         }

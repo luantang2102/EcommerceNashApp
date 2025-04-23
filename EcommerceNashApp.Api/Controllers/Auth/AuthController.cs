@@ -1,4 +1,5 @@
 ﻿using EcommerceNashApp.Api.Controllers.Base;
+using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Api.Filters;
 using EcommerceNashApp.Core.DTOs.Auth.Request;
 using EcommerceNashApp.Core.DTOs.Auth.Response;
@@ -6,7 +7,6 @@ using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Interfaces.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace EcommerceNashApp.Api.Controllers.Auth
 {
@@ -50,11 +50,11 @@ namespace EcommerceNashApp.Api.Controllers.Auth
         }
 
         [HttpGet("check")]
-        [Authorize]
         [SkipCsrfValidation]
         public async Task<IActionResult> CheckAuth()
         {
-            var authResponse = await _identityService.GetCurrentUserAsync();
+            var userId = User.GetUserId();
+            var authResponse = await _identityService.GetCurrentUserAsync(userId);
             return Ok(new ApiResponse<AuthResponse>(200, "User authenticated", authResponse));
         }
 

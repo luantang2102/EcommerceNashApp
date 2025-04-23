@@ -25,6 +25,7 @@ namespace EcommerceNashApp.Api.Controllers
         public async Task<IActionResult> GetCategories([FromQuery] CategoryParams categoryParams)
         {
             var categories = await CategoryService.GetCategoriesAsync(categoryParams);
+            Response.AddPaginationHeader(categories.Metadata);
             return Ok(new ApiResponse<IEnumerable<CategoryResponse>>(200, "Categories retrieved successfully", categories));
         }
 
@@ -43,6 +44,7 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<IActionResult> CreateCategory([FromForm] CategoryRequest categoryRequest)
         {
             var createdCategory = await CategoryService.CreateCategoryAsync(categoryRequest);
@@ -50,6 +52,7 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<IActionResult> UpdateCategory(Guid id, [FromForm] CategoryRequest categoryRequest)
         {
             var updatedCategory = await CategoryService.UpdateCategoryAsync(id, categoryRequest);
@@ -57,6 +60,7 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
             await CategoryService.DeleteCategoryAsync(id);

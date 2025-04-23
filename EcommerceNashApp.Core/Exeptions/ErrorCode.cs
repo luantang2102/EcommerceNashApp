@@ -18,6 +18,9 @@ namespace EcommerceNashApp.Core.Exeptions
         // Access related errors (400-499)
         public static readonly ErrorCode UNAUTHORIZED_ACCESS = new(401, "Unauthorized access", StatusCodes.Status401Unauthorized);
         public static readonly ErrorCode ACCESS_DENIED = new(403, "Access denied to view or modify this resource", StatusCodes.Status403Forbidden);
+        public static readonly ErrorCode INVALID_OR_EXPIRED_REFRESH_TOKEN = new(404, "Invalid or expired refresh token", StatusCodes.Status401Unauthorized);
+        public static readonly ErrorCode INVALID_CLAIM = new(405, "Invalid claim", StatusCodes.Status403Forbidden);
+        public static readonly ErrorCode INVALID_CSRF_TOKEN = new(406, "Invalid csrf token", StatusCodes.Status403Forbidden);
 
         // Product related errors (600-699)
         public static readonly ErrorCode PRODUCT_NOT_FOUND = new(600, "Product not found", StatusCodes.Status404NotFound);
@@ -37,9 +40,6 @@ namespace EcommerceNashApp.Core.Exeptions
         // Rating related errors (900-999)
         public static readonly ErrorCode RATING_NOT_FOUND = new(900, "Rating not found", StatusCodes.Status404NotFound);
         public static readonly ErrorCode RATING_ALREADY_EXISTS = new(901, "Rating already exists", StatusCodes.Status409Conflict);
-
-        // Token related errors (1000-1099)
-        public static readonly ErrorCode INVALID_OR_EXPIRED_REFRESH_TOKEN = new(1000, "Invalid or expired refresh token", StatusCodes.Status401Unauthorized);
 
         // Validation related errors (1100-1199)
         public static readonly ErrorCode VALIDATION_ERROR = new(1100, "Validation error", StatusCodes.Status400BadRequest);

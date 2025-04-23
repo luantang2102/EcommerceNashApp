@@ -1,8 +1,8 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using EcommerceNashApp.Core.Exeptions;
-using EcommerceNashApp.Core.Helpers.Configurations;
 using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Core.Settings;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;

@@ -2,6 +2,7 @@
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers;
 using EcommerceNashApp.Core.Helpers.Params;
+using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
@@ -15,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly UserManager<AppUser> _userManager;
 
@@ -51,7 +52,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 .Sort(userParams.OrderBy)
                 .AsQueryable();
 
-            var projectedQuery = query.Select(x => x.MapModelToResponse());
+            var projectedQuery = query.Select(x => x.MapModelToResponse(_userManager.GetRolesAsync(x).Result));
 
             return await PagedList<UserResponse>.ToPagedList(
                 projectedQuery,
@@ -76,7 +77,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.USER_NOT_FOUND, attribute);
             }
 
-            return user.MapModelToResponse();
+            return user.MapModelToResponse(_userManager.GetRolesAsync(user).Result);
         }
     }
 }

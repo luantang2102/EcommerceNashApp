@@ -10,8 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class ProductsController : BaseApiController
     {
         private readonly IProductService _productService;
@@ -45,6 +43,7 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<IActionResult> CreateProduct([FromForm] ProductRequest productRequest)
         {
             var createdProduct = await _productService.CreateProductAsync(productRequest);
@@ -52,6 +51,7 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<IActionResult> UpdateProduct(Guid id, [FromForm] ProductRequest productRequest)
         {
             var updatedProduct = await _productService.UpdateProductAsync(id, productRequest);
@@ -59,6 +59,7 @@ namespace EcommerceNashApp.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<IActionResult> DeleteProduct(Guid id)
         {
             await _productService.DeleteProductAsync(id);
