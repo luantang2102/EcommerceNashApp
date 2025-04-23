@@ -25,6 +25,7 @@ namespace EcommerceNashApp.Infrastructure.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<UserProfile> UserProfiles { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,6 +40,7 @@ namespace EcommerceNashApp.Infrastructure.Data
             modelBuilder.ApplyConfiguration<Order>(new OrderConfiguration());
             modelBuilder.ApplyConfiguration<ProductImage>(new ProductImageConfiguration());
             modelBuilder.ApplyConfiguration<Rating>(new RatingConfiguration());
+            modelBuilder.ApplyConfiguration<UserProfile>(new UserProfileConfiguration());
 
             base.OnModelCreating(modelBuilder);
 

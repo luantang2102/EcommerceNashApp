@@ -1,5 +1,6 @@
 ﻿using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Auth;
+using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,6 @@ namespace EcommerceNashApp.Api.SeedData
         public static async Task InitDb(WebApplication app)
         {
             using var scope = app.Services.CreateScope();
-
             var services = scope.ServiceProvider;
 
             var userManager = services.GetRequiredService<UserManager<AppUser>>()
@@ -27,6 +27,10 @@ namespace EcommerceNashApp.Api.SeedData
             await SeedCategory(dbContext);
             await SeedSubCategories(dbContext);
             await SeedProducts(dbContext);
+            await SeedUserProfiles(dbContext, userManager);
+            await SeedOrders(dbContext);
+            await SeedOrderItems(dbContext);
+            await SeedRatings(dbContext, userManager);
         }
 
         private static async Task SeedUsersAndRoles(UserManager<AppUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
@@ -45,28 +49,28 @@ namespace EcommerceNashApp.Api.SeedData
             if (!userManager.Users.Any(x => !string.IsNullOrEmpty(x.Email)))
             {
                 var password = "Luantang@123!";
-                var newUser = new AppUser()
+                var users = new List<(string UserName, string Email, UserRole Role)>
                 {
-                    UserName = "luantang",
-                    Email = "luantang.work@gmail.com",
-                    EmailConfirmed = true,
+                    ("luantang", "luantang.work@gmail.com", UserRole.User),
+                    ("admin", "admin@gmail.com", UserRole.Admin),
+                    ("johndoe", "john.doe@gmail.com", UserRole.User),
+                    ("janedoe", "jane.doe@gmail.com", UserRole.User),
+                    ("marysmith", "mary.smith@gmail.com", UserRole.User)
                 };
-                var result = await userManager.CreateAsync(newUser, password);
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(newUser, UserRole.User.ToString());
-                }
 
-                var newAdmin = new AppUser()
+                foreach (var userData in users)
                 {
-                    UserName = "admin",
-                    Email = "admin@gmail.com",
-                    EmailConfirmed = true,
-                };
-                var adminResult = await userManager.CreateAsync(newAdmin, password);
-                if (adminResult.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(newAdmin, UserRole.Admin.ToString());
+                    var newUser = new AppUser
+                    {
+                        UserName = userData.UserName,
+                        Email = userData.Email,
+                        EmailConfirmed = true
+                    };
+                    var result = await userManager.CreateAsync(newUser, password);
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(newUser, userData.Role.ToString());
+                    }
                 }
             }
         }
@@ -194,5 +198,152 @@ namespace EcommerceNashApp.Api.SeedData
             }
         }
 
+        private static async Task SeedUserProfiles(AppDbContext context, UserManager<AppUser> userManager)
+        {
+            if (!context.UserProfiles.Any())
+            {
+                var userProfiles = new List<(string Email, string FirstName, string LastName, string PhoneNumber, string Address)>
+                {
+                    ("luantang.work@gmail.com", "Luan", "Tang", "123-456-7890", "123 User Street, City"),
+                    ("admin@gmail.com", "Admin", "User", "987-654-3210", "456 Admin Avenue, City"),
+                    ("john.doe@gmail.com", "John", "Doe", "555-123-4567", "789 Oak Lane, City"),
+                    ("jane.doe@gmail.com", "Jane", "Doe", "555-987-6543", "101 Pine Road, City"),
+                    ("mary.smith@gmail.com", "Mary", "Smith", "555-456-7890", "202 Maple Drive, City")
+                };
+
+                foreach (var profileData in userProfiles)
+                {
+                    var user = await userManager.FindByEmailAsync(profileData.Email);
+                    if (user != null)
+                    {
+                        var userProfile = new UserProfile
+                        {
+                            FirstName = profileData.FirstName,
+                            LastName = profileData.LastName,
+                            PhoneNumber = profileData.PhoneNumber,
+                            Address = profileData.Address,
+                            UserId = user.Id
+                        };
+                        await context.UserProfiles.AddAsync(userProfile);
+                    }
+                }
+
+                await context.SaveChangesAsync();
+            }
+        }
+
+        private static async Task SeedOrders(AppDbContext context)
+        {
+            if (!context.Orders.Any())
+            {
+                var userProfile = await context.UserProfiles
+                    .FirstOrDefaultAsync(up => up.Address == "123 User Street, City");
+
+                if (userProfile != null)
+                {
+                    var orders = new List<Order>
+                    {
+                        new Order
+                        {
+                            TotalAmount = 30.0,
+                            Status = "Pending",
+                            OrderDate = DateTime.UtcNow,
+                            ShippingAddress = "123 User Street, City",
+                            PaymentMethod = "Credit Card",
+                            UserProfileId = userProfile.Id
+                        },
+                        new Order
+                        {
+                            TotalAmount = 20.0,
+                            Status = "Shipped",
+                            OrderDate = DateTime.UtcNow.AddDays(-2),
+                            ShippingAddress = "123 User Street, City",
+                            PaymentMethod = "PayPal",
+                            UserProfileId = userProfile.Id
+                        }
+                    };
+
+                    await context.Orders.AddRangeAsync(orders);
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
+
+        private static async Task SeedOrderItems(AppDbContext context)
+        {
+            if (!context.OrderItems.Any())
+            {
+                var orders = await context.Orders.ToListAsync();
+                var products = await context.Products
+                    .Where(p => p.Name == "Product 1" || p.Name == "Product 2")
+                    .ToListAsync();
+
+                if (orders.Any() && products.Any())
+                {
+                    var orderItems = new List<OrderItem>
+                    {
+                        new OrderItem
+                        {
+                            Quantity = 2,
+                            Price = 10.0,
+                            ProductId = products.First(p => p.Name == "Product 1").Id,
+                            OrderId = orders[0].Id
+                        },
+                        new OrderItem
+                        {
+                            Quantity = 1,
+                            Price = 20.0,
+                            ProductId = products.First(p => p.Name == "Product 2").Id,
+                            OrderId = orders[0].Id
+                        },
+                        new OrderItem
+                        {
+                            Quantity = 1,
+                            Price = 20.0,
+                            ProductId = products.First(p => p.Name == "Product 2").Id,
+                            OrderId = orders[1].Id
+                        }
+                    };
+
+                    await context.OrderItems.AddRangeAsync(orderItems);
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
+
+        private static async Task SeedRatings(AppDbContext context, UserManager<AppUser> userManager)
+        {
+            if (!context.Ratings.Any())
+            {
+                var user = await userManager.FindByEmailAsync("luantang.work@gmail.com");
+                var products = await context.Products
+                    .Where(p => p.Name == "Product 1" || p.Name == "Product 2")
+                    .ToListAsync();
+
+                if (user != null && products.Any())
+                {
+                    var ratings = new List<Rating>
+                    {
+                        new Rating
+                        {
+                            Value = 5,
+                            Comment = "Great product, highly recommend!",
+                            ProductId = products.First(p => p.Name == "Product 1").Id,
+                            UserId = user.Id
+                        },
+                        new Rating
+                        {
+                            Value = 4,
+                            Comment = "Good quality, but shipping was slow.",
+                            ProductId = products.First(p => p.Name == "Product 2").Id,
+                            UserId = user.Id
+                        }
+                    };
+
+                    await context.Ratings.AddRangeAsync(ratings);
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
     }
 }

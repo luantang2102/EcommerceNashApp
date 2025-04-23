@@ -167,7 +167,10 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             var user = new AppUser
             {
                 UserName = registerRequest.Email,
-                Email = registerRequest.Email
+                Email = registerRequest.Email,
+                ImageUrl = registerRequest.ImageUrl,
+                PublicId = registerRequest.PublicId,
+                CreatedDate = DateTime.UtcNow
             };
 
             var result = await _userManager.CreateAsync(user, registerRequest.Password);

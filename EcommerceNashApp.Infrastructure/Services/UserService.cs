@@ -8,11 +8,6 @@ using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
@@ -25,37 +20,33 @@ namespace EcommerceNashApp.Infrastructure.Services
             _userManager = userManager;
         }
 
-        private async Task<IQueryable<AppUser>> GetUsersByRolesAsync(List<UserRole> roles)
-        {
-            if (roles == null || roles.Count == 0)
-            {
-                return Enumerable.Empty<AppUser>().AsQueryable();
-            }
-
-            var usersInRoles = new List<AppUser>();
-
-            foreach (var role in roles)
-            {
-                var users = await _userManager.GetUsersInRoleAsync(role.ToString());
-                usersInRoles.AddRange(users);
-            }
-
-            return usersInRoles.Distinct().AsQueryable();
-        }
-
         public async Task<PagedList<UserResponse>> GetUsersAsync(UserParams userParams)
         {
-            var usersQuery = await GetUsersByRolesAsync([UserRole.User]);
-            var query = usersQuery
+            var usersInRole = await _userManager.GetUsersInRoleAsync("User");
+
+            // Filtering User role
+            var query = _userManager.Users
+                .Where(u => usersInRole.Select(r => r.Id).Contains(u.Id))
                 .Include(x => x.UserProfiles)
                 .Search(userParams.SearchTerm)
-                .Sort(userParams.OrderBy)
-                .AsQueryable();
+                .Sort(userParams.OrderBy);
 
-            var projectedQuery = query.Select(x => x.MapModelToResponse(_userManager.GetRolesAsync(x).Result));
+            var pagedList = await PagedList<AppUser>.ToPagedList(
+                query,
+                userParams.PageNumber,
+                userParams.PageSize
+            );
 
-            return await PagedList<UserResponse>.ToPagedList(
-                projectedQuery,
+            var usersWithRoles = new List<UserResponse>();
+            foreach (var user in pagedList)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                usersWithRoles.Add(user.MapModelToResponse(roles));
+            }
+
+            return new PagedList<UserResponse>(
+                usersWithRoles,
+                pagedList.Metadata.TotalCount,
                 userParams.PageNumber,
                 userParams.PageSize
             );
@@ -63,21 +54,31 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<UserResponse> GetUserByIdAsync(Guid userId)
         {
-            var usersQuery = await GetUsersByRolesAsync([UserRole.User]);
-            var user = await usersQuery
+            var user = await _userManager.Users
                 .Include(x => x.UserProfiles)
-                .FirstOrDefaultAsync(x => x.Id == userId);
+                .FirstOrDefaultAsync(x => x.Id == userId); 
 
             if (user == null)
             {
                 var attribute = new Dictionary<string, object>
-                    {
-                        { "UserId", userId.ToString() }
-                    };
+                {
+                    { "UserId", userId.ToString() }
+                };
                 throw new AppException(ErrorCode.USER_NOT_FOUND, attribute);
             }
 
-            return user.MapModelToResponse(_userManager.GetRolesAsync(user).Result);
+            if (!await _userManager.IsInRoleAsync(user, "User"))
+            {
+                var attribute = new Dictionary<string, object>
+                {
+                    { "UserId", userId.ToString() }
+                };
+                throw new AppException(ErrorCode.USER_NOT_FOUND, attribute);
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return user.MapModelToResponse(roles);
         }
     }
 }
