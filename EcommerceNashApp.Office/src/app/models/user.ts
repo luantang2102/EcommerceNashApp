@@ -4,4 +4,6 @@ export interface User {
     imageUrl: string | null;
     publicId: string | null;
     email: string | null;
+    roles: string[];
+    createdDate: string | null;
 }

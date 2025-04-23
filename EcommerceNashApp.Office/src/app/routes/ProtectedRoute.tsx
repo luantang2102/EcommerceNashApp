@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, loading } = useAppSelector((state) => state.auth);
+  const { isAuthenticated: isAuthenticated, loading } = useAppSelector((state) => state.auth);
 
   if (loading) {
     return <div><CircularProgress></CircularProgress></div>;

@@ -13,8 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class RatingsController : BaseApiController
     {
         private readonly IRatingService _ratingService;

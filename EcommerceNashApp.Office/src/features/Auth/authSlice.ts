@@ -1,11 +1,10 @@
-// features/Auth/authSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
 import { authApi } from "../../app/api/authApi";
 import { User } from "../../app/models/user";
 
 interface AuthState {
   isAuthenticated: boolean;
-  user: null | User 
+  user: null | User;
   loading: boolean;
 }
 
@@ -36,7 +35,7 @@ const authSlice = createSlice({
       authApi.endpoints.checkAuth.matchFulfilled,
       (state, { payload }) => {
         state.isAuthenticated = true;
-        state.user = payload.user; // Adjust based on your AuthResponse structure
+        state.user = payload.user;
         state.loading = false;
       }
     );
@@ -45,16 +44,29 @@ const authSlice = createSlice({
       state.user = null;
       state.loading = false;
     });
-    // Handle login and register
+    // Handle login
     builder.addMatcher(authApi.endpoints.login.matchFulfilled, (state, { payload }) => {
-      state.isAuthenticated = true;
-      state.user = payload.user; // Adjust based on your AuthResponse structure
-      state.loading = false;
+      if (payload.user.roles.includes("Admin")) {
+        state.isAuthenticated = true;
+        state.user = payload.user;
+        state.loading = false;
+      } else {
+        state.isAuthenticated = false;
+        state.user = null;
+        state.loading = false;
+      }
     });
+    // Handle register
     builder.addMatcher(authApi.endpoints.register.matchFulfilled, (state, { payload }) => {
-      state.isAuthenticated = true;
-      state.user = payload.user; // Adjust based on your AuthResponse structure
-      state.loading = false;
+      if (payload.user.roles.includes("Admin")) {
+        state.isAuthenticated = true;
+        state.user = payload.user;
+        state.loading = false;
+      } else {
+        state.isAuthenticated = false;
+        state.user = null;
+        state.loading = false;
+      }
     });
     // Handle logout
     builder.addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {

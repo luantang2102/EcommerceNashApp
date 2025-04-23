@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithErrorHandling } from "./baseApi";
 import { ApiResponse } from "../models/apiResponse";
-import { AuthResponse } from "../models/auth/auth";
+import { AuthResponse } from "../models/auth";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -14,6 +14,10 @@ export const authApi = createApi({
         body: formData,
       }),
       transformResponse: (response: ApiResponse<AuthResponse>) => {
+        const { user } = response.body;
+        if (!user?.roles?.includes("Admin")) {
+          throw new Error("Only Admin users are authorized");
+        }
         return response.body;
       },
     }),
@@ -25,6 +29,10 @@ export const authApi = createApi({
         body: formData,
       }),
       transformResponse: (response: ApiResponse<AuthResponse>) => {
+        const { user } = response.body;
+        if (!user?.roles?.includes("Admin")) {
+          throw new Error("Only Admin users are authorized");
+        }
         return response.body;
       },
     }),
@@ -35,6 +43,10 @@ export const authApi = createApi({
         method: "GET",
       }),
       transformResponse: (response: ApiResponse<AuthResponse>) => {
+        const { user } = response.body;
+        if (!user?.roles?.includes("Admin")) {
+          throw new Error("Only Admin users are authorized");
+        }
         return response.body;
       },
     }),
@@ -45,6 +57,10 @@ export const authApi = createApi({
         method: "GET",
       }),
       transformResponse: (response: ApiResponse<AuthResponse>) => {
+        const { user } = response.body;
+        if (!user?.roles?.includes("Admin")) {
+          throw new Error("Only Admin users are authorized");
+        }
         return response.body;
       },
     }),

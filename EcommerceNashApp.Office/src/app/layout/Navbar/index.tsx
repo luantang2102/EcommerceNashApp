@@ -1,11 +1,13 @@
 import { DarkMode, LightMode, Menu } from "@mui/icons-material";
 import { styled } from '@mui/material/styles';
-import { Avatar, Box, IconButton, LinearProgress, Toolbar } from "@mui/material";
+import { Box, IconButton, LinearProgress, Toolbar } from "@mui/material";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import { NavLink } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { setSidebarOpen, toggleDarkMode } from "../uiSlice";
 import Logo from "../../../assets/logo.png";
+import MoodButton from "../../../features/Gadgets/MoodButton";
+import Clock from "../../../features/Gadgets/Clock";
 
 interface AppBarProps extends MuiAppBarProps {
     open?: boolean;
@@ -42,44 +44,43 @@ export default function NavBar() {
             <Toolbar variant='regular' sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box display='flex' alignItems='center'>
                     <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        onClick={handleToggleSidebar}
-                        edge="start"
-                        sx={{ marginRight: 2 }}
+                    color="inherit"
+                    aria-label="open drawer"
+                    onClick={handleToggleSidebar}
+                    edge="start"
+                    sx={{ marginRight: 2 }}
                     >
-                        <Menu />
+                    <Menu />
                     </IconButton>
                     <NavLink to="/">
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                            }}
-                        >
-                            <img
-                                src={Logo}
-                                alt="Logo"
-                                style={{
-                                    maxWidth: "120px",
-                                    maxHeight: "40px",
-                                    objectFit: "contain",
-                                }}
-                            />
-                        </Box>
+                    <Box
+                        sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        }}
+                    >
+                        <img
+                        src={Logo}
+                        alt="Logo"
+                        style={{
+                            maxWidth: "120px",
+                            maxHeight: "40px",
+                            objectFit: "contain",
+                        }}
+                        />
+                    </Box>
                     </NavLink>
                     <IconButton onClick={() => dispatch(toggleDarkMode())}>
-                        {darkMode ? <DarkMode /> : <LightMode />}
+                    {darkMode ? <DarkMode /> : <LightMode />}
                     </IconButton>
                 </Box>
 
                 <Box display='flex' alignItems='center'>
-                    <IconButton>
-                        <Avatar src='' />
-                    </IconButton>
+                    <MoodButton />
+                    <Clock />
                 </Box>
-            </Toolbar>
+                </Toolbar>
             {isLoading && (
                 <Box sx={{ width: '100%' }}>
                     <LinearProgress color='info' />

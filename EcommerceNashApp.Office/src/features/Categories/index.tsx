@@ -524,7 +524,7 @@ export default function CategoryList() {
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3 }}>
             <Typography variant="body2" color="textSecondary">
               Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of{" "}
-              {data.pagination.totalCount} categories
+              {data.pagination.totalCount} products
             </Typography>
             <Pagination
               count={data.pagination.totalPages}
