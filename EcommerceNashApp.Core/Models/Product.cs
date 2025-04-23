@@ -19,6 +19,5 @@ namespace EcommerceNashApp.Core.Models
         public virtual ICollection<OrderItem> OrderItems { get; set; } = [];
         public virtual ICollection<CartItem> CartItems { get; set; } = [];
 
-
     }
 }

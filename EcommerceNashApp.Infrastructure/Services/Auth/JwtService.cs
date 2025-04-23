@@ -1,5 +1,5 @@
 ﻿using EcommerceNashApp.Core.Interfaces.Auth;
-using EcommerceNashApp.Core.Models.Identity;
+using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

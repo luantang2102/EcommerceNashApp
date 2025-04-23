@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Core.Models.Identity;
+﻿using EcommerceNashApp.Core.Models.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

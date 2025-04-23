@@ -5,7 +5,7 @@ using EcommerceNashApp.Core.Helpers;
 using EcommerceNashApp.Core.Helpers.Params;
 using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Models;
-using EcommerceNashApp.Core.Models.Identity;
+using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;

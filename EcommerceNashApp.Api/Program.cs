@@ -4,7 +4,7 @@ using EcommerceNashApp.Api.SeedData;
 using EcommerceNashApp.Core.Helpers.Configurations;
 using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Interfaces.Auth;
-using EcommerceNashApp.Core.Models.Identity;
+using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Settings;
 using EcommerceNashApp.Core.Validators;
 using EcommerceNashApp.Infrastructure.Data;

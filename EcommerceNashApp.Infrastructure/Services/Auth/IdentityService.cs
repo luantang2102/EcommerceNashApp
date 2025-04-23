@@ -2,7 +2,7 @@
 using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.Auth;
-using EcommerceNashApp.Core.Models.Identity;
+using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Http;

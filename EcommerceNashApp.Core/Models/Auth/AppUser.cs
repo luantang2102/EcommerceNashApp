@@ -1,8 +1,7 @@
 ﻿using EcommerceNashApp.Core.Models.Base;
 using EcommerceNashApp.Core.Models.Extended;
-using Microsoft.AspNetCore.Identity;
 
-namespace EcommerceNashApp.Core.Models.Identity
+namespace EcommerceNashApp.Core.Models.Auth
 {
     public enum UserRole
     {
@@ -13,6 +12,7 @@ namespace EcommerceNashApp.Core.Models.Identity
     public class AppUser : BaseUser
     {
         public override string? UserName { get; set; } = "Anonymous";
+        public override string? Email { get; set; } = "Anonymous";
         public string? ImageUrl { get; set; } = string.Empty;
         public string? PublicId { get; set; } = string.Empty;
         public string? RefreshToken { get; set; }

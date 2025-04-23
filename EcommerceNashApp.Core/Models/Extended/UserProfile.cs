@@ -1,5 +1,5 @@
-﻿using EcommerceNashApp.Core.Models.Base;
-using EcommerceNashApp.Core.Models.Identity;
+﻿using EcommerceNashApp.Core.Models.Auth;
+using EcommerceNashApp.Core.Models.Base;
 
 namespace EcommerceNashApp.Core.Models.Extended
 {

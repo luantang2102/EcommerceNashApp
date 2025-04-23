@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Core.Models.Identity;
+﻿using EcommerceNashApp.Core.Models.Auth;
 
 namespace EcommerceNashApp.Core.Interfaces.Auth
 {
