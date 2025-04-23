@@ -1,4 +1,5 @@
-﻿using EcommerceNashApp.Core.Models.Extended;
+﻿using EcommerceNashApp.Core.Models.Base;
+using EcommerceNashApp.Core.Models.Extended;
 using Microsoft.AspNetCore.Identity;
 
 namespace EcommerceNashApp.Core.Models.Identity
@@ -9,7 +10,7 @@ namespace EcommerceNashApp.Core.Models.Identity
         Admin = 2
     }
 
-    public class AppUser : IdentityUser<Guid>
+    public class AppUser : BaseUser
     {
         public override string? UserName { get; set; } = "Anonymous";
         public string? ImageUrl { get; set; } = string.Empty;
