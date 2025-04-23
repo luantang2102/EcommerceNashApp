@@ -9,7 +9,6 @@ import {
   TableHead,
   TableRow,
   Pagination,
-  Button,
   Typography,
   Paper,
   Chip,
@@ -35,6 +34,7 @@ import {
   InputLabel,
   FormControl,
   Collapse,
+  Button,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -610,48 +610,46 @@ export default function ProductList() {
               {data?.items.map((product) => (
                 <TableRow
                   key={product.id}
-                  sx={{
-                    "&:hover": { backgroundColor: "#f9f9f9" },
-                    transition: "background-color 0.2s",
-                  }}
                 >
                   <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      {product.productImages && product.productImages.length > 0 ? (
-                        <Box
-                          component="img"
-                          src={product.productImages[0].imageUrl}
-                          alt={product.name}
-                          sx={{ width: 40, height: 40, mr: 1, objectFit: "cover", borderRadius: "4px" }}
-                        />
-                      ) : (
-                        <Box
+                    <Tooltip title={product.name}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        {product.productImages && product.productImages.length > 0 ? (
+                          <Box
+                            component="img"
+                            src={product.productImages[0].imageUrl}
+                            alt={product.name}
+                            sx={{ width: 40, height: 40, mr: 1, objectFit: "cover", borderRadius: "4px" }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              mr: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              bgcolor: "#f0f0f0",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <InventoryIcon color="disabled" fontSize="small" />
+                          </Box>
+                        )}
+                        <Typography
+                          variant="body1"
                           sx={{
-                            width: 40,
-                            height: 40,
-                            mr: 1,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            bgcolor: "#f0f0f0",
-                            borderRadius: "4px",
+                            maxWidth: "5vw",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                           }}
                         >
-                          <InventoryIcon color="disabled" fontSize="small" />
-                        </Box>
-                      )}
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          maxWidth: "5vw",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {product.name}
-                      </Typography>
-                    </Box>
+                          {product.name}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
                   </TableCell>
                   <TableCell>
                     <Tooltip title={product.description}>

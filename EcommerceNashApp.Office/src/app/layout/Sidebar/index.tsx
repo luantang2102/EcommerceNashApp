@@ -14,7 +14,7 @@ export default function SideBar() {
   const { openSideBar } = useAppSelector((state) => state.ui);
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("xl"));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const [logout] = useLogoutMutation();
 
@@ -61,7 +61,7 @@ export default function SideBar() {
         display: "flex", 
         alignItems: "center", 
         justifyContent: "flex-end", 
-        p: 1,
+        p: 1
       }}>
         <IconButton onClick={handleToggleSidebar}>
           {openSideBar ? <ChevronLeft /> : <ChevronRight />}

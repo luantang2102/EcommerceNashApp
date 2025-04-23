@@ -1,3 +1,5 @@
+import { UserProfile } from "./userProfile";
+
 export interface User {
     id: string;
     userName: string | null;
@@ -6,4 +8,6 @@ export interface User {
     email: string | null;
     roles: string[];
     createdDate: string | null;
+    userProfiles: UserProfile[];
 }
+

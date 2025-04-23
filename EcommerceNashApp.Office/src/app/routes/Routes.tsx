@@ -5,6 +5,7 @@ import NotFound from "../errors/NotFound";
 import Dashboard from "../../features/Dashboard";
 import Products from "../../features/Products";
 import Categories from "../../features/Categories";
+import Users from "../../features/Users";
 import ProtectedRoute from "./ProtectedRoute";
 import AuthLayout from "../layout/Auth";
 import SignIn from "../../features/Auth/SignIn";
@@ -29,6 +30,10 @@ export const router = createBrowserRouter([
       {
         path: "categories",
         element: <ProtectedRoute><Categories /></ProtectedRoute>,
+      },
+      {
+        path: "customers",
+        element: <ProtectedRoute><Users /></ProtectedRoute>,
       },
       {
         path: "server-error",

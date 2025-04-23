@@ -39,7 +39,7 @@ export default function NavBar() {
             color='default'
             open={openSideBar}
             elevation={0}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
+            sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: darkMode ? "#121212" : "rgb(125, 166, 254)" }}
         >
             <Toolbar variant='regular' sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box display='flex' alignItems='center'>

@@ -408,10 +408,6 @@ export default function CategoryList() {
               {data?.items.map((category) => (
                 <TableRow
                   key={category.id}
-                  sx={{
-                    "&:hover": { backgroundColor: "#f9f9f9" },
-                    transition: "background-color 0.2s",
-                  }}
                 >
                   <TableCell>
                     <Typography

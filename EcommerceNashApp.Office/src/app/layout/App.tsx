@@ -20,12 +20,22 @@ function App() {
       background: {
         default: paletteType === "light" ? "#eaeaea" : "#121212",
       },
+      
     },
     components: {
       MuiTableHead: {
         defaultProps: {
           sx: {
             backgroundColor: paletteType === "light" ? "#f5f5f5" : "#424242",
+          },
+        },
+      },
+      MuiTableRow: {
+        defaultProps: {
+          sx: {
+            "&:hover": {
+              backgroundColor: paletteType === "light" ? "#f9f9f9" : "#424242",
+            },
           },
         },
       },
@@ -45,7 +55,7 @@ function App() {
           minHeight: "100vh",
           background: darkMode
             ? "radial-gradient(circle, rgb(62, 66, 86), #111B27)"
-            : "radial-gradient(circle, rgb(179, 215, 225), #f0f9ff)",
+            : "rgb(227, 236, 255)",
           display: "flex",
         }}
       >
