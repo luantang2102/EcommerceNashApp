@@ -1,6 +1,6 @@
 ﻿using EcommerceNashApp.Core.DTOs.Response;
-using EcommerceNashApp.Core.Helpers;
 using EcommerceNashApp.Core.Helpers.Params;
+using EcommerceNashApp.Shared.Paginations;
 
 namespace EcommerceNashApp.Core.Interfaces
 {

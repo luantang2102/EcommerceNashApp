@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Core.Helpers.Params.Base;
+﻿using EcommerceNashApp.Shared.Paginations;
 
 namespace EcommerceNashApp.Core.Helpers.Params
 {

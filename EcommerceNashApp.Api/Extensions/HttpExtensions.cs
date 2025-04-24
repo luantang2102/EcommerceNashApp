@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Core.Helpers;
+﻿using EcommerceNashApp.Shared.Paginations;
 using Microsoft.Net.Http.Headers;
 using System.Text.Json;
 

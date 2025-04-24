@@ -1,5 +1,5 @@
 ﻿using CloudinaryDotNet.Actions;
-using EcommerceNashApp.Core.Helpers.Params.Base;
+using EcommerceNashApp.Shared.Paginations;
 using System;
 using System.Collections.Generic;
 using System.Linq;

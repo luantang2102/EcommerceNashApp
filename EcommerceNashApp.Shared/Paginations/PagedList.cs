@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace EcommerceNashApp.Core.Helpers
+namespace EcommerceNashApp.Shared.Paginations
 {
     public class PagedList<T> : List<T>
     {

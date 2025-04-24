@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.Helpers
+﻿namespace EcommerceNashApp.Shared.Paginations
 {
     public class PaginationMetadata
     {

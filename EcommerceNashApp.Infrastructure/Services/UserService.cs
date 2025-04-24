@@ -1,11 +1,11 @@
 ﻿using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Exeptions;
-using EcommerceNashApp.Core.Helpers;
 using EcommerceNashApp.Core.Helpers.Params;
 using EcommerceNashApp.Core.Interfaces;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
+using EcommerceNashApp.Shared.Paginations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
