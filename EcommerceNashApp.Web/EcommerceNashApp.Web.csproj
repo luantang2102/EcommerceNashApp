@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EcommerceNashApp.Shared\EcommerceNashApp.Shared.csproj" />
     <ProjectReference Include="..\EcommerceNashApp.Test\EcommerceNashApp.Test.csproj" />
   </ItemGroup>
 

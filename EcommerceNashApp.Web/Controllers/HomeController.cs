@@ -1,4 +1,6 @@
+using EcommerceNashApp.Shared.Paginations;
 using EcommerceNashApp.Web.Models;
+using EcommerceNashApp.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -7,20 +9,26 @@ namespace EcommerceNashApp.Web.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly IProductService _productService;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, IProductService productService)
     {
         _logger = logger;
+        _productService = productService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        return View();
-    }
+        var products = await _productService.GetProductsAsync(
+            new PaginationParams
+            {
+                PageNumber = 1,
+                PageSize = 8
+            },
+            cancellationToken
+        );
 
-    public IActionResult Privacy()
-    {
-        return View();
+        return View(products);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
