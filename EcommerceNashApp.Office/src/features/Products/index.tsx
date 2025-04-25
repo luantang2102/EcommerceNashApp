@@ -703,6 +703,7 @@ export default function ProductList() {
                           label={category.name}
                           size="small"
                           sx={{ fontSize: "0.7rem" }}
+                          color={category.subCategories.length > 0 ? "error" : "success"}
                         />
                       ))}
                     </Box>
