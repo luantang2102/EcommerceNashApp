@@ -10,9 +10,9 @@ namespace EcommerceNashApp.Web.Services.Impl
         private readonly HttpClient _httpClient;
         private readonly ILogger<ProductService> _logger;
 
-        public ProductService(HttpClient httpClient, ILogger<ProductService> logger)
+        public ProductService(IHttpClientFactory httpClient, ILogger<ProductService> logger)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClient.CreateClient("NashApp.Api");
             _logger = logger;
         }
 
@@ -43,11 +43,9 @@ namespace EcommerceNashApp.Web.Services.Impl
 
         public async Task<PagedList<ProductView>> GetProductsAsync(PaginationParams paginationParams, CancellationToken cancellationToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://localhost:5001/api/Products?pageNumber={paginationParams.PageNumber}&pageSize={paginationParams.PageSize}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"api/Products?pageNumber={paginationParams.PageNumber}&pageSize={paginationParams.PageSize}");
 
-            // Ensure _httpClient.BaseAddress is not null before using it
-            var baseAddress = _httpClient.BaseAddress?.ToString() ?? "UnknownBaseAddress";
-            _logger.LogInformation("Fetching products from {RequestUri}", baseAddress + request);
+            _logger.LogInformation("\nFetching products from {RequestUri}", request);
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
 

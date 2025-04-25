@@ -9,11 +9,19 @@ builder.Services.AddControllersWithViews();
 
 // Register IProductService with ProductService
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
+var test = builder.Configuration["NashApp:Api:Address"];
 // Configure HttpClient for NashApp.Api
+var apiAddress = builder.Configuration["NashApp:Api:Address"];
+if (string.IsNullOrEmpty(apiAddress))
+{
+    throw new InvalidOperationException("The API address is not configured in the application settings.");
+}
+
 builder.Services.AddHttpClient("NashApp.Api", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["NashApp:Api:Address"]!);
+    client.BaseAddress = new Uri(apiAddress);
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 

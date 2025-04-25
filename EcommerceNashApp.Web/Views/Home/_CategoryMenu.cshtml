@@ -1,0 +1,69 @@
+﻿@model EcommerceNashApp.Web.Models.Views.CategoryView
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    // Get IsTopLevel from ViewData, default to true if not set
+    bool isTopLevel = ViewData["IsTopLevel"] as bool? ?? true;
+}
+
+@if (Model.SubCategories.Any())
+{
+    if (isTopLevel)
+    {
+        <!-- Top-level category with subcategories (dropdown) -->
+        <li class="nav-item dropdown">
+            <a class="nav-link me-5 dropdown-toggle border-0" href="@Url.Action("Category", "Home", new { id = Model.Id })" 
+               data-bs-toggle="dropdown" aria-expanded="false">@Model.Name</a>
+            <ul class="dropdown-menu fw-bold" style="white-space: nowrap;">
+                @foreach (var subCategory in Model.SubCategories)
+                {
+                    <li class="dropdown-submenu">
+                        @{
+                            // Create a new ViewDataDictionary without copying IsTopLevel
+                            var newViewData = new ViewDataDictionary(ViewData);
+                            newViewData["IsTopLevel"] = false; // Set explicitly
+                        }
+                        @await Html.PartialAsync("_CategoryMenu", subCategory, newViewData)
+                    </li>
+                }
+            </ul>
+        </li>
+    }
+    else
+    {
+        <!-- Nested subcategory with subcategories (dropdown-submenu) -->
+        <li class="dropdown-submenu">
+            <a class="dropdown-item dropdown-toggle" href="@Url.Action("Category", "Home", new { id = Model.Id })">@Model.Name</a>
+            <ul class="dropdown-menu fw-bold" style="white-space: nowrap;">
+                @foreach (var subCategory in Model.SubCategories)
+                {
+                    <li class="dropdown-submenu">
+                        @{
+                            // Create a new ViewDataDictionary without copying IsTopLevel
+                            var newViewData = new ViewDataDictionary(ViewData);
+                            newViewData["IsTopLevel"] = false; // Set explicitly
+                        }
+                        @await Html.PartialAsync("_CategoryMenu", subCategory, newViewData)
+                    </li>
+                }
+            </ul>
+        </li>
+    }
+}
+else
+{
+    if (isTopLevel)
+    {
+        <!-- Top-level category without subcategories -->
+        <li class="nav-item">
+            <a class="nav-link me-5" href="@Url.Action("Category", "Home", new { id = Model.Id })">@Model.Name</a>
+        </li>
+    }
+    else
+    {
+        <!-- Nested subcategory without subcategories -->
+        <li>
+            <a class="dropdown-item" href="@Url.Action("Category", "Home", new { id = Model.Id })">@Model.Name</a>
+        </li>
+    }
+}

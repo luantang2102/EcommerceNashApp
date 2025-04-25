@@ -1,5 +1,6 @@
 using EcommerceNashApp.Shared.Paginations;
 using EcommerceNashApp.Web.Models;
+using EcommerceNashApp.Web.Models.Views;
 using EcommerceNashApp.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -10,11 +11,13 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly IProductService _productService;
-
-    public HomeController(ILogger<HomeController> logger, IProductService productService)
+    private readonly ICategoryService _categoryService;
+    
+    public HomeController(ILogger<HomeController> logger, IProductService productService, ICategoryService categoryService)
     {
         _logger = logger;
         _productService = productService;
+        _categoryService = categoryService;
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -28,7 +31,14 @@ public class HomeController : Controller
             cancellationToken
         );
 
-        return View(products);
+        var categories = await _categoryService.GetCategoriesTreeAsync(cancellationToken);
+
+
+        return View(new HomeView
+        {
+            Products = products,
+            Categories = categories
+        });
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -114,6 +114,20 @@ a {
   --bs-dropdown-link-active-bg: var(--bs-tertiary-bg);
 }
 
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    display: none;
+}
+
+.dropdown-submenu:hover > .dropdown-menu {
+    display: block;
+}
+
 /* list group */
 .list-group-item {
   --bs-list-group-item-padding-x: 0;
