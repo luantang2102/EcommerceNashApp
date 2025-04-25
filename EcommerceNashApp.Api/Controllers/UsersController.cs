@@ -3,7 +3,7 @@ using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Helpers.Params;
-using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Core.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

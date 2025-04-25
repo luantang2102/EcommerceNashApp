@@ -1,33 +1,31 @@
 ﻿using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers.Params;
-using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Core.Interfaces.IRepositories;
+using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.Paginations;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
     public class UserService : IUserService
     {
-        private readonly UserManager<AppUser> _userManager;
+        private readonly IUserRepository _userRepository;
 
-        public UserService(UserManager<AppUser> userManager)
+        public UserService(IUserRepository userRepository)
         {
-            _userManager = userManager;
+            _userRepository = userRepository;
         }
 
         public async Task<PagedList<UserResponse>> GetUsersAsync(UserParams userParams)
         {
-            var usersInRole = await _userManager.GetUsersInRoleAsync("User");
+            var usersInRole = await _userRepository.GetUsersInRoleAsync("User");
+            var userIdsInRole = usersInRole.Select(u => u.Id).ToHashSet();
 
-            // Filtering User role
-            var query = _userManager.Users
-                .Where(u => usersInRole.Select(r => r.Id).Contains(u.Id))
-                .Include(x => x.UserProfiles)
+            var query = _userRepository.GetAllAsync()
+                .Where(u => userIdsInRole.Contains(u.Id))
                 .Search(userParams.SearchTerm)
                 .Sort(userParams.OrderBy);
 
@@ -40,7 +38,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             var usersWithRoles = new List<UserResponse>();
             foreach (var user in pagedList)
             {
-                var roles = await _userManager.GetRolesAsync(user);
+                var roles = await _userRepository.GetRolesAsync(user);
                 usersWithRoles.Add(user.MapModelToResponse(roles));
             }
 
@@ -54,10 +52,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<UserResponse> GetUserByIdAsync(Guid userId)
         {
-            var user = await _userManager.Users
-                .Include(x => x.UserProfiles)
-                .FirstOrDefaultAsync(x => x.Id == userId); 
-
+            var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
             {
                 var attribute = new Dictionary<string, object>
@@ -67,7 +62,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.USER_NOT_FOUND, attribute);
             }
 
-            if (!await _userManager.IsInRoleAsync(user, "User"))
+            if (!await _userRepository.IsInRoleAsync(user, "User"))
             {
                 var attribute = new Dictionary<string, object>
                 {
@@ -76,8 +71,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.USER_NOT_FOUND, attribute);
             }
 
-            var roles = await _userManager.GetRolesAsync(user);
-
+            var roles = await _userRepository.GetRolesAsync(user);
             return user.MapModelToResponse(roles);
         }
     }

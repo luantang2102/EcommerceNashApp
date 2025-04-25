@@ -2,9 +2,9 @@
 using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers.Params;
-using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Core.Interfaces.IRepositories;
+using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
-using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.Paginations;
@@ -14,24 +14,20 @@ namespace EcommerceNashApp.Infrastructure.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly AppDbContext _context;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public CategoryService(AppDbContext context)
+        public CategoryService(ICategoryRepository categoryRepository)
         {
-            _context = context;
+            _categoryRepository = categoryRepository;
         }
 
         public async Task<PagedList<CategoryResponse>> GetCategoriesAsync(CategoryParams categoryParams)
         {
-            var query = _context.Categories
-                .Include(x => x.ParentCategory)
-                .AsQueryable();
+            var query = _categoryRepository.GetAllAsync();
 
             if (categoryParams.ParentCategoryId.HasValue)
             {
-                var parentExists = await _context.Categories
-                    .AnyAsync(c => c.Id == categoryParams.ParentCategoryId.Value);
-
+                var parentExists = await _categoryRepository.ParentCategoryExistsAsync(categoryParams.ParentCategoryId.Value);
                 if (!parentExists)
                 {
                     var attributes = new Dictionary<string, object>
@@ -59,19 +55,8 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<List<CategoryResponse>> GetCategoriesTreeAsync()
         {
-            // Fetch only root categories (ParentCategoryId is null) and include their subcategories
-            var rootCategories = await _context.Categories
-                .Include(c => c.ParentCategory)
-                .Include(c => c.SubCategories) // Include subcategories
-                    .ThenInclude(sc => sc.SubCategories) // Include nested subcategories (Level 2)
-                        .ThenInclude(ssc => ssc.SubCategories) // Include deeper nested subcategories (Level 3)
-                .Where(c => c.ParentCategoryId == null) // Only root categories
-                .ToListAsync();
-
-            // Map to CategoryResponse
-            var categoryResponses = rootCategories.Select(c => MapCategoryToResponse(c)).ToList();
-
-            return categoryResponses;
+            var rootCategories = await _categoryRepository.GetRootCategoriesAsync().ToListAsync();
+            return rootCategories.Select(c => MapCategoryToResponse(c)).ToList();
         }
 
         private CategoryResponse MapCategoryToResponse(Category category)
@@ -84,10 +69,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<CategoryResponse> GetCategoryByIdAsync(Guid categoryId)
         {
-            var category = await _context.Categories
-                .Include(x => x.ParentCategory)
-                .FirstOrDefaultAsync(x => x.Id == categoryId);
-
+            var category = await _categoryRepository.GetByIdAsync(categoryId);
             if (category == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -102,11 +84,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<List<CategoryResponse>> GetCategoriesByIdsAsync(List<Guid> categoryIds)
         {
-            var categories = await _context.Categories
-                .Where(x => categoryIds.Contains(x.Id))
-                .Include(x => x.ParentCategory)
-                .ToListAsync();
-
+            var categories = await _categoryRepository.GetByIdsAsync(categoryIds);
             if (categories.Count == 0)
             {
                 var attributes = new Dictionary<string, object>
@@ -121,13 +99,11 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<CategoryResponse> CreateCategoryAsync(CategoryRequest categoryRequest)
         {
-            int level = 0; // Default level 
+            int level = 0;
 
             if (categoryRequest.ParentCategoryId.HasValue)
             {
-                var parentCategory = await _context.Categories
-                    .FirstOrDefaultAsync(c => c.Id == categoryRequest.ParentCategoryId.Value);
-
+                var parentCategory = await _categoryRepository.GetByIdAsync(categoryRequest.ParentCategoryId.Value);
                 if (parentCategory == null)
                 {
                     var attributes = new Dictionary<string, object>
@@ -149,18 +125,13 @@ namespace EcommerceNashApp.Infrastructure.Services
                 Level = level
             };
 
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-
-            return category.MapModelToResponse();
+            var createdCategory = await _categoryRepository.CreateAsync(category);
+            return createdCategory.MapModelToResponse();
         }
 
         public async Task<CategoryResponse> UpdateCategoryAsync(Guid categoryId, CategoryRequest categoryRequest)
         {
-            var category = await _context.Categories
-                .Include(c => c.ParentCategory)
-                .FirstOrDefaultAsync(c => c.Id == categoryId);
-
+            var category = await _categoryRepository.GetByIdAsync(categoryId);
             if (category == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -172,9 +143,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             if (categoryRequest.ParentCategoryId.HasValue)
             {
-                var parentCategory = await _context.Categories
-                    .FirstOrDefaultAsync(c => c.Id == categoryRequest.ParentCategoryId.Value);
-
+                var parentCategory = await _categoryRepository.GetByIdAsync(categoryRequest.ParentCategoryId.Value);
                 if (parentCategory == null)
                 {
                     var attributes = new Dictionary<string, object>
@@ -188,7 +157,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             }
             else
             {
-                category.Level = 0; // Default level if no parent category
+                category.Level = 0;
             }
 
             category.Name = categoryRequest.Name;
@@ -197,17 +166,13 @@ namespace EcommerceNashApp.Infrastructure.Services
             category.ParentCategoryId = categoryRequest.ParentCategoryId;
             category.UpdatedDate = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
-
+            await _categoryRepository.UpdateAsync(category);
             return category.MapModelToResponse();
         }
 
         public async Task<bool> DeleteCategoryAsync(Guid categoryId)
         {
-            var category = await _context.Categories
-                .Include(c => c.SubCategories)
-                .FirstOrDefaultAsync(c => c.Id == categoryId);
-
+            var category = await _categoryRepository.GetWithSubCategoriesAsync(categoryId);
             if (category == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -217,7 +182,6 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.CATEGORY_NOT_FOUND, attributes);
             }
 
-            // Check if this category has subcategories
             if (category.SubCategories.Any())
             {
                 var attributes = new Dictionary<string, object>
@@ -228,9 +192,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.CATEGORY_HAS_SUBCATEGORIES, attributes);
             }
 
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-
+            await _categoryRepository.DeleteAsync(category);
             return true;
         }
     }

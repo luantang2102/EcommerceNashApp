@@ -1,6 +1,6 @@
 ﻿using EcommerceNashApp.Core.Models.Auth;
 
-namespace EcommerceNashApp.Core.Interfaces.Auth
+namespace EcommerceNashApp.Core.Interfaces.IServices.Auth
 {
     public interface IJwtService
     {

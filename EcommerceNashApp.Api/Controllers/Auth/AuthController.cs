@@ -4,7 +4,7 @@ using EcommerceNashApp.Api.Filters;
 using EcommerceNashApp.Core.DTOs.Auth.Request;
 using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
-using EcommerceNashApp.Core.Interfaces.Auth;
+using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

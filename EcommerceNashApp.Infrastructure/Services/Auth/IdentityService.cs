@@ -1,10 +1,12 @@
 ﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
 using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.Exeptions;
-using EcommerceNashApp.Core.Interfaces.Auth;
+using EcommerceNashApp.Core.Interfaces.IRepositories;
+using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
+using EcommerceNashApp.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,21 +15,21 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
     public class IdentityService : IIdentityService
     {
-        private readonly UserManager<AppUser> _userManager;
+        private readonly IUserRepository _userRepository;
         private readonly IJwtService _jwt;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public IdentityService(UserManager<AppUser> userManager, IJwtService jwt, IHttpContextAccessor httpContextAccessor)
+        public IdentityService(IUserRepository userRepository, IJwtService jwt, IHttpContextAccessor httpContextAccessor)
         {
-            _userManager = userManager;
+            _userRepository = userRepository;
             _jwt = jwt;
             _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest loginRequest)
         {
-            var user = await _userManager.FindByEmailAsync(loginRequest.Email);
-            if (user == null || !await _userManager.CheckPasswordAsync(user, loginRequest.Password))
+            var user = await _userRepository.FindByEmailAsync(loginRequest.Email);
+            if (user == null || !await _userRepository.CheckPasswordAsync(user, loginRequest.Password))
             {
                 var attributes = new Dictionary<string, object>
                 {
@@ -36,14 +38,14 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                 throw new AppException(ErrorCode.INVALID_CREDENTIALS, attributes);
             }
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userRepository.GetRolesAsync(user);
             var accessToken = _jwt.GenerateToken(user, roles);
             var refreshToken = _jwt.GenerateRefreshToken();
             var csrfToken = Guid.NewGuid().ToString();
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-            await _userManager.UpdateAsync(user);
+            await _userRepository.UpdateAsync(user);
 
             // Set JWT cookie
             var jwtCookieOptions = new CookieOptions
@@ -78,13 +80,13 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 CsrfToken = csrfToken,
-                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result)
+                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result)
             };
         }
 
         public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest dto)
         {
-            var user = await _userManager.Users
+            var user = await _userRepository.GetAllAsync()
                 .FirstOrDefaultAsync(u => u.RefreshToken == dto.RefreshToken);
 
             if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
@@ -96,14 +98,14 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                 throw new AppException(ErrorCode.INVALID_OR_EXPIRED_REFRESH_TOKEN, attributes);
             }
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userRepository.GetRolesAsync(user);
             var newAccessToken = _jwt.GenerateToken(user, roles);
             var newRefreshToken = _jwt.GenerateRefreshToken();
             var newCsrfToken = Guid.NewGuid().ToString();
 
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-            await _userManager.UpdateAsync(user);
+            await _userRepository.UpdateAsync(user);
 
             // Set new JWT cookie
             var jwtCookieOptions = new CookieOptions
@@ -138,7 +140,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 CsrfToken = newCsrfToken,
-                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result)
+                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result)
             };
         }
 
@@ -154,7 +156,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                 throw new AppException(ErrorCode.PASSWORDS_DO_NOT_MATCH, attributes);
             }
 
-            var existingUser = await _userManager.FindByEmailAsync(registerRequest.Email);
+            var existingUser = await _userRepository.FindByEmailAsync(registerRequest.Email);
             if (existingUser != null)
             {
                 var attributes = new Dictionary<string, object>
@@ -173,27 +175,28 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                 CreatedDate = DateTime.UtcNow
             };
 
-            var result = await _userManager.CreateAsync(user, registerRequest.Password);
-            if (!result.Succeeded)
+            var result = await _userRepository.CreateAsync(user, registerRequest.Password);
+            if (!result)
             {
-                var errors = result.Errors.Select(e => e.Description).ToList();
+                var errors = new List<string> { "User creation failed." };
                 var attributes = new Dictionary<string, object>
+
                 {
                     { "errors", errors }
                 };
                 throw new AppException(ErrorCode.IDENTITY_CREATION_FAILED, attributes);
             }
 
-            await _userManager.AddToRoleAsync(user, "User");
+            await _userRepository.AddToRoleAsync(user, "User");
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userRepository.GetRolesAsync(user);
             var accessToken = _jwt.GenerateToken(user, roles);
             var refreshToken = _jwt.GenerateRefreshToken();
             var csrfToken = Guid.NewGuid().ToString();
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-            await _userManager.UpdateAsync(user);
+            await _userRepository.UpdateAsync(user);
 
             var jwtCookieOptions = new CookieOptions
             {
@@ -225,13 +228,13 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             return new AuthResponse
             {
                 CsrfToken = csrfToken,
-                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result)
+                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result)
             };
         }
 
         public async Task<AuthResponse> GetCurrentUserAsync(Guid userId)
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var user = await _userRepository.GetAllAsync().FirstOrDefaultAsync(x => x.Id == userId);
 
             if (user == null)
             {
@@ -244,7 +247,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
 
             return new AuthResponse
             {
-                User = user.MapModelToResponse(_userManager.GetRolesAsync(user).Result),
+                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result),
                 CsrfToken = _httpContextAccessor.HttpContext.Request.Cookies["csrf"]
             };
         }

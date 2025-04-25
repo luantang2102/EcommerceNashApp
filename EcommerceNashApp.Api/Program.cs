@@ -1,12 +1,14 @@
 using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Api.Filters;
 using EcommerceNashApp.Api.SeedData;
-using EcommerceNashApp.Core.Interfaces;
-using EcommerceNashApp.Core.Interfaces.Auth;
+using EcommerceNashApp.Core.Interfaces.IRepositories;
+using EcommerceNashApp.Core.Interfaces.IServices;
+using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Settings;
 using EcommerceNashApp.Core.Validators;
 using EcommerceNashApp.Infrastructure.Data;
+using EcommerceNashApp.Infrastructure.Repositories;
 using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Infrastructure.Services.Auth;
 using FluentValidation;
@@ -73,14 +75,21 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Dependency injection for repositories
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IRatingRepository, RatingRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 // Dependency injection for services
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IMediaService, CloudinaryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<IUserService, UserService>();
+
 
 // Exception handling and authentication
 builder.Services.AddGlobalExceptionHandling();

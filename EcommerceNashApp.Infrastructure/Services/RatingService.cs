@@ -2,36 +2,28 @@
 using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers.Params;
-using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Core.Interfaces.IRepositories;
+using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
-using EcommerceNashApp.Core.Models.Auth;
-using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.Paginations;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
     public class RatingService : IRatingService
     {
-        private readonly AppDbContext _context;
-        private readonly UserManager<AppUser> _userManager;
+        private readonly IRatingRepository _ratingRepository;
 
-        public RatingService(AppDbContext context, UserManager<AppUser> userManager)
+        public RatingService(IRatingRepository ratingRepository)
         {
-            _context = context;
-            _userManager = userManager;
+            _ratingRepository = ratingRepository;
         }
 
         public async Task<PagedList<RatingResponse>> GetRatingsAsync(RatingParams ratingParams)
         {
-            var query = _context.Ratings
-                .Include(x => x.User)
-                .Include(x => x.Product)
-                .Filter(ratingParams.Value, ratingParams.HasComment)
-                .AsQueryable();
+            var query = _ratingRepository.GetAllAsync()
+                .Filter(ratingParams.Value, ratingParams.HasComment);
 
             var projectedQuery = query.Select(x => x.MapModelToReponse());
 
@@ -44,11 +36,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<RatingResponse> GetRatingByIdAsync(Guid ratingId)
         {
-            var rating = await _context.Ratings
-                .Include(x => x.User)
-                .Include(x => x.Product)
-                .FirstOrDefaultAsync(x => x.Id == ratingId);
-
+            var rating = await _ratingRepository.GetByIdAsync(ratingId);
             if (rating == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -63,12 +51,8 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<PagedList<RatingResponse>> GetRatingsByProductIdAsync(RatingParams ratingParams, Guid productId)
         {
-            var query = _context.Ratings
-                .Include(x => x.User)
-                .Include(x => x.Product)
-                .Where(x => x.ProductId == productId)
-                .Filter(ratingParams.Value, ratingParams.HasComment)
-                .AsQueryable();
+            var query = _ratingRepository.GetByProductIdAsync(productId)
+                .Filter(ratingParams.Value, ratingParams.HasComment);
 
             var projectedQuery = query.Select(x => x.MapModelToReponse());
 
@@ -81,7 +65,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<RatingResponse> CreateRatingAsync(Guid userId, RatingRequest ratingRequest)
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var user = await _ratingRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -91,9 +75,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.USER_NOT_FOUND, attributes);
             }
 
-            var existingRating = await _context.Ratings
-                .FirstOrDefaultAsync(x => x.ProductId == ratingRequest.ProductId && x.UserId == userId);
-
+            var existingRating = await _ratingRepository.GetByUserAndProductAsync(userId, ratingRequest.ProductId);
             if (existingRating != null)
             {
                 var attributes = new Dictionary<string, object>
@@ -112,19 +94,13 @@ namespace EcommerceNashApp.Infrastructure.Services
                 ProductId = ratingRequest.ProductId
             };
 
-            await _context.Ratings.AddAsync(rating);
-            await _context.SaveChangesAsync();
-
-            return rating.MapModelToReponse();
+            var createdRating = await _ratingRepository.CreateAsync(rating);
+            return createdRating.MapModelToReponse();
         }
 
         public async Task<RatingResponse> UpdateRatingAsync(Guid userId, Guid ratingId, RatingRequest ratingRequest)
         {
-            var rating = await _context.Ratings
-                .Include(x => x.User)
-                .Include(x => x.Product)
-                .FirstOrDefaultAsync(x => x.Id == ratingId);
-
+            var rating = await _ratingRepository.GetByIdAsync(ratingId);
             if (rating == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -147,19 +123,13 @@ namespace EcommerceNashApp.Infrastructure.Services
             rating.Value = ratingRequest.Value;
             rating.Comment = ratingRequest.Comment;
 
-            _context.Ratings.Update(rating);
-            await _context.SaveChangesAsync();
-
+            await _ratingRepository.UpdateAsync(rating);
             return rating.MapModelToReponse();
         }
 
         public async Task DeleteRatingAsync(Guid userId, Guid ratingId)
         {
-            var rating = await _context.Ratings
-                .Include(x => x.User)
-                .Include(x => x.Product)
-                .FirstOrDefaultAsync(x => x.Id == ratingId);
-
+            var rating = await _ratingRepository.GetByIdAsync(ratingId);
             if (rating == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -179,8 +149,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 throw new AppException(ErrorCode.ACCESS_DENIED, attributes);
             }
 
-            _context.Ratings.Remove(rating);
-            await _context.SaveChangesAsync();
+            await _ratingRepository.DeleteAsync(rating);
         }
     }
 }

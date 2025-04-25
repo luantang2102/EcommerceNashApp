@@ -1,38 +1,33 @@
 ﻿using EcommerceNashApp.Core.DTOs.Request;
 using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Exeptions;
-using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Core.Interfaces.IRepositories;
+using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
-using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extentions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
 using EcommerceNashApp.Shared.Paginations;
-using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context;
-        private readonly ICloudinaryService _cloudinaryService;
+        private readonly IProductRepository _productRepository;
+        private readonly IMediaService _mediaService;
 
-        public ProductService(AppDbContext context, ICloudinaryService cloudinaryService)
+        public ProductService(IProductRepository productRepository, IMediaService cloudinaryService)
         {
-            _context = context;
-            _cloudinaryService = cloudinaryService;
+            _productRepository = productRepository;
+            _mediaService = cloudinaryService;
         }
 
         public async Task<PagedList<ProductResponse>> GetProductsAsync(ProductParams productParams)
         {
-            var query = _context.Products
-                .Include(x => x.Categories)
-                .Include(x => x.Ratings)
-                .Include(x => x.ProductImages)
+            var query = _productRepository.GetAllAsync()
                 .Sort(productParams.OrderBy)
                 .Search(productParams.SearchTerm)
-                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice)
-                .AsQueryable();
+                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice);
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
@@ -45,12 +40,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<ProductResponse> GetProductByIdAsync(Guid productId)
         {
-            var product = await _context.Products
-                .Include(x => x.Categories)
-                .Include(x => x.Ratings)
-                .Include(x => x.ProductImages)
-                .FirstOrDefaultAsync(x => x.Id == productId);
-
+            var product = await _productRepository.GetByIdAsync(productId);
             if (product == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -65,15 +55,10 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<PagedList<ProductResponse>> GetProductsByCategoryIdAsync(Guid categoryId, ProductParams productParams)
         {
-            var query = _context.Products
-                .Include(x => x.Categories)
-                .Include(x => x.Ratings)
-                .Include(x => x.ProductImages)
-                .Where(x => x.Categories.Any(c => c.Id == categoryId))
+            var query = _productRepository.GetByCategoryIdAsync(categoryId)
                 .Sort(productParams.OrderBy)
                 .Search(productParams.SearchTerm)
-                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice)
-                .AsQueryable();
+                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice);
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
@@ -93,13 +78,12 @@ namespace EcommerceNashApp.Infrastructure.Services
                 Price = productRequest.Price,
                 InStock = productRequest.InStock,
                 StockQuantity = productRequest.StockQuantity,
+                ProductImages = new List<ProductImage>()
             };
 
             if (productRequest.CategoryIds.Count > 0)
             {
-                var categories = await _context.Categories
-                    .Where(c => productRequest.CategoryIds.Contains(c.Id))
-                    .ToListAsync();
+                var categories = await _productRepository.GetCategoriesByIdsAsync(productRequest.CategoryIds);
                 if (categories.Count != productRequest.CategoryIds.Count)
                 {
                     var attributes = new Dictionary<string, object>
@@ -115,7 +99,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             {
                 foreach (var image in productRequest.FormImages)
                 {
-                    var uploadResult = await _cloudinaryService.AddImageAsync(image);
+                    var uploadResult = await _mediaService.AddImageAsync(image);
                     var productImage = new ProductImage
                     {
                         PublicId = uploadResult.PublicId,
@@ -126,15 +110,13 @@ namespace EcommerceNashApp.Infrastructure.Services
                 }
             }
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            return product.MapModelToResponse();
+            var createdProduct = await _productRepository.CreateAsync(product);
+            return createdProduct.MapModelToResponse();
         }
 
         public async Task<ProductResponse> UpdateProductAsync(Guid productId, ProductRequest productRequest)
         {
-            var product = await _context.Products.Include(p => p.ProductImages).FirstOrDefaultAsync(p => p.Id == productId);
-
+            var product = await _productRepository.GetWithImagesAsync(productId);
             if (product == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -158,22 +140,16 @@ namespace EcommerceNashApp.Infrastructure.Services
             {
                 if (!requestImageIds.Contains(image.Id))
                 {
-                    await _cloudinaryService.DeleteImageAsync(image.PublicId);
-                    _context.ProductImages.Remove(image);
+                    await _mediaService.DeleteImageAsync(image.PublicId);
+                    product.ProductImages.Remove(image);
                 }
             }
 
             // Update Categories
             if (productRequest.CategoryIds.Count > 0)
             {
-                var requestCategoryIds = productRequest.CategoryIds.ToHashSet();
-
-                // Fetch all categories match the requested IDs
-                var categories = await _context.Categories
-                    .Where(c => requestCategoryIds.Contains(c.Id))
-                    .ToListAsync();
-
-                if (categories.Count != requestCategoryIds.Count)
+                var categories = await _productRepository.GetCategoriesByIdsAsync(productRequest.CategoryIds);
+                if (categories.Count != productRequest.CategoryIds.Count)
                 {
                     var attributes = new Dictionary<string, object>
                     {
@@ -182,11 +158,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                     throw new AppException(ErrorCode.CATEGORY_NOT_FOUND, attributes);
                 }
 
-                // Reload the product with its current categories
-                var productWithCategories = await _context.Products
-                    .Include(p => p.Categories)
-                    .FirstOrDefaultAsync(p => p.Id == productId);
-
+                var productWithCategories = await _productRepository.GetWithCategoriesAsync(productId);
                 if (productWithCategories == null)
                 {
                     var attributes = new Dictionary<string, object>
@@ -196,21 +168,16 @@ namespace EcommerceNashApp.Infrastructure.Services
                     throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
                 }
 
-                // Clear existing categories
                 productWithCategories.Categories.Clear();
-
                 foreach (var category in categories)
                 {
                     productWithCategories.Categories.Add(category);
                 }
+                product.Categories = productWithCategories.Categories;
             }
             else
             {
-                // If no categories are provided, remove all existing category associations
-                var productWithCategories = await _context.Products
-                    .Include(p => p.Categories)
-                    .FirstOrDefaultAsync(p => p.Id == productId);
-
+                var productWithCategories = await _productRepository.GetWithCategoriesAsync(productId);
                 if (productWithCategories == null)
                 {
                     var attributes = new Dictionary<string, object>
@@ -219,8 +186,8 @@ namespace EcommerceNashApp.Infrastructure.Services
                     };
                     throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
                 }
-
                 productWithCategories.Categories.Clear();
+                product.Categories = productWithCategories.Categories;
             }
 
             // Update IsMain for existing images
@@ -237,7 +204,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             {
                 foreach (var image in productRequest.FormImages)
                 {
-                    var uploadResult = await _cloudinaryService.AddImageAsync(image);
+                    var uploadResult = await _mediaService.AddImageAsync(image);
                     var productImage = new ProductImage
                     {
                         PublicId = uploadResult.PublicId,
@@ -249,16 +216,13 @@ namespace EcommerceNashApp.Infrastructure.Services
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _productRepository.UpdateAsync(product);
             return product.MapModelToResponse();
         }
 
         public async Task DeleteProductAsync(Guid productId)
         {
-            var product = await _context.Products
-                .Include(p => p.ProductImages)
-                .FirstOrDefaultAsync(p => p.Id == productId);
-
+            var product = await _productRepository.GetWithImagesAsync(productId);
             if (product == null)
             {
                 var attributes = new Dictionary<string, object>
@@ -270,13 +234,10 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             foreach (var image in product.ProductImages)
             {
-                await _cloudinaryService.DeleteImageAsync(image.PublicId);
+                await _mediaService.DeleteImageAsync(image.PublicId);
             }
 
-            _context.ProductImages.RemoveRange(product.ProductImages);
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            await _productRepository.DeleteAsync(product);
         }
-
     }
 }

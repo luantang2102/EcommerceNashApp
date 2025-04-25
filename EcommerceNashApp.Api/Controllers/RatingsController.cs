@@ -5,7 +5,7 @@ using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers.Params;
-using EcommerceNashApp.Core.Interfaces;
+using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
 using Microsoft.AspNetCore.Authorization;

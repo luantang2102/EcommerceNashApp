@@ -1,7 +1,7 @@
 ﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
 using EcommerceNashApp.Core.DTOs.Auth.Response;
 
-namespace EcommerceNashApp.Core.Interfaces.Auth
+namespace EcommerceNashApp.Core.Interfaces.IServices.Auth
 {
     public interface IIdentityService
     {
