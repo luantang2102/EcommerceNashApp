@@ -2,6 +2,9 @@ import { BaseQueryApi, FetchArgs, fetchBaseQuery } from "@reduxjs/toolkit/query"
 import { setLoading } from "../layout/uiSlice";
 import { toast } from "react-toastify";
 import { router } from "../routes/Routes";
+import { Mutex } from "async-mutex";
+
+const mutex = new Mutex();
 
 const customBaseQuery = fetchBaseQuery({
   baseUrl: "https://localhost:5001/api",
@@ -27,6 +30,9 @@ export const baseQueryWithErrorHandling = async (
   api: BaseQueryApi,
   extraOptions: object
 ) => {
+  // Wait for any ongoing refresh to complete
+  await mutex.waitForUnlock();
+
   api.dispatch(setLoading(true));
 
   // Handle FormData bodies for non-auth endpoints
@@ -48,7 +54,36 @@ export const baseQueryWithErrorHandling = async (
     }
   }
 
-  const result = await customBaseQuery(modifiedArgs, api, extraOptions);
+  let result = await customBaseQuery(modifiedArgs, api, extraOptions);
+
+  if (result.error && result.error.status === 401 && !api.endpoint.startsWith("auth/")) {
+    if (!mutex.isLocked()) {
+      const release = await mutex.acquire();
+      try {
+        // Attempt to refresh the token
+        const refreshResult = await customBaseQuery(
+          { url: "auth/refresh-token", method: "GET" },
+          api,
+          extraOptions
+        );
+
+        if (refreshResult.data) {
+          result = await customBaseQuery(modifiedArgs, api, extraOptions);
+        } else { 
+          toast.error("Session expired. Please log in again.");
+          router.navigate("/login");
+        }
+      } finally {
+        release();
+      }
+    } else {
+      // Another refresh is in progress, wait for it to complete
+      await mutex.waitForUnlock();
+      // Retry the original request
+      result = await customBaseQuery(modifiedArgs, api, extraOptions);
+    }
+  }
+
   api.dispatch(setLoading(false));
 
   if (result.error) {
