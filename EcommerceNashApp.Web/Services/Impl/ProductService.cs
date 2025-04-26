@@ -1,18 +1,19 @@
 ﻿using EcommerceNashApp.Shared.Paginations;
 using EcommerceNashApp.Web.Models.DTOs;
 using EcommerceNashApp.Web.Models.Views;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Text.Json;
+using System.Web;
 
 namespace EcommerceNashApp.Web.Services.Impl
 {
-    public class ProductService: IProductService
+    public class ProductService : IProductService
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<ProductService> _logger;
 
-        public ProductService(IHttpClientFactory httpClient, ILogger<ProductService> logger)
+        public ProductService(IHttpClientFactory httpClientFactory, ILogger<ProductService> logger)
         {
-            _httpClient = httpClient.CreateClient("NashApp.Api");
+            _httpClient = httpClientFactory.CreateClient("NashApp.Api");
             _logger = logger;
         }
 
@@ -26,7 +27,7 @@ namespace EcommerceNashApp.Web.Services.Impl
                 Price = productDto.Price,
                 StockQuantity = productDto.StockQuantity,
                 AverageRating = productDto.AverageRating,
-                ProductImages = productDto.ProductImages.Select(image => MapProductImageDtoToView(image)).ToList()
+                ProductImages = productDto.ProductImages?.Select(MapProductImageDtoToView).ToList() ?? new List<ProductImageView>()
             };
         }
 
@@ -43,30 +44,76 @@ namespace EcommerceNashApp.Web.Services.Impl
 
         public async Task<PagedList<ProductView>> GetProductsAsync(PaginationParams paginationParams, CancellationToken cancellationToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"api/Products?pageNumber={paginationParams.PageNumber}&pageSize={paginationParams.PageSize}");
+            var queryString = $"pageNumber={paginationParams.PageNumber}&pageSize={paginationParams.PageSize}";
+            return await FetchProductsAsync($"api/Products?{queryString}", paginationParams.PageNumber, paginationParams.PageSize, cancellationToken);
+        }
 
-            _logger.LogInformation("\nFetching products from {RequestUri}", request);
-
-            var response = await _httpClient.SendAsync(request, cancellationToken);
-
-            response.EnsureSuccessStatusCode();
-
-            // Fixing the generic type usage and syntax issues
-            var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<List<ProductDto>>>(cancellationToken);
-
-            if (apiResponse?.Body != null)
+        public async Task<PagedList<ProductView>> GetFilteredProductsAsync(
+            string? categories = null,
+            string? minPrice = null,
+            string? maxPrice = null,
+            string? orderBy = null,
+            string? searchTerm = null,
+            string? ratings = null,
+            int pageNumber = 1,
+            int pageSize = 12,
+            CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
             {
-                var productViews = apiResponse.Body.Select(product => MapProductDtoToView(product)).ToList();
+                { "PageNumber", pageNumber.ToString() },
+                { "PageSize", pageSize.ToString() }
+            };
+            if (!string.IsNullOrEmpty(categories)) queryParams.Add("Categories", categories);
+            if (!string.IsNullOrEmpty(minPrice)) queryParams.Add("MinPrice", minPrice);
+            if (!string.IsNullOrEmpty(maxPrice)) queryParams.Add("MaxPrice", maxPrice);
+            if (!string.IsNullOrEmpty(orderBy)) queryParams.Add("OrderBy", orderBy);
+            if (!string.IsNullOrEmpty(searchTerm)) queryParams.Add("SearchTerm", searchTerm);
+            if (!string.IsNullOrEmpty(ratings)) queryParams.Add("Ratings", ratings);
 
-                return new PagedList<ProductView>(
-                    productViews,
-                    productViews.Count,
-                    paginationParams.PageNumber,
-                    paginationParams.PageSize
-                );
+            var queryString = string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={HttpUtility.UrlEncode(kvp.Value)}"));
+            return await FetchProductsAsync($"api/Products?{queryString}", pageNumber, pageSize, cancellationToken);
+        }
+
+        private async Task<PagedList<ProductView>> FetchProductsAsync(string requestUri, int pageNumber, int pageSize, CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Fetching products from {RequestUri}", requestUri);
+            try
+            {
+                var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<List<ProductDto>>>(cancellationToken);
+                var paginationHeader = response.Headers.GetValues("Pagination").FirstOrDefault();
+
+                if (apiResponse?.Body != null && paginationHeader != null)
+                {
+                    try
+                    {
+                        var pagination = JsonSerializer.Deserialize<PaginationHeader>(paginationHeader);
+                        if (pagination != null)
+                        {
+                            var productViews = apiResponse.Body.Select(MapProductDtoToView).ToList();
+                            return new PagedList<ProductView>(
+                                productViews,
+                                pagination.TotalCount,
+                                pagination.CurrentPage,
+                                pagination.PageSize
+                            );
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        _logger.LogError(ex, "Failed to deserialize pagination header: {Header}", paginationHeader);
+                    }
+                }
             }
-
-            return new PagedList<ProductView>(new List<ProductView>(), 0, paginationParams.PageNumber, paginationParams.PageSize);
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "API request failed for {RequestUri}", requestUri);
+            }
+            _logger.LogWarning("Returning empty product list for {RequestUri}", requestUri);
+            return new PagedList<ProductView>(new List<ProductView>(), 0, pageNumber, pageSize);
         }
     }
 }

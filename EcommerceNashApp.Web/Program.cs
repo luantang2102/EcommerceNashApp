@@ -11,8 +11,6 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-var test = builder.Configuration["NashApp:Api:Address"];
-// Configure HttpClient for NashApp.Api
 var apiAddress = builder.Configuration["NashApp:Api:Address"];
 if (string.IsNullOrEmpty(apiAddress))
 {
@@ -28,7 +26,11 @@ builder.Services.AddHttpClient("NashApp.Api", client =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();

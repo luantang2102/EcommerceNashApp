@@ -1,0 +1,258 @@
+﻿@using EcommerceNashApp.Web.Models.Views
+@model ProductsPageView
+@{
+    ViewData["Title"] = "Sản Phẩm";
+}
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Trang Chủ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Sản Phẩm</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<section class="products-section py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar Filters -->
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <div class="filter-sidebar bg-white p-4 rounded shadow-sm">
+                    <h4 class="mb-4 fw-bold">Bộ Lọc</h4>
+                    
+                    <!-- Category Filter -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">Danh Mục</h5>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="categories" value="@category.Id" id="category-@category.Id"
+                                       @(Model.SelectedCategoryIds.Contains(category.Id) ? "checked" : "")>
+                                <label class="form-check-label" for="category-@category.Id">@category.Name</label>
+                            </div>
+                            @if (category.SubCategories?.Any() == true)
+                            {
+                                <div class="ms-3">
+                                    @foreach (var subCategory in category.SubCategories)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" name="categories" value="@subCategory.Id" id="category-@subCategory.Id"
+                                                   @(Model.SelectedCategoryIds.Contains(subCategory.Id) ? "checked" : "")>
+                                            <label class="form-check-label" for="category-@subCategory.Id">@subCategory.Name</label>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                    
+                    <!-- Price Range Slider -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">Giá</h5>
+                        <div class="price-range">
+                            <div class=" Edgex justify-content-between mb-2">
+                                <span id="price-min">$0</span>
+                                <span id="price-max">$5,000,000</span>
+                            </div>
+                            <input type="range" class="form-range mb-2" id="price-range-min" min="0" max="5000000" value="@(Model.SelectedMinPrice ?? "0")">
+                            <input type="range" class="form-range" id="price-range-max" min="0" max="5000000" value="@(Model.SelectedMaxPrice ?? "5000000")">
+                            <div class="d-flex justify-content-between mt-2">
+                                <span>Từ: $<span id="current-min-price">@(double.TryParse(Model.SelectedMinPrice, out var min) ? min.ToString("N0") : "0")</span></span>
+                                <span>Đến: $<span id="current-max-price">@(double.TryParse(Model.SelectedMaxPrice, out var max) ? max.ToString("N0") : "5,000,000")</span></span>
+                            </div>
+                            <input type="hidden" id="minPrice" name="minPrice" value="@Model.SelectedMinPrice">
+                            <input type="hidden" id="maxPrice" name="maxPrice" value="@Model.SelectedMaxPrice">
+                        </div>
+                    </div>
+                    
+                    <!-- Apply Filters Button -->
+                    <button id="apply-filters" class="btn btn-primary w-100 text-uppercase">Áp Dụng</button>
+                </div>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="col-lg-9">
+                <!-- Search Bar -->
+                <div class="mb-4">
+                    <form class="d-flex" method="get" action="@Url.Action("Index", "Product")">
+                        <input type="text" class="form-control me-2" name="searchTerm" placeholder="Tìm kiếm sản phẩm..." value="@Model.SearchTerm">
+                        <button type="submit" class="btn btn-primary">Tìm</button>
+                    </form>
+                </div>
+                
+                <div class="product-header d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="m-0">Sản Phẩm</h2>
+                    <div class="d-flex align-items-center">
+                        <label for="sort-by" class="me-2">Sắp xếp theo:</label>
+                        <select id="sort-by" class="form-select">
+                            <option value="newest" selected="@(Model.SortBy == "newest")">Mới nhất</option>
+                            <option value="price-asc" selected="@(Model.SortBy == "price-asc")">Giá thấp đến cao</option>
+                            <option value="price-desc" selected="@(Model.SortBy == "price-desc")">Giá cao đến thấp</option>
+                            <option value="popular" selected="@(Model.SortBy == "popular")">Phổ biến</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                    @foreach (var product in Model.Products)
+                    {
+                        <div class="col">
+                            <div class="product-card border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;">
+                                <div class="card-img overflow-hidden" style="height: 30vh;">
+                                    <img src="@(product.ProductImages.Any() ? product.ProductImages.First().ImageUrl : "~/images/placeholder.jpg")"
+                                         alt="@product.Name" class="img-fluid w-100 h-100 object-fit-cover">
+                                </div>
+                                <div class="card-detail d-flex flex-column p-3">
+                                    <div style="height: 8vh; overflow: auto; margin-bottom: 10px;">
+                                        <h3 class="fs-5 fw-bold m-0">
+                                            <a href="@Url.Action("Details", "Product", new { id = product.Id })">@product.Name</a>
+                                        </h3>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="fw-bold">$@product.Price.ToString("N2")</span>
+                                        <span class="fs-7">Tồn kho: @product.StockQuantity</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        @{
+                                            var rating = Math.Round(product.AverageRating * 2) / 2;
+                                            var fullStars = (int)Math.Floor(rating);
+                                            var halfStar = (rating % 1) >= 0.5 ? 1 : 0;
+                                            var emptyStars = 5 - fullStars - halfStar;
+                                            for (var i = 0; i < fullStars; i++)
+                                            {
+                                                <span style="color: gold;">★</span>
+                                            }
+                                            if (halfStar == 1)
+                                            {
+                                                <span style="color: gold;">★</span>
+                                            }
+                                            for (var i = 0; i < emptyStars; i++)
+                                            {
+                                                <span style="color: gray;">☆</span>
+                                            }
+                                        }
+                                    </div>
+                                    <div class="d-flex gap-2 justify-content-center mt-3" onclick="event.stopPropagation()">
+                                        <button class="btn btn-light p-2" onclick="addToCart('@product.Id')"
+                                                style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                            <svg class="shopping-carriage"><use xlink:href="#shopping-carriage"></use></svg>
+                                        </button>
+                                        <button class="btn btn-light p-2" data-bs-toggle="modal" data-bs-target="#quickViewModal"
+                                                style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                            <svg class="quick-view"><use xlink:href="#quick-view"></use></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="Page navigation" class="mt-5">
+                        <ul class="pagination justify-content-center">
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", "Product", new { page = Model.CurrentPage - 1, categories = string.Join(",", Model.SelectedCategoryIds), minPrice = Model.SelectedMinPrice, maxPrice = Model.SelectedMaxPrice, sortBy = Model.SortBy, searchTerm = Model.SearchTerm })" aria-label="Previous">«</a>
+                                </li>
+                            }
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", "Product", new { page = i, categories = string.Join(",", Model.SelectedCategoryIds), minPrice = Model.SelectedMinPrice, maxPrice = Model.SelectedMaxPrice, sortBy = Model.SortBy, searchTerm = Model.SearchTerm })">@i</a>
+                                </li>
+                            }
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", "Product", new { page = Model.CurrentPage + 1, categories = string.Join(",", Model.SelectedCategoryIds), minPrice = Model.SelectedMinPrice, maxPrice = Model.SelectedMaxPrice, sortBy = Model.SortBy, searchTerm = Model.SearchTerm })" aria-label="Next">»</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickViewModalLabel">Quick View</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Product details will be loaded here.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const minPriceSlider = document.getElementById('price-range-min');
+        const maxPriceSlider = document.getElementById('price-range-max');
+        const minPriceDisplay = document.getElementById('current-min-price');
+        const maxPriceDisplay = document.getElementById('current-max-price');
+        const minPriceInput = document.getElementById('minPrice');
+        const maxPriceInput = document.getElementById('maxPrice');
+
+        minPriceSlider.addEventListener('input', () => {
+            minPriceDisplay.textContent = parseInt(minPriceSlider.value).toLocaleString();
+            minPriceInput.value = minPriceSlider.value;
+            if (parseInt(minPriceSlider.value) > parseInt(maxPriceSlider.value)) {
+                maxPriceSlider.value = minPriceSlider.value;
+                maxPriceDisplay.textContent = parseInt(minPriceSlider.value).toLocaleString();
+                maxPriceInput.value = minPriceSlider.value;
+            }
+        });
+
+        maxPriceSlider.addEventListener('input', () => {
+            maxPriceDisplay.textContent = parseInt(maxPriceSlider.value).toLocaleString();
+            maxPriceInput.value = maxPriceSlider.value;
+            if (parseInt(maxPriceSlider.value) < parseInt(minPriceSlider.value)) {
+                minPriceSlider.value = maxPriceSlider.value;
+                minPriceDisplay.textContent = parseInt(maxPriceSlider.value).toLocaleString();
+                minPriceInput.value = maxPriceSlider.value;
+            }
+        });
+
+        document.getElementById('apply-filters').addEventListener('click', () => {
+            const categories = Array.from(document.querySelectorAll('input[name="categories"]:checked'))
+                .map(checkbox => checkbox.value)
+                .join(',');
+            const sortBy = document.getElementById('sort-by').value;
+            const searchTerm = '@Model.SearchTerm';
+            const url = '@Url.Action("Index", "Product")' + `?categories=${encodeURIComponent(categories)}&minPrice=${minPriceInput.value}&maxPrice=${maxPriceInput.value}&sortBy=${sortBy}&searchTerm=${encodeURIComponent(searchTerm)}`;
+            window.location.href = url;
+        });
+
+        function addToCart(productId) {
+            fetch('/api/Cart/Add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: productId, quantity: 1 })
+            })
+            .then(response => response.ok ? alert('Product added to cart!') : alert('Failed to add product to cart.'))
+            .catch(error => {
+                console.error('Error adding to cart:', error);
+                alert('An error occurred while adding to cart.');
+            });
+        }
+    </script>
+}
+<script src="js/jquery-1.11.0.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/script.js"></script>
