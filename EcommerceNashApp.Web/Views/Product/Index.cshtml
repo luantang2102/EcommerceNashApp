@@ -115,7 +115,7 @@
                         @foreach (var product in Model.Products)
                         {
                             <div class="col">
-                                <div class="product-card border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;">
+                                <div class="product-card border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;" data-product-id="@product.Id">
                                     <div class="card-img overflow-hidden" style="height: 30vh;">
                                         <img src="@(product.ProductImages.Any() ? product.ProductImages.First().ImageUrl : "~/images/placeholder.jpg")"
                                              alt="@product.Name" class="img-fluid w-100 h-100 object-fit-cover">
@@ -123,7 +123,7 @@
                                     <div class="card-detail d-flex flex-column p-3">
                                         <div style="height: 8vh; overflow: auto; margin-bottom: 10px;">
                                             <h3 class="fs-5 fw-bold m-0">
-                                                <a href="@Url.Action("Details", "Product", new { id = product.Id })">@product.Name</a>
+                                                <a href="@Url.Action("Index", "ProductDetails", new { id = product.Id })">@product.Name</a>
                                             </h3>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-2">
@@ -270,6 +270,21 @@
 
         document.getElementById('sort-by').addEventListener('change', () => {
             document.getElementById('sortByHidden').value = document.getElementById('sort-by').value;
+        });
+
+        // Product card navigation
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', (event) => {
+                // Skip navigation if clicking a button
+                if (event.target.closest('.btn')) {
+                    return;
+                }
+                const productId = card.dataset.productId;
+                if (productId) {
+                    const url = '@Url.Action("Index", "ProductDetails")' + `?id=${productId}`;
+                    window.location.href = url;
+                }
+            });
         });
     </script>
 }

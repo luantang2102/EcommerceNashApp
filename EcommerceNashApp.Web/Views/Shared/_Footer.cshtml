@@ -1,151 +1,88 @@
-﻿<footer id="footer" class="py-5 border-top" style="background-color: #c5b4fd">
+﻿<footer id="footer" class="py-5 border-top" style="background-color: #c5b4fd;">
     <div class="container-lg">
         <div class="row">
-            <div class="col-lg-2 pb-3">
+            <!-- Company Info -->
+            <div class="col-lg-3 col-md-6 pb-4">
                 <div class="footer-menu">
-                    <h5 class="widget-title pb-2">Info</h5>
+                    <h5 class="widget-title pb-3 fw-bold">Về Chúng Tôi</h5>
                     <ul class="menu-list list-unstyled">
                         <li class="pb-2">
-                            <a href="#">Track Your Order</a>
+                            <a href="@Url.Action("About", "Home")">Giới Thiệu</a>
                         </li>
                         <li class="pb-2">
-                            <a href="index.html">Our Blog</a>
+                            <a href="@Url.Action("Contact", "Home")">Liên Hệ</a>
                         </li>
                         <li class="pb-2">
-                            <a href="#">Privacy policy</a>
+                            <a href="@Url.Action("PrivacyPolicy", "Home")">Chính Sách Bảo Mật</a>
                         </li>
                         <li class="pb-2">
-                            <a href="#">Shipping</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Contact Us</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Help</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Community</a>
+                            <a href="@Url.Action("Terms", "Home")">Điều Khoản Sử Dụng</a>
                         </li>
                     </ul>
                 </div>
             </div>
-            <div class="col-lg-2 pb-3">
+
+            <!-- Customer Support -->
+            <div class="col-lg-3 col-md-6 pb-4">
                 <div class="footer-menu">
-                    <h5 class="widget-title pb-2">About</h5>
+                    <h5 class="widget-title pb-3 fw-bold">Hỗ Trợ Khách Hàng</h5>
                     <ul class="menu-list list-unstyled">
                         <li class="pb-2">
-                            <a href="#">History</a>
+                            <a href="@Url.Action("TrackOrder", "Order")">Theo Dõi Đơn Hàng</a>
                         </li>
                         <li class="pb-2">
-                            <a href="#">Our Team</a>
+                            <a href="@Url.Action("Faq", "Help")">Câu Hỏi Thường Gặp</a>
                         </li>
                         <li class="pb-2">
-                            <a href="#">Services</a>
+                            <a href="@Url.Action("Shipping", "Help")">Thông Tin Vận Chuyển</a>
                         </li>
                         <li class="pb-2">
-                            <a href="#">Company</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Manufacture</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Wholesale</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Retail</a>
+                            <a href="@Url.Action("Returns", "Help")">Chính Sách Đổi Trả</a>
                         </li>
                     </ul>
                 </div>
             </div>
-            <div class="col-lg-2 pb-3">
+
+            <!-- Account & Shop -->
+            <div class="col-lg-3 col-md-6 pb-4">
                 <div class="footer-menu">
-                    <h5 class="widget-title pb-2">Women Shoes</h5>
+                    <h5 class="widget-title pb-3 fw-bold">Tài Khoản & Mua Sắm</h5>
                     <ul class="menu-list list-unstyled">
                         <li class="pb-2">
-                            <a href="#">Track Your Order</a>
+                            <a href="@Url.Action("Index", "Product")">Cửa Hàng</a>
                         </li>
                         <li class="pb-2">
-                            <a href="index.html">Our Blog</a>
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modallogin">Đăng Nhập</a>
                         </li>
                         <li class="pb-2">
-                            <a href="#">Privacy policy</a>
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modallong">Giỏ Hàng</a>
                         </li>
                         <li class="pb-2">
-                            <a href="#">Shipping</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Contact Us</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Help</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Community</a>
+                            <a href="@Url.Action("BestSellers", "Product")">Sản Phẩm Bán Chạy</a>
                         </li>
                     </ul>
                 </div>
             </div>
-            <div class="col-lg-2 pb-3">
+
+            <!-- Contact Info -->
+            <div class="col-lg-3 col-md-6 pb-4">
                 <div class="footer-menu">
-                    <h5 class="widget-title pb-2">Popular</h5>
-                    <ul class="menu-list list-unstyled">
-                        <li class="pb-2">
-                            <a href="#">Prices Drop</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">New Products</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Best Sales</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="index.html">Stores</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#modallogin">Login</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#modallong">Cart</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-lg-2 pb-3">
-                <div class="footer-menu">
-                    <h5 class="widget-title pb-2">Mens Collection</h5>
-                    <ul class="menu-list list-unstyled">
-                        <li class="pb-2">
-                            <a href="#">Delivery</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="index.html">About Us</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Shoes</a>
-                        </li>
-                        <li class="pb-2">
-                            <a href="#">Contact Us</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-lg-2 pb-3">
-                <div class="footer-menu">
-                    <h5 class="widget-title pb-3">Get In Touch</h5>
+                    <h5 class="widget-title pb-3 fw-bold">Liên Hệ</h5>
                     <div class="footer-contact-text">
-                        <span>Stylish Online Store 123 Main Street, Toulouse - France. </span>
-                        <span> Call us: (+33) 800 456 789-987 </span>
-                        <span class="text-hover fw-bold light-border"><a href="mailto:contact@yourwebsite.com">contact@yourwebsite.com</a></span>
+                        <span>123 Đường Chính, Quận 1, TP. Hồ Chí Minh, Việt Nam</span><br>
+                        <span>Gọi chúng tôi: (+84) 123 456 789</span><br>
+                        <span class="text-hover fw-bold light-border">
+                            <a href="mailto:contact@ecommercenashapp.com">contact@ecommercenashapp.com</a>
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row">
+
+        <!-- Copyright & Credits -->
+        <div class="row border-top pt-4">
             <div class="col-md-6">
-                <p>© Copyright Stylish 2023.</p>
-            </div>
-            <div class="col-md-6 text-lg-end">
-                <p>Free HTML by <a href="https://templatesjungle.com/" target="_blank">TemplatesJungle</a><br> Distributed by <a href="https://themewagon.com" target="blank">ThemeWagon</a> </p>
+                <p>&copy; @DateTime.Now.Year Ecommerce NashApp. Mọi quyền được bảo lưu.</p>
             </div>
         </div>
     </div>
