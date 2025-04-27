@@ -23,6 +23,17 @@ builder.Services.AddHttpClient("NashApp.Api", client =>
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .WithExposedHeaders("pagination"); // Lowercase
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

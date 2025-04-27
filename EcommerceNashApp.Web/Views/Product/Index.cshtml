@@ -53,7 +53,7 @@
                     <div class="mb-4">
                         <h5 class="fw-bold mb-3">Giá</h5>
                         <div class="price-range">
-                            <div class=" Edgex justify-content-between mb-2">
+                            <div class="d-flex justify-content-between mb-2">
                                 <span id="price-min">$0</span>
                                 <span id="price-max">$5,000,000</span>
                             </div>
@@ -77,8 +77,12 @@
             <div class="col-lg-9">
                 <!-- Search Bar -->
                 <div class="mb-4">
-                    <form class="d-flex" method="get" action="@Url.Action("Index", "Product")">
+                    <form class="d-flex" method="get" action="@Url.Action("Index", "Product")" id="search-form">
                         <input type="text" class="form-control me-2" name="searchTerm" placeholder="Tìm kiếm sản phẩm..." value="@Model.SearchTerm">
+                        <input type="hidden" name="sortBy" id="sortByHidden" value="@Model.SortBy">
+                        <input type="hidden" name="categories" id="categoriesHidden" value="@string.Join(",", Model.SelectedCategoryIds)">
+                        <input type="hidden" name="minPrice" id="minPriceHidden" value="@Model.SelectedMinPrice">
+                        <input type="hidden" name="maxPrice" id="maxPriceHidden" value="@Model.SelectedMaxPrice">
                         <button type="submit" class="btn btn-primary">Tìm</button>
                     </form>
                 </div>
@@ -96,63 +100,75 @@
                     </div>
                 </div>
                 
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-                    @foreach (var product in Model.Products)
-                    {
-                        <div class="col">
-                            <div class="product-card border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;">
-                                <div class="card-img overflow-hidden" style="height: 30vh;">
-                                    <img src="@(product.ProductImages.Any() ? product.ProductImages.First().ImageUrl : "~/images/placeholder.jpg")"
-                                         alt="@product.Name" class="img-fluid w-100 h-100 object-fit-cover">
-                                </div>
-                                <div class="card-detail d-flex flex-column p-3">
-                                    <div style="height: 8vh; overflow: auto; margin-bottom: 10px;">
-                                        <h3 class="fs-5 fw-bold m-0">
-                                            <a href="@Url.Action("Details", "Product", new { id = product.Id })">@product.Name</a>
-                                        </h3>
+                @if (!Model.Products.Any())
+                {
+                    <div class="bg-white p-5 rounded shadow-sm d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+                        <div class="text-center">
+                            <h4 class="mb-3">Không tìm thấy sản phẩm nào</h4>
+                            <p>Vui lòng thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh bộ lọc.</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                        @foreach (var product in Model.Products)
+                        {
+                            <div class="col">
+                                <div class="product-card border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;">
+                                    <div class="card-img overflow-hidden" style="height: 30vh;">
+                                        <img src="@(product.ProductImages.Any() ? product.ProductImages.First().ImageUrl : "~/images/placeholder.jpg")"
+                                             alt="@product.Name" class="img-fluid w-100 h-100 object-fit-cover">
                                     </div>
-                                    <div class="d-flex justify-content-between align-items-center mt-2">
-                                        <span class="fw-bold">$@product.Price.ToString("N2")</span>
-                                        <span class="fs-7">Tồn kho: @product.StockQuantity</span>
-                                    </div>
-                                    <div class="mt-2">
-                                        @{
-                                            var rating = Math.Round(product.AverageRating * 2) / 2;
-                                            var fullStars = (int)Math.Floor(rating);
-                                            var halfStar = (rating % 1) >= 0.5 ? 1 : 0;
-                                            var emptyStars = 5 - fullStars - halfStar;
-                                            for (var i = 0; i < fullStars; i++)
-                                            {
-                                                <span style="color: gold;">★</span>
+                                    <div class="card-detail d-flex flex-column p-3">
+                                        <div style="height: 8vh; overflow: auto; margin-bottom: 10px;">
+                                            <h3 class="fs-5 fw-bold m-0">
+                                                <a href="@Url.Action("Details", "Product", new { id = product.Id })">@product.Name</a>
+                                            </h3>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="fw-bold">$@product.Price.ToString("N2")</span>
+                                            <span class="fs-7">Tồn kho: @product.StockQuantity</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            @{
+                                                var rating = Math.Round(product.AverageRating * 2) / 2;
+                                                var fullStars = (int)Math.Floor(rating);
+                                                var halfStar = (rating % 1) >= 0.5 ? 1 : 0;
+                                                var emptyStars = 5 - fullStars - halfStar;
+                                                for (var i = 0; i < fullStars; i++)
+                                                {
+                                                    <span style="color: gold;">★</span>
+                                                }
+                                                if (halfStar == 1)
+                                                {
+                                                    <span style="color: gold;">★</span>
+                                                }
+                                                for (var i = 0; i < emptyStars; i++)
+                                                {
+                                                    <span style="color: gray;">☆</span>
+                                                }
                                             }
-                                            if (halfStar == 1)
-                                            {
-                                                <span style="color: gold;">★</span>
-                                            }
-                                            for (var i = 0; i < emptyStars; i++)
-                                            {
-                                                <span style="color: gray;">☆</span>
-                                            }
-                                        }
-                                    </div>
-                                    <div class="d-flex gap-2 justify-content-center mt-3" onclick="event.stopPropagation()">
-                                        <button class="btn btn-light p-2" onclick="addToCart('@product.Id')"
-                                                style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                            <svg class="shopping-carriage"><use xlink:href="#shopping-carriage"></use></svg>
-                                        </button>
-                                        <button class="btn btn-light p-2" data-bs-toggle="modal" data-bs-target="#quickViewModal"
-                                                style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                            <svg class="quick-view"><use xlink:href="#quick-view"></use></svg>
-                                        </button>
+                                        </div>
+                                        <div class="d-flex gap-2 justify-content-center mt-3" onclick="event.stopPropagation()">
+                                            <button class="btn btn-light p-2" onclick="addToCart('@product.Id')"
+                                                    style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                <svg class="shopping-carriage"><use xlink:href="#shopping-carriage"></use></svg>
+                                            </button>
+                                            <button class="btn btn-light p-2" data-bs-toggle="modal" data-bs-target="#quickViewModal"
+                                                    style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                <svg class="quick-view"><use xlink:href="#quick-view"></use></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
                 
                 <!-- Pagination -->
-                @if (Model.TotalPages > 1)
+                @if (Model.TotalPages >= 1)
                 {
                     <nav aria-label="Page navigation" class="mt-5">
                         <ul class="pagination justify-content-center">
@@ -251,6 +267,10 @@
                 alert('An error occurred while adding to cart.');
             });
         }
+
+        document.getElementById('sort-by').addEventListener('change', () => {
+            document.getElementById('sortByHidden').value = document.getElementById('sort-by').value;
+        });
     </script>
 }
 <script src="js/jquery-1.11.0.min.js"></script>

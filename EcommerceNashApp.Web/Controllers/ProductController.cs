@@ -2,11 +2,6 @@
 using EcommerceNashApp.Web.Models;
 using EcommerceNashApp.Web.Models.Views;
 using EcommerceNashApp.Web.Services;
-using System;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Threading;
-using System.Linq;
 using System.Diagnostics;
 using EcommerceNashApp.Shared.Paginations;
 
@@ -36,7 +31,7 @@ namespace EcommerceNashApp.Web.Controllers
             string? sortBy = "newest",
             string? searchTerm = null,
             int page = 1,
-            int pageSize = 12,
+            int pageSize = 5,
             CancellationToken cancellationToken = default)
         {
             try
@@ -85,10 +80,10 @@ namespace EcommerceNashApp.Web.Controllers
                     null,
                     page,
                     pageSize,
-                    cancellationToken) ?? new PagedList<ProductView>(new List<ProductView>(), 0, page, pageSize);
+                    cancellationToken) ?? new PagedList<ProductView>([], 0, page, pageSize);
 
                 var selectedCategoryIds = string.IsNullOrEmpty(categories)
-                    ? new List<Guid>()
+                    ? []
                     : categories.Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Select(id => Guid.TryParse(id, out var guid) ? guid : Guid.Empty)
                         .Where(guid => guid != Guid.Empty)

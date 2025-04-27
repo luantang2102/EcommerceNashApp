@@ -84,22 +84,26 @@ namespace EcommerceNashApp.Web.Services.Impl
                 response.EnsureSuccessStatusCode();
 
                 var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<List<ProductDto>>>(cancellationToken);
-                var paginationHeader = response.Headers.GetValues("Pagination").FirstOrDefault();
+                var paginationHeader = response.Headers.GetValues("pagination").FirstOrDefault();
 
                 if (apiResponse?.Body != null && paginationHeader != null)
                 {
                     try
                     {
-                        var pagination = JsonSerializer.Deserialize<PaginationHeader>(paginationHeader);
+                        var pagination = JsonSerializer.Deserialize<PaginationHeader>(
+                            paginationHeader,
+                            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }
+                        );
                         if (pagination != null)
                         {
                             var productViews = apiResponse.Body.Select(MapProductDtoToView).ToList();
-                            return new PagedList<ProductView>(
+                            var result = new PagedList<ProductView>(
                                 productViews,
                                 pagination.TotalCount,
                                 pagination.CurrentPage,
                                 pagination.PageSize
                             );
+                            return result;
                         }
                     }
                     catch (JsonException ex)
@@ -113,7 +117,7 @@ namespace EcommerceNashApp.Web.Services.Impl
                 _logger.LogError(ex, "API request failed for {RequestUri}", requestUri);
             }
             _logger.LogWarning("Returning empty product list for {RequestUri}", requestUri);
-            return new PagedList<ProductView>(new List<ProductView>(), 0, pageNumber, pageSize);
+            return new PagedList<ProductView>([], 0, pageNumber, pageSize);
         }
     }
 }
