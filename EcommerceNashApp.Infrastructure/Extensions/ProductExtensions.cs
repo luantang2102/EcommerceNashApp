@@ -11,6 +11,8 @@ namespace EcommerceNashApp.Infrastructure.Extentions
             query = orderBy switch
             {
                 "dateCreatedDesc" => query.OrderByDescending(x => x.CreatedDate),
+                "priceAsc" => query.OrderBy(x => x.Price),
+                "priceDesc" => query.OrderByDescending(x => x.Price),
                 _ => query.OrderBy(x => x.CreatedDate),
             };
 
@@ -32,7 +34,8 @@ namespace EcommerceNashApp.Infrastructure.Extentions
             if (!string.IsNullOrEmpty(categories))
             {
                 categoryList.AddRange(categories.ToLower().Split(",").ToList());
-                query = query.Where(x => x.Categories.Any(c => categoryList.Contains(c.Name.ToLower())));
+                
+                query = query.Where(x => x.Categories.Any(c => categoryList.Contains(c.Id.ToString().ToLower())));
             }
 
             if (!string.IsNullOrEmpty(ratings))
