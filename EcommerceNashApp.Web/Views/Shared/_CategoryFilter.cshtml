@@ -1,0 +1,52 @@
+﻿@model EcommerceNashApp.Web.Models.Views.CategoryView
+@{
+    var selectedCategoryIds = ViewData["SelectedCategoryIds"] as IEnumerable<Guid> ?? new List<Guid>();
+    int indentLevel = ViewData["IndentLevel"] as int? ?? 0;
+
+    // Check if any subcategory (at any level) is selected
+    bool HasSelectedSubCategory()
+    {
+        if (Model.SubCategories == null || !Model.SubCategories.Any())
+        {
+            return false;
+        }
+        return Model.SubCategories.Any(sub =>
+            selectedCategoryIds.Contains(sub.Id) ||
+            (sub.SubCategories != null && sub.SubCategories.Any(sc => selectedCategoryIds.Contains(sc.Id) ||
+                (sc.SubCategories != null && sc.SubCategories.Any(deeper => selectedCategoryIds.Contains(deeper.Id))))));
+    }
+
+    // Determine if the current category should be expanded
+    bool isExpanded = selectedCategoryIds.Contains(Model.Id) || HasSelectedSubCategory();
+}
+
+<div class="category-filter-item" style="margin-left: @(indentLevel * 20)px;">
+    <div class="form-check mb-2 d-flex align-items-center">
+        <!-- Checkbox for category -->
+        <input class="form-check-input me-2" type="checkbox" name="categories" value="@Model.Id" id="category-@Model.Id"
+        @(selectedCategoryIds.Contains(Model.Id) ? "checked" : "")>
+        <label class="form-check-label" for="category-@Model.Id">@Model.Name</label>
+
+        <!-- Expand/Collapse Toggle (only if subcategories exist) -->
+        @if (Model.SubCategories?.Any() == true)
+        {
+            <button class="btn btn-link p-0 ms-2 toggle-icon" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#subcategories-@Model.Id"
+                    aria-expanded="@(isExpanded ? "true" : "false")"
+                    aria-controls="subcategories-@Model.Id">
+                <i class="bi @(isExpanded ? "bi-dash" : "bi-plus") toggle-icon"></i>
+            </button>
+        }
+    </div>
+
+    <!-- Subcategories (collapsible) -->
+    @if (Model.SubCategories?.Any() == true)
+    {
+        <div class="sub-categories collapse @(isExpanded ? "show" : "")" id="subcategories-@Model.Id">
+            @foreach (var subCategory in Model.SubCategories)
+            {
+                @await Html.PartialAsync("_CategoryFilter", subCategory, new ViewDataDictionary(ViewData) { ["IndentLevel"] = indentLevel + 1 })
+            }
+        </div>
+    }
+</div>

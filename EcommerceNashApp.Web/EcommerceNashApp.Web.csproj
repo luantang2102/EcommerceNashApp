@@ -11,8 +11,4 @@
     <ProjectReference Include="..\EcommerceNashApp.Test\EcommerceNashApp.Test.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Views\Logout\" />
-  </ItemGroup>
-
 </Project>

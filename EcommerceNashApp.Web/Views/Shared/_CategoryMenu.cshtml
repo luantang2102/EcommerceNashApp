@@ -56,14 +56,14 @@ else
     {
         <!-- Top-level category without subcategories -->
         <li class="nav-item">
-            <a class="nav-link me-5" href="@Url.Action("Category", "Home", new { id = Model.Id })">@Model.Name</a>
+            <a class="nav-link me-5" href="@Url.Action("Index", "Product", new { categories = Model.Id })">@Model.Name</a>
         </li>
     }
     else
     {
         <!-- Nested subcategory without subcategories -->
         <li>
-            <a class="dropdown-item" href="@Url.Action("Category", "Home", new { id = Model.Id })">@Model.Name</a>
+            <a class="dropdown-item" href="@Url.Action("Index", "Product", new { categories = Model.Id })">@Model.Name</a>
         </li>
     }
 }

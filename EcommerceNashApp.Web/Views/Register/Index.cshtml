@@ -10,6 +10,11 @@
             <form asp-action="Index" asp-controller="Register" method="post">
                 <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
                 <div class="mb-3">
+                    <label asp-for="UserName" class="form-label">Tên Người Dùng *</label>
+                    <input asp-for="UserName" class="form-control" placeholder="Tên Người Dùng" required />
+                    <span asp-validation-for="UserName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
                     <label asp-for="Email" class="form-label">Email *</label>
                     <input asp-for="Email" class="form-control" placeholder="Email" required />
                     <span asp-validation-for="Email" class="text-danger"></span>

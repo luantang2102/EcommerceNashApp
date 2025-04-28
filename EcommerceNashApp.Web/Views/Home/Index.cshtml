@@ -66,7 +66,7 @@
                 </div>
                 <div class="col-lg-3 col-md-12">
                     <div class="btn-wrap">
-                        <a href="#" class="btn btn-black btn-medium text-uppercase hvr-sweep-to-right">Gửi email đ NASH</a>
+                        <a href="#" class="btn btn-black btn-medium text-uppercase hvr-sweep-to-right">Gửi email đến NASH</a>
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
                 @foreach (var product in Model.Products)
                 {
                     <div class="col mb-4">
-                        <div class="product-card position-relative d-flex flex-column h-100 border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;" onclick="document.querySelector('[data-bs-target=\'#modaltoggle\']').click()">
+                        <div class="product-card position-relative d-flex flex-column h-100 border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;" onclick="window.location.href= '@Url.Action("Index", "ProductDetails")' + `?id=@product.Id` ">
                             <div class="card-img position-relative overflow-hidden" style="height: 30vh;">
                                 @if (product.ProductImages.Any())
                                 {
@@ -101,7 +101,7 @@
                             <div class="card-detail flex-grow-1 d-flex flex-column p-3 overflow-hidden">
                                 <div style="height: 8vh; overflow: auto; margin-bottom: 10px;">
                                     <h3 class="card-title fs-5 fw-normal m-0 fw-bold">
-                                        <a href="index.html">@product.Name</a>
+                                        <span>@product.Name</span>
                                     </h3>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mt-2">

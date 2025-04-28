@@ -7,6 +7,9 @@ using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Web.Models.DTOs.Request;
 using EcommerceNashApp.Web.Models.DTOs;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 namespace EcommerceNashApp.Web.Controllers
 {
@@ -23,7 +26,7 @@ namespace EcommerceNashApp.Web.Controllers
 
         // GET: /Register
         [HttpGet]
-        public IActionResult Index(string returnUrl = null)
+        public IActionResult Index(string returnUrl = "")
         {
             ViewData["ReturnUrl"] = returnUrl;
             return View(null);
@@ -32,7 +35,7 @@ namespace EcommerceNashApp.Web.Controllers
         // POST: /Register
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index([FromForm] RegisterRequest model, string returnUrl = null)
+        public async Task<IActionResult> Index([FromForm] RegisterRequest model, string returnUrl = "")
         {
             ViewData["ReturnUrl"] = returnUrl;
             if (!ModelState.IsValid)
@@ -50,6 +53,7 @@ namespace EcommerceNashApp.Web.Controllers
             {
                 var formData = new MultipartFormDataContent
                 {
+                    { new StringContent(model.UserName), "userName" },
                     { new StringContent(model.Email), "email" },
                     { new StringContent(model.Password), "password" },
                     { new StringContent(model.ConfirmPassword), "confirmPassword" }
@@ -64,8 +68,26 @@ namespace EcommerceNashApp.Web.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    SetAuthCookies(result.Body);
-                    returnUrl = returnUrl ?? Url.Action("Index", "Home");
+                    // Set csrf cookie
+                    SetCsrfCookie(result.Body);
+
+                    // Create claims for user info
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, result.Body.User.Id.ToString()),
+                        new Claim(ClaimTypes.Email, result.Body.User.Email ?? string.Empty),
+                        new Claim(ClaimTypes.Name, result.Body.User.UserName ?? "Anonymous"),
+                    };
+
+                    // Create identity and principal
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var principal = new ClaimsPrincipal(identity);
+                    await HttpContext.SignInAsync("CookieAuth", principal, new AuthenticationProperties
+                    {
+                        IsPersistent = false
+                    });
+
+                    returnUrl = string.IsNullOrEmpty(returnUrl) ? Url.Action("Index", "Home")! : returnUrl;
                     return Redirect(returnUrl);
                 }
 
@@ -78,12 +100,14 @@ namespace EcommerceNashApp.Web.Controllers
                 return View(model);
             }
         }
-
-        private void SetAuthCookies(AuthDto authResponse)
+        private void SetCsrfCookie(AuthDto authResponse)
         {
-            Response.Cookies.Append("jwt", authResponse.Jwt, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
-            Response.Cookies.Append("refresh", authResponse.RefreshToken, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict });
-            Response.Cookies.Append("csrf", authResponse.CsrfToken, new CookieOptions { HttpOnly = false, Secure = true, SameSite = SameSiteMode.Strict });
+            Response.Cookies.Append("csrf", authResponse.CsrfToken, new CookieOptions
+            {
+                HttpOnly = false,
+                Secure = true,
+                SameSite = SameSiteMode.Strict
+            });
         }
     }
 }

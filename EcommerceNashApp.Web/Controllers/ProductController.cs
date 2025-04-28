@@ -31,7 +31,7 @@ namespace EcommerceNashApp.Web.Controllers
             string? sortBy = "newest",
             string? searchTerm = null,
             int page = 1,
-            int pageSize = 5,
+            int pageSize = 12,
             CancellationToken cancellationToken = default)
         {
             try
@@ -70,7 +70,7 @@ namespace EcommerceNashApp.Web.Controllers
                     _ => "dateDesc"
                 };
 
-                var allCategories = await _categoryService.GetCategoriesTreeAsync(cancellationToken) ?? new List<CategoryView>();
+                var allCategories = await _categoryService.GetCategoriesTreeAsync(cancellationToken) ?? [];
                 var productResult = await _productService.GetFilteredProductsAsync(
                     categories,
                     minPrice,
