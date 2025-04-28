@@ -1,0 +1,37 @@
+﻿@using System.Security.Claims
+@if (User.Identity.IsAuthenticated)
+{
+    var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+    <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-black" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="white-space: nowrap;">
+            <svg class="user me-1" width="20" height="20">
+                <use xlink:href="#user"></use>
+            </svg>
+            Xin chào, @userName
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
+            <li><a class="dropdown-item" href="#">Cài đặt</a></li>
+            <li>
+                <form asp-controller="Logout" asp-action="Index" method="post">
+                    <button type="submit" class="dropdown-item">Đăng Xuất</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+}
+else
+{
+    <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-black" href="#" id="authDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="white-space: nowrap;">
+            <svg class="user me-1" width="20" height="20">
+                <use xlink:href="#user"></use>
+            </svg>
+            Tài Khoản
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="authDropdown">
+            <li><a class="dropdown-item" asp-controller="Login" asp-action="Index">Đăng Nhập</a></li>
+            <li><a class="dropdown-item" asp-controller="Register" asp-action="Index">Đăng Ký</a></li>
+        </ul>
+    </div>
+}

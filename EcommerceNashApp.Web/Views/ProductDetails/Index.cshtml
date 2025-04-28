@@ -1,4 +1,5 @@
 ﻿@using EcommerceNashApp.Web.Models.Views
+@using System.Security.Claims
 @model ProductDetailsView
 @{
     ViewData["Title"] = @Model.Product.Name;
@@ -281,12 +282,12 @@
                 return;
             }
 
-            fetch('/api/ProductRatings/Add', {
+            fetch('https://localhost:5001/api/Ratings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     productId: '@Model.Product.Id',
-                    rating: parseInt(rating),
+                    value: parseInt(rating),
                     comment: comment
                 })
             })

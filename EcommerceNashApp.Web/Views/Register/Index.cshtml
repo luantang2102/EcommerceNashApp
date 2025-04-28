@@ -1,0 +1,57 @@
+﻿@model EcommerceNashApp.Web.Models.DTOs.Request.RegisterRequest
+@{
+    ViewData["Title"] = "Đăng Ký";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <h2 class="text-center mb-4">Đăng Ký</h2>
+            <form asp-action="Index" asp-controller="Register" method="post">
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Email *</label>
+                    <input asp-for="Email" class="form-control" placeholder="Email" required />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">Mật Khẩu *</label>
+                    <input asp-for="Password" class="form-control" type="password" placeholder="Mật Khẩu" required />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label">Xác Nhận Mật Khẩu *</label>
+                    <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Xác Nhận Mật Khẩu" required />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ImageUrl" class="form-label">URL Ảnh Đại Diện (Tùy Chọn)</label>
+                    <input asp-for="ImageUrl" class="form-control" placeholder="URL Ảnh Đại Diện" />
+                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                </div>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="text-danger mb-3">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <p>@error.ErrorMessage</p>
+                        }
+                    </div>
+                }
+                <div class="d-flex justify-content-center">
+                    <button type="submit" class="btn btn-red hvr-sweep-to-right dark-sweep">Đăng Ký</button>
+                </div>
+            </form>
+            <div class="text-center mt-3">
+                <p>Đã có tài khoản? <a asp-action="Index" asp-controller="Login">Đăng Nhập</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+<script src="js/jquery-1.11.0.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/script.js"></script>

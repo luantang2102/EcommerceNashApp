@@ -1,0 +1,42 @@
+﻿@model EcommerceNashApp.Web.Controllers.ForgotPasswordModel
+@{
+    ViewData["Title"] = "Quên Mật Khẩu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <h2 class="text-center mb-4">Quên Mật Khẩu</h2>
+            <form asp-action="Index" asp-controller="Forgot" method="post">
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Email *</label>
+                    <input asp-for="Email" class="form-control" placeholder="Email" required />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="text-danger mb-3">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <p>@error.ErrorMessage</p>
+                        }
+                    </div>
+                }
+                <div class="d-flex justify-content-center">
+                    <button type="submit" class="btn btn-red hvr-sweep-to-right dark-sweep">Gửi Liên Kết Đặt Lại</button>
+                </div>
+            </form>
+            <div class="text-center mt-3">
+                <p>Quay lại <a asp-action="Index" asp-controller="Login">Đăng Nhập</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+<script src="js/jquery-1.11.0.min.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/script.js"></script>

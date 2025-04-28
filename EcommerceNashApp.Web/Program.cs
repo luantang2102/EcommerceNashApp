@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Web.Services;
 using EcommerceNashApp.Web.Services.Impl;
 
@@ -17,11 +18,25 @@ if (string.IsNullOrEmpty(apiAddress))
     throw new InvalidOperationException("The API address is not configured in the application settings.");
 }
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRole.Admin.ToString()));
+    options.AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRole.User.ToString()));
+});
+
 builder.Services.AddHttpClient("NashApp.Api", client =>
 {
     client.BaseAddress = new Uri(apiAddress);
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
+
+builder.Services.AddAuthentication("CookieAuth")
+        .AddCookie("CookieAuth", options =>
+        {
+            options.Cookie.Name = "jwt";
+            options.LoginPath = "/Login";
+            options.LogoutPath = "/Logout";
+        });
 
 builder.Services.AddCors(options =>
 {
@@ -50,6 +65,7 @@ else
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
