@@ -168,7 +168,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
 
             var user = new AppUser
             {
-                UserName = registerRequest.Email,
+                UserName = registerRequest.UserName,
                 Email = registerRequest.Email,
                 ImageUrl = registerRequest.ImageUrl,
                 PublicId = registerRequest.PublicId,
