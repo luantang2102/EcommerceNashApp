@@ -6,9 +6,6 @@ using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
-using EcommerceNashApp.Infrastructure.Repositories;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
@@ -17,16 +14,14 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
     {
         private readonly IUserRepository _userRepository;
         private readonly IJwtService _jwt;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public IdentityService(IUserRepository userRepository, IJwtService jwt, IHttpContextAccessor httpContextAccessor)
+        public IdentityService(IUserRepository userRepository, IJwtService jwt)
         {
             _userRepository = userRepository;
             _jwt = jwt;
-            _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<AuthResponse> LoginAsync(LoginRequest loginRequest)
+        public async Task<TokenResponse> LoginAsync(LoginRequest loginRequest)
         {
             var user = await _userRepository.FindByEmailAsync(loginRequest.Email);
             if (user == null || !await _userRepository.CheckPasswordAsync(user, loginRequest.Password))
@@ -47,44 +42,20 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userRepository.UpdateAsync(user);
 
-            // Set JWT cookie
-            var jwtCookieOptions = new CookieOptions
+            return new TokenResponse
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1) // Match access token expiration
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("jwt", accessToken, jwtCookieOptions);
-
-            // Set refresh token cookie
-            var refreshCookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddDays(7) // Match refresh token expiration
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh", refreshToken, refreshCookieOptions);
-
-            // Set CSRF cookie
-            var csrfCookieOptions = new CookieOptions
-            {
-                HttpOnly = false, // Accessible by JavaScript
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1)
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("csrf", csrfToken, csrfCookieOptions);
-
-            return new AuthResponse
-            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
                 CsrfToken = csrfToken,
-                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result)
+                AuthResponse = new AuthResponse
+                {
+                    CsrfToken = csrfToken,
+                    User = user.MapModelToResponse(roles)
+                }
             };
         }
 
-        public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest dto)
+        public async Task<TokenResponse> RefreshTokenAsync(RefreshTokenRequest dto)
         {
             var user = await _userRepository.GetAllAsync()
                 .FirstOrDefaultAsync(u => u.RefreshToken == dto.RefreshToken);
@@ -107,44 +78,20 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userRepository.UpdateAsync(user);
 
-            // Set new JWT cookie
-            var jwtCookieOptions = new CookieOptions
+            return new TokenResponse
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1)
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("jwt", newAccessToken, jwtCookieOptions);
-
-            // Set new refresh token cookie
-            var refreshCookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddDays(7)
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh", newRefreshToken, refreshCookieOptions);
-
-            // Set new CSRF cookie
-            var csrfCookieOptions = new CookieOptions
-            {
-                HttpOnly = false,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1)
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("csrf", newCsrfToken, csrfCookieOptions);
-
-            return new AuthResponse
-            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken,
                 CsrfToken = newCsrfToken,
-                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result)
+                AuthResponse = new AuthResponse
+                {
+                    CsrfToken = newCsrfToken,
+                    User = user.MapModelToResponse(roles)
+                }
             };
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest registerRequest)
+        public async Task<TokenResponse> RegisterAsync(RegisterRequest registerRequest)
         {
             if (registerRequest.Password != registerRequest.ConfirmPassword)
             {
@@ -180,7 +127,6 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             {
                 var errors = new List<string> { "User creation failed." };
                 var attributes = new Dictionary<string, object>
-
                 {
                     { "errors", errors }
                 };
@@ -198,37 +144,16 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userRepository.UpdateAsync(user);
 
-            var jwtCookieOptions = new CookieOptions
+            return new TokenResponse
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1)
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("jwt", accessToken, jwtCookieOptions);
-
-            var refreshCookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddDays(7)
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("refresh", refreshToken, refreshCookieOptions);
-
-            var csrfCookieOptions = new CookieOptions
-            {
-                HttpOnly = false,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(1)
-            };
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("csrf", csrfToken, csrfCookieOptions);
-
-            return new AuthResponse
-            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
                 CsrfToken = csrfToken,
-                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result)
+                AuthResponse = new AuthResponse
+                {
+                    CsrfToken = csrfToken,
+                    User = user.MapModelToResponse(roles)
+                }
             };
         }
 
@@ -245,10 +170,11 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                 throw new AppException(ErrorCode.USER_NOT_FOUND, attribute);
             }
 
+            var roles = await _userRepository.GetRolesAsync(user);
             return new AuthResponse
             {
-                User = user.MapModelToResponse(_userRepository.GetRolesAsync(user).Result),
-                CsrfToken = _httpContextAccessor.HttpContext.Request.Cookies["csrf"]
+                User = user.MapModelToResponse(roles),
+                CsrfToken = ""
             };
         }
     }

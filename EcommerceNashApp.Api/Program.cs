@@ -61,6 +61,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRole.Admin.ToString()));
     options.AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRole.User.ToString()));
 });
+
 builder.Services.AddHttpContextAccessor();
 
 // Enable CORS
