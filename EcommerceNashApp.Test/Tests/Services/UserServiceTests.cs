@@ -62,7 +62,7 @@ namespace EcommerceNashApp.Test.Tests.Services
         {
             // Arrange
             var userId = Guid.NewGuid();
-            _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((AppUser?)null); 
+            _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((AppUser?)null);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<AppException>(() => _userService.GetUserByIdAsync(userId));

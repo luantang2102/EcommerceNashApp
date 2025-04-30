@@ -34,7 +34,7 @@ namespace EcommerceNashApp.Infrastructure.Extentions
             if (!string.IsNullOrEmpty(categories))
             {
                 categoryList.AddRange(categories.ToLower().Split(",").ToList());
-                
+
                 query = query.Where(x => x.Categories.Any(c => categoryList.Contains(c.Id.ToString().ToLower())));
             }
 

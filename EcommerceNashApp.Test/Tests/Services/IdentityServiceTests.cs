@@ -1,5 +1,4 @@
 ﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
-using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices.Auth;
@@ -139,20 +138,20 @@ namespace EcommerceNashApp.Tests.Services
                 PublicId = registerRequest.PublicId,
                 CreatedDate = DateTime.UtcNow
             };
-        var roles = new List<string> { "User" };
-        _userRepositoryMock.Setup(r => r.FindByEmailAsync(registerRequest.Email)).ReturnsAsync((AppUser)null);
-        _userRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<AppUser>(), registerRequest.Password)).ReturnsAsync(true);
-        _userRepositoryMock.Setup(r => r.AddToRoleAsync(It.IsAny<AppUser>(), "User")).Returns(Task.CompletedTask);
-        _userRepositoryMock.Setup(r => r.GetRolesAsync(It.IsAny<AppUser>())).ReturnsAsync(roles);
-        _jwtServiceMock.Setup(j => j.GenerateToken(It.IsAny<AppUser>(), roles)).Returns("jwt-token");
-        _jwtServiceMock.Setup(j => j.GenerateRefreshToken()).Returns("refresh-token");
-        _userRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<AppUser>())).Returns(Task.CompletedTask);
+            var roles = new List<string> { "User" };
+            _userRepositoryMock.Setup(r => r.FindByEmailAsync(registerRequest.Email)).ReturnsAsync((AppUser)null);
+            _userRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<AppUser>(), registerRequest.Password)).ReturnsAsync(true);
+            _userRepositoryMock.Setup(r => r.AddToRoleAsync(It.IsAny<AppUser>(), "User")).Returns(Task.CompletedTask);
+            _userRepositoryMock.Setup(r => r.GetRolesAsync(It.IsAny<AppUser>())).ReturnsAsync(roles);
+            _jwtServiceMock.Setup(j => j.GenerateToken(It.IsAny<AppUser>(), roles)).Returns("jwt-token");
+            _jwtServiceMock.Setup(j => j.GenerateRefreshToken()).Returns("refresh-token");
+            _userRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<AppUser>())).Returns(Task.CompletedTask);
 
-        // Act
-        var result = await _identityService.RegisterAsync(registerRequest);
+            // Act
+            var result = await _identityService.RegisterAsync(registerRequest);
 
-        // Assert
-        Assert.NotNull(result);
+            // Assert
+            Assert.NotNull(result);
             Assert.Equal("jwt-token", result.AccessToken);
             Assert.Equal("refresh-token", result.RefreshToken);
             Assert.NotEmpty(result.CsrfToken);

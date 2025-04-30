@@ -5,20 +5,12 @@ using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
-using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
 using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Shared.Paginations;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Moq;
-using Moq.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace EcommerceNashApp.Test.Services
 {
@@ -30,16 +22,6 @@ namespace EcommerceNashApp.Test.Services
 
         public ProductServiceTests()
         {
-            //var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-
-            //optionsBuilder.UseSqlServer("");
-
-            //var options = optionsBuilder.Options;
-
-            //using var context = new AppDbContext(options);
-
-            
-
             _productRepositoryMock = new Mock<IProductRepository>();
             _mediaServiceMock = new Mock<IMediaService>();
             _productService = new ProductService(_productRepositoryMock.Object, _mediaServiceMock.Object);
@@ -50,12 +32,12 @@ namespace EcommerceNashApp.Test.Services
         {
             // Arrange
             var productParams = new ProductParams { PageNumber = 1, PageSize = 10 };
-            var products = new List<Product>
-            {
-                new Product { Id = Guid.NewGuid(), Name = "Test Product", Description = "Test Desc" }
-            };
-            _productRepositoryMock.Setup(r => r.GetAllAsync())
-                .Returns(() => products.AsQueryable().AsDbSet());
+            var products = new List<Product> { new Product { Id = Guid.NewGuid(), Name = "Test Product", Description = "Test Desc" } };
+            var queryable = products.AsQueryable();
+            _productRepositoryMock.Setup(r => r.GetAllAsync()).Returns(queryable);
+            PagedList<ProductResponse> pagedList = new PagedList<ProductResponse>(
+                products.Select(p => new ProductResponse { Id = p.Id, Name = p.Name }).ToList(),
+                1, 1, 10);
 
             // Act
             var result = await _productService.GetProductsAsync(productParams);
@@ -123,18 +105,6 @@ namespace EcommerceNashApp.Test.Services
             _productRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Product>()), Times.Once());
         }
     }
-
-    // Extension method to convert IEnumerable to DbSet for Moq.EntityFrameworkCore
-    public static class QueryableExtensions
-    {
-        public static IQueryable<T> AsDbSet<T>(this IQueryable<T> source) where T : class
-        {
-            var mockDbSet = new Mock<DbSet<T>>();
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(source.Provider);
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(source.Expression);
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(source.ElementType);
-            mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(source.GetEnumerator());
-            return mockDbSet.Object.AsQueryable();
-        }
-    }
 }
+
+

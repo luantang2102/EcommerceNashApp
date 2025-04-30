@@ -3,9 +3,6 @@ using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Infrastructure.Repositories
 {

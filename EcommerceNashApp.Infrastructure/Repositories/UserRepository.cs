@@ -55,17 +55,17 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(AppUser user)
     {
-        await _userManager.UpdateAsync(user); 
+        await _userManager.UpdateAsync(user);
     }
 
     public async Task<bool> CreateAsync(AppUser user, string password)
     {
-        var result = await _userManager.CreateAsync(user, password); 
+        var result = await _userManager.CreateAsync(user, password);
         return result.Succeeded; // Return whether the operation succeeded
     }
 
     public async Task AddToRoleAsync(AppUser user, string role)
     {
-        await _userManager.AddToRoleAsync(user, role); 
+        await _userManager.AddToRoleAsync(user, role);
     }
 }

@@ -1,16 +1,11 @@
 ﻿using EcommerceNashApp.Core.DTOs.Request;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
-using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Models;
+using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Services;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Test.Tests.Services
 {

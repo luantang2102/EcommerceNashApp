@@ -60,15 +60,16 @@ namespace EcommerceNashApp.Test.Tests.Services
             // Arrange
             var categoryId = Guid.NewGuid();
             var category = new Category
-            { 
-                Id = categoryId, 
+            {
+                Id = categoryId,
                 SubCategories = new List<Category> { new Category
                                                     {
                                                         Name = "Sub Category Test",
                                                         Description = "Test Desc"
-                                                    }}, 
-                Name = "Category Test", 
-                Description = "Desc" };
+                                                    }},
+                Name = "Category Test",
+                Description = "Desc"
+            };
             _categoryRepositoryMock.Setup(r => r.GetWithSubCategoriesAsync(categoryId)).ReturnsAsync(category);
 
             // Act & Assert

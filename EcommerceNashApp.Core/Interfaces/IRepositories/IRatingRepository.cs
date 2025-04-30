@@ -1,8 +1,5 @@
 ﻿using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Auth;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Core.Interfaces.IRepositories
 {

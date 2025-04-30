@@ -1,6 +1,5 @@
 ﻿using EcommerceNashApp.Core.DTOs.Response;
 using EcommerceNashApp.Core.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Extensions
 {
