@@ -3,21 +3,28 @@ using EcommerceNashApp.Core.DTOs.Auth.Response;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices.Auth;
+using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Auth;
+using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
     public class IdentityService : IIdentityService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ICartRepository _cartRepository;
         private readonly IJwtService _jwt;
 
-        public IdentityService(IUserRepository userRepository, IJwtService jwt)
+        public IdentityService(IUserRepository userRepository, ICartRepository cartRepository, IJwtService jwt)
         {
             _userRepository = userRepository;
+            _cartRepository = cartRepository;
             _jwt = jwt;
         }
 
@@ -31,6 +38,30 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                     { "email", loginRequest.Email }
                 };
                 throw new AppException(ErrorCode.INVALID_CREDENTIALS, attributes);
+            }
+
+            // Check if user has a cart and create one if not
+            var cart = await _cartRepository.GetByUserIdAsync(user.Id);
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    UserId = user.Id,
+                    CartItems = []
+                };
+                try
+                {
+                    await _cartRepository.CreateAsync(cart);
+                }
+                catch (Exception ex)
+                {
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "userId", user.Id },
+                        { "error", ex.Message }
+                    };
+                    throw new AppException(ErrorCode.CART_CREATION_FAILED, attributes);
+                }
             }
 
             var roles = await _userRepository.GetRolesAsync(user);
@@ -134,6 +165,26 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
             }
 
             await _userRepository.AddToRoleAsync(user, "User");
+
+            // Create a cart for the new user
+            var cart = new Cart
+            {
+                UserId = user.Id,
+                CartItems = []
+            };
+            try
+            {
+                await _cartRepository.CreateAsync(cart);
+            }
+            catch (Exception ex)
+            {
+                var attributes = new Dictionary<string, object>
+                {
+                    { "userId", user.Id },
+                    { "error", ex.Message }
+                };
+                throw new AppException(ErrorCode.CART_CREATION_FAILED, attributes);
+            }
 
             var roles = await _userRepository.GetRolesAsync(user);
             var accessToken = _jwt.GenerateToken(user, roles);

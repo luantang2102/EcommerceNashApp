@@ -11,6 +11,7 @@ using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Repositories;
 using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Infrastructure.Services.Auth;
+using EcommerceNashApp.Infrastructure.Settings;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +40,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddCustomSwagger();
 
 // Bind settings from appsettings.json
+builder.Services.Configure<StripeConfig>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<CloudinaryConfig>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
@@ -80,6 +82,10 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartItemRepository, CartItemRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
 // Dependency injection for services
 builder.Services.AddScoped<IIdentityService, IdentityService>();
@@ -89,6 +95,9 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<StripeService>();
 
 
 // Exception handling and authentication

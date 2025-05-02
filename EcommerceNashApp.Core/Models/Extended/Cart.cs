@@ -6,6 +6,9 @@ namespace EcommerceNashApp.Core.Models
 {
     public class Cart : BaseEntity
     {
+        public string? PaymentIntentId { get; set; }
+        public string? ClientSecret { get; set; }
+
         // Foreign key
         public Guid UserId { get; set; }
 

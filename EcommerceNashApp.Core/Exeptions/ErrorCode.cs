@@ -14,7 +14,6 @@ namespace EcommerceNashApp.Core.Exeptions
         public static readonly ErrorCode PASSWORDS_DO_NOT_MATCH = new(102, "Passwords do not match", StatusCodes.Status400BadRequest);
         public static readonly ErrorCode IDENTITY_CREATION_FAILED = new(103, "Identity creation failed", StatusCodes.Status500InternalServerError);
 
-
         // Access related errors (400-499)
         public static readonly ErrorCode UNAUTHORIZED_ACCESS = new(401, "Unauthorized access", StatusCodes.Status401Unauthorized);
         public static readonly ErrorCode ACCESS_DENIED = new(403, "Access denied to view or modify this resource", StatusCodes.Status403Forbidden);
@@ -41,7 +40,22 @@ namespace EcommerceNashApp.Core.Exeptions
         public static readonly ErrorCode RATING_NOT_FOUND = new(900, "Rating not found", StatusCodes.Status404NotFound);
         public static readonly ErrorCode RATING_ALREADY_EXISTS = new(901, "Rating already exists", StatusCodes.Status409Conflict);
 
-        // Validation related errors (1100-1199)
+        // Cart related errors (1000-1099)
+        public static readonly ErrorCode CART_NOT_FOUND = new(1000, "Cart item not found", StatusCodes.Status404NotFound);
+        public static readonly ErrorCode CART_ITEM_NOT_FOUND = new(1001, "Cart item not found", StatusCodes.Status404NotFound);
+        public static readonly ErrorCode INSUFFICIENT_STOCK = new(1002, "Insufficient stock", StatusCodes.Status400BadRequest);
+        public static readonly ErrorCode CART_EMPTY = new(1003, "Cart empty", StatusCodes.Status400BadRequest);
+        public static readonly ErrorCode CART_CREATION_FAILED = new(1004, "Failed to create cart", StatusCodes.Status400BadRequest);
+
+        // Order related errors (1100-1199) 
+        public static readonly ErrorCode ORDER_NOT_FOUND = new(1100, "Order not found", StatusCodes.Status404NotFound);
+
+        // Payment related errors (1200-1299)
+        public static readonly ErrorCode INVALID_PAYMENT_INTENT = new(1200, "Invalid payment intent", StatusCodes.Status400BadRequest);
+        public static readonly ErrorCode PAYMENT_FAILED = new(1201, "Payment failed", StatusCodes.Status400BadRequest);
+        public static readonly ErrorCode PAYMENT_NOT_FOUND = new(1202, "Payment not found", StatusCodes.Status404NotFound);
+
+        // Validation related errors (1300-1399)
         public static readonly ErrorCode VALIDATION_ERROR = new(1100, "Validation error", StatusCodes.Status400BadRequest);
 
         /// <summary>

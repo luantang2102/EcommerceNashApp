@@ -9,6 +9,7 @@ namespace EcommerceNashApp.Core.Models.Extended
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public string ShippingAddress { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = string.Empty;
+        public string? PaymentIntentId { get; set; }
 
         // Foreign key
         public Guid UserProfileId { get; set; }
