@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\EcommerceNashApp.Shared\EcommerceNashApp.Shared.csproj" />
-    <ProjectReference Include="..\EcommerceNashApp.Test\EcommerceNashApp.Test.csproj" />
   </ItemGroup>
 
 </Project>

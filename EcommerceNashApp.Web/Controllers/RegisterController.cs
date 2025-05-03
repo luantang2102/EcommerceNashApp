@@ -1,15 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using System;
-using EcommerceNashApp.Core.DTOs.Auth.Response;
-using EcommerceNashApp.Core.DTOs.Wrapper;
+﻿using EcommerceNashApp.Web.Models.DTOs;
 using EcommerceNashApp.Web.Models.DTOs.Request;
-using EcommerceNashApp.Web.Models.DTOs;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace EcommerceNashApp.Web.Controllers
 {
@@ -17,25 +13,27 @@ namespace EcommerceNashApp.Web.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<RegisterController> _logger;
 
-        public RegisterController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public RegisterController(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<RegisterController> logger)
         {
             _httpClient = httpClientFactory.CreateClient("NashApp.Api");
             _configuration = configuration;
+            _logger = logger;
         }
 
         // GET: /Register
         [HttpGet]
-        public IActionResult Index(string returnUrl = "")
+        public IActionResult Index(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            return View(null);
+            return View();
         }
 
         // POST: /Register
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index([FromForm] RegisterRequest model, string returnUrl = "")
+        public async Task<IActionResult> Index([FromForm] RegisterRequest model, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
             if (!ModelState.IsValid)
@@ -63,15 +61,19 @@ namespace EcommerceNashApp.Web.Controllers
                     formData.Add(new StringContent(model.ImageUrl), "imageUrl");
                 }
 
+                _logger.LogInformation("Calling /api/Auth/register for email: {Email}", model.Email);
                 var response = await _httpClient.PostAsync("/api/Auth/register", formData);
-                var result = await response.Content.ReadFromJsonAsync<ApiDto<AuthDto>>();
+                var content = await response.Content.ReadAsStringAsync();
+                _logger.LogDebug("API response: {Content}", content);
+
+                var result = JsonSerializer.Deserialize<ApiDto<AuthDto>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Set csrf cookie
-                    SetCsrfCookie(result.Body);
+                    // API sets jwt, refresh, and csrf cookies
+                    _logger.LogInformation("Registration successful for user ID: {UserId}", result.Body.User.Id);
 
-                    // Create claims for user info
+                    // Create claims for MVC authentication
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.NameIdentifier, result.Body.User.Id.ToString()),
@@ -79,35 +81,29 @@ namespace EcommerceNashApp.Web.Controllers
                         new Claim(ClaimTypes.Name, result.Body.User.UserName ?? "Anonymous"),
                     };
 
-                    // Create identity and principal
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var principal = new ClaimsPrincipal(identity);
-                    await HttpContext.SignInAsync("CookieAuth", principal, new AuthenticationProperties
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
                     {
-                        IsPersistent = false
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3) // Match jwt cookie
                     });
 
-                    returnUrl = string.IsNullOrEmpty(returnUrl) ? Url.Action("Index", "Home")! : returnUrl;
+                    returnUrl = string.IsNullOrEmpty(returnUrl) ? Url.Action("Index", "Home") : returnUrl;
+                    _logger.LogInformation("Redirecting to {ReturnUrl}", returnUrl);
                     return Redirect(returnUrl);
                 }
 
+                _logger.LogWarning("Registration failed: {Message}", result?.Message);
                 ModelState.AddModelError("", result?.Message ?? "Email đã được sử dụng.");
                 return View(model);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error during registration for email: {Email}", model.Email);
                 ModelState.AddModelError("", "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
                 return View(model);
             }
-        }
-        private void SetCsrfCookie(AuthDto authResponse)
-        {
-            Response.Cookies.Append("csrf", authResponse.CsrfToken, new CookieOptions
-            {
-                HttpOnly = false,
-                Secure = true,
-                SameSite = SameSiteMode.Strict
-            });
         }
     }
 }

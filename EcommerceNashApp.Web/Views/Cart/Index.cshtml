@@ -1,0 +1,106 @@
+﻿@using EcommerceNashApp.Web.Models.Views
+@model CartPageView
+@{
+    ViewData["Title"] = "Giỏ Hàng";
+}
+
+<section id="cart" class="cart-page py-5">
+    <div class="container-md">
+        <h1 class="display-6 text-center mb-5">Giỏ Hàng Của Bạn</h1>
+        <div class="row">
+            <!-- Checkout Stepper (Left) -->
+            <div class="col-lg-3 col-md-12 mb-4">
+                <div class="checkout-stepper bg-light p-4 rounded-3">
+                    <ul class="list-unstyled">
+                        <li class="step active d-flex align-items-center mb-3">
+                            <span class="step-number rounded-circle bg-dark text-white d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">1</span>
+                            <span class="step-title fw-bold">Giỏ Hàng</span>
+                        </li>
+                        <li class="step d-flex align-items-center mb-3">
+                            <span class="step-number rounded-circle bg-gray text-dark d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">2</span>
+                            <span class="step-title">Thanh Toán</span>
+                        </li>
+                        <li class="step d-flex align-items-center">
+                            <span class="step-number rounded-circle bg-gray text-dark d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">3</span>
+                            <span class="step-title">Hoàn Tất</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Order Summary (Right) -->
+            <div class="col-lg-9 col-md-12">
+                <div class="order-summary bg-white p-4 rounded-3 border">
+                    <h2 class="fs-4 mb-4">Tóm Tắt Đơn Hàng</h2>
+                    <div id="cartItems" class="cart-items">
+                        @if (Model.Items.Any())
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <div class="cart-item d-flex border-bottom pb-4 mb-4" data-cart-item-key="@item.Id">
+                                    <div class="col-lg-2 col-md-3 col-sm-2 me-4">
+                                        <a href="@Url.Action("Index", "ProductDetails", new { id = item.ProductId })" title="product-image">
+                                            <img src="@(item.Images[0].ImageUrl ?? "~/images/placeholder.jpg")" class="img-fluid rounded" alt="@item.ProductName">
+                                        </a>
+                                    </div>
+                                    <div class="col-lg-9 col-md-8 col-sm-8">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h3 class="fs-5 fw-bold">@item.ProductName</h3>
+                                            <form asp-action="RemoveCartItem" asp-controller="Cart" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="cartItemId" value="@item.Id" />
+                                                <button type="submit" class="btn p-0" aria-label="Remove this item">
+                                                    <svg class="close" width="20" height="20"><use xlink:href="#close"></use></svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <form asp-action="UpdateCartItem" asp-controller="Cart" method="post" class="input-group product-qty" style="width: 150px;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="cartItemId" value="@item.Id" />
+                                                <button type="submit" name="quantity" value="@(item.Quantity - 1)" class="quantity-left-minus btn btn-light rounded-0 rounded-start btn-number" @(item.Quantity <= 1 ? "disabled" : "")>
+                                                    <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
+                                                </button>
+                                                <input type="text" name="quantity-display" class="form-control input-number quantity text-center" value="@item.Quantity" readonly>
+                                                <button type="submit" name="quantity" value="@(item.Quantity + 1)" class="quantity-right-plus btn btn-light rounded-0 rounded-end btn-number">
+                                                    <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
+                                                </button>
+                                            </form>
+                                            <span class="fs-5 fw-bold">$@item.Price.ToString("F2")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-center">Giỏ hàng trống.</p>
+                        }
+                    </div>
+                    <div class="cart-total mt-4 pt-4 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fs-5">Tổng Cộng:</span>
+                            <span class="fs-5 fw-bold">$@Model.Subtotal.ToString("F2")</span>
+                        </div>
+                        <div class="text-end">
+                            <a href="@Url.Action("Index", "Checkout")" class="btn btn-red btn-medium text-uppercase hvr-sweep-to-right">Tiến Hành Thanh Toán</a>
+                            @if (Model.Items.Any())
+                            {
+                                <form asp-action="ClearCart" asp-controller="Cart" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-gray btn-medium text-uppercase hvr-sweep-to-right ms-2">Xóa Giỏ Hàng</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="js/jquery-1.11.0.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/script.js"></script>
+}

@@ -1,6 +1,5 @@
 ﻿using EcommerceNashApp.Shared.Paginations;
 using EcommerceNashApp.Web.Models.Views;
-using EcommerceNashApp.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 
 public class ProductDetailsController : Controller

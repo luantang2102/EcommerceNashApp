@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EcommerceNashApp.Shared.Paginations;
 using EcommerceNashApp.Web.Models;
 using EcommerceNashApp.Web.Models.Views;
 using EcommerceNashApp.Web.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using EcommerceNashApp.Shared.Paginations;
 
 namespace EcommerceNashApp.Web.Controllers
 {

@@ -1,28 +1,33 @@
-using System.Net.Http.Headers;
-using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Web.Services;
 using EcommerceNashApp.Web.Services.Impl;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add logging
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Register IProductService with ProductService
+// Register services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<CartService>();
+builder.Services.AddHttpContextAccessor();
 
+// Configure HttpClient for NashApp API
 var apiAddress = builder.Configuration["NashApp:Api:Address"];
 if (string.IsNullOrEmpty(apiAddress))
 {
     throw new InvalidOperationException("The API address is not configured in the application settings.");
 }
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRole.Admin.ToString()));
-    options.AddPolicy("RequireUserRole", policy => policy.RequireRole(UserRole.User.ToString()));
-});
 
 builder.Services.AddHttpClient("NashApp.Api", client =>
 {
@@ -30,22 +35,47 @@ builder.Services.AddHttpClient("NashApp.Api", client =>
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 
-builder.Services.AddAuthentication("CookieAuth")
-        .AddCookie("CookieAuth", options =>
+// Configure authentication with cookie scheme
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "jwt";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.LoginPath = "/Login";
+        options.LogoutPath = "/Logout";
+        options.ExpireTimeSpan = TimeSpan.FromDays(3); // Matches AuthController's jwt cookie
+        options.SlidingExpiration = false; // Prevent extending beyond 3 days
+        options.Events.OnSigningIn = context =>
         {
-            options.Cookie.Name = "jwt";
-            options.LoginPath = "/Login";
-            options.LogoutPath = "/Logout";
-        });
+            // Ensure jwt cookie uses API's token, not session cookie
+            context.Properties.IsPersistent = true;
+            context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3);
+            return Task.CompletedTask;
+        };
+    });
 
+// Add antiforgery for CSRF protection
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = "XSRF-TOKEN"; // Different from API's 'csrf'
+    options.Cookie.HttpOnly = false;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
+
+// Configure CORS to allow only the API origin
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowApi", builder =>
     {
-        builder.AllowAnyOrigin()
+        builder.WithOrigins(apiAddress.TrimEnd('/'))
                .AllowAnyMethod()
                .AllowAnyHeader()
-               .WithExposedHeaders("pagination"); // Lowercase
+               .AllowCredentials()
+               .WithExposedHeaders("pagination");
     });
 });
 
@@ -64,6 +94,9 @@ else
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+// Enable CORS before authentication/authorization
+app.UseCors("AllowApi");
 
 app.UseAuthentication();
 app.UseAuthorization();

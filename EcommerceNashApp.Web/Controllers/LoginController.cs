@@ -1,14 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using System;
-using EcommerceNashApp.Web.Models.DTOs;
-using EcommerceNashApp.Core.DTOs.Wrapper;
+﻿using EcommerceNashApp.Web.Models.DTOs;
 using EcommerceNashApp.Web.Models.DTOs.Request;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace EcommerceNashApp.Web.Controllers
 {
@@ -16,11 +13,13 @@ namespace EcommerceNashApp.Web.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<LoginController> _logger;
 
-        public LoginController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public LoginController(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<LoginController> logger)
         {
             _httpClient = httpClientFactory.CreateClient("NashApp.Api");
             _configuration = configuration;
+            _logger = logger;
         }
 
         // GET: /Login
@@ -28,7 +27,7 @@ namespace EcommerceNashApp.Web.Controllers
         public IActionResult Index(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            return View(null);
+            return View();
         }
 
         // POST: /Login
@@ -50,15 +49,19 @@ namespace EcommerceNashApp.Web.Controllers
                     { new StringContent(model.Password), "password" },
                 };
 
+                _logger.LogInformation("Calling /api/Auth/login for email: {Email}", model.Email);
                 var response = await _httpClient.PostAsync("/api/Auth/login", formData);
-                var result = await response.Content.ReadFromJsonAsync<ApiDto<AuthDto>>();
+                var content = await response.Content.ReadAsStringAsync();
+                _logger.LogDebug("API response: {Content}", content);
+
+                var result = JsonSerializer.Deserialize<ApiDto<AuthDto>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Set csrf cookie
-                    SetCsrfCookie(result.Body);
+                    // API sets jwt, refresh, and csrf cookies
+                    _logger.LogInformation("Login successful for user ID: {UserId}", result.Body.User.Id);
 
-                    // Create claims for user info
+                    // Create minimal claims for MVC authentication
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.NameIdentifier, result.Body.User.Id.ToString()),
@@ -66,36 +69,29 @@ namespace EcommerceNashApp.Web.Controllers
                         new Claim(ClaimTypes.Name, result.Body.User.UserName ?? "Anonymous"),
                     };
 
-                    // Create identity and principal
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var principal = new ClaimsPrincipal(identity);
-                    await HttpContext.SignInAsync("CookieAuth", principal, new AuthenticationProperties
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
                     {
-                        IsPersistent = false
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3) // Match jwt cookie
                     });
 
                     returnUrl = returnUrl ?? Url.Action("Index", "Home");
+                    _logger.LogInformation("Redirecting to {ReturnUrl}", returnUrl);
                     return Redirect(returnUrl);
                 }
 
+                _logger.LogWarning("Login failed: {Message}", result?.Message);
                 ModelState.AddModelError("", result?.Message ?? "Email hoặc mật khẩu không đúng.");
                 return View(model);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error during login for email: {Email}", model.Email);
                 ModelState.AddModelError("", "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
                 return View(model);
             }
-        }
-
-        private void SetCsrfCookie(AuthDto authResponse)
-        {
-            Response.Cookies.Append("csrf", authResponse.CsrfToken, new CookieOptions
-            {
-                HttpOnly = false,
-                Secure = true,
-                SameSite = SameSiteMode.Strict
-            });
         }
     }
 }

@@ -1,7 +1,5 @@
-﻿using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Web.Models.DTOs;
 using EcommerceNashApp.Web.Models.Views;
-using System.Threading;
 
 namespace EcommerceNashApp.Web.Services.Impl
 {

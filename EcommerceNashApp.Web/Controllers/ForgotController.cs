@@ -1,10 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using System;
-using EcommerceNashApp.Core.DTOs.Wrapper;
-using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Web.Models.DTOs;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Web.Controllers
 {

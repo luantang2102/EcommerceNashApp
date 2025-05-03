@@ -1,6 +1,4 @@
-﻿using EcommerceNashApp.Core.DTOs.Response;
-
-namespace EcommerceNashApp.Web.Models.DTOs
+﻿namespace EcommerceNashApp.Web.Models.DTOs
 {
     public class UserDto
     {
