@@ -1,8 +1,13 @@
-﻿@using System.Security.Claims
-@if (User.Identity.IsAuthenticated)
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var userInfoJson = HttpContextAccessor.HttpContext!.Session.GetString("UserInfo");
+    var userInfo = userInfoJson != null ? Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(userInfoJson) : null;
+}
+@if (userInfo != null)
 {
-    var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-    <div class="nav-item dropdown">
+    var userName = userInfo.UserName;
+    <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle text-black" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="white-space: nowrap;">
             <svg class="user me-1" width="20" height="20">
                 <use xlink:href="#user"></use>
@@ -18,11 +23,11 @@
                 </form>
             </li>
         </ul>
-    </div>
+    </li>
 }
 else
 {
-    <div class="nav-item dropdown">
+    <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle text-black" href="#" id="authDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="white-space: nowrap;">
             <svg class="user me-1" width="20" height="20">
                 <use xlink:href="#user"></use>
@@ -33,5 +38,5 @@ else
             <li><a class="dropdown-item" asp-controller="Login" asp-action="Index">Đăng Nhập</a></li>
             <li><a class="dropdown-item" asp-controller="Register" asp-action="Index">Đăng Ký</a></li>
         </ul>
-    </div>
+    </li>
 }

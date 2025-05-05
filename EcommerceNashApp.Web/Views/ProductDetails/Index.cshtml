@@ -1,8 +1,11 @@
 ﻿@using EcommerceNashApp.Web.Models.Views
-@using System.Security.Claims
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
 @model ProductDetailsView
 @{
     ViewData["Title"] = @Model.Product.Name;
+    var userInfoJson = HttpContextAccessor.HttpContext!.Session.GetString("UserInfo");
+    var userInfo = userInfoJson != null ? Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(userInfoJson) : null;
 }
 
 <!-- Header -->
@@ -21,6 +24,22 @@
 <!-- Product Details Section -->
 <section class="py-5">
     <div class="container">
+        <!-- Success/Error Messages -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
         <div class="row">
             <div class="col-lg-6 mb-4 mb-lg-0">
                 <!-- Swipeable Image Gallery -->
@@ -58,7 +77,7 @@
                     <!-- Size Selection -->
                     <div class="mb-3">
                         <label for="size" class="form-label fw-bold">Kích thước:</label>
-                        <select id="size" class="form-select">
+                        <select id="size" name="size" class="form-select">
                             <option value="S">S</option>
                             <option value="M">M</option>
                             <option value="L">L</option>
@@ -67,17 +86,27 @@
                     </div>
 
                     <!-- Quantity Selection -->
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="quantity" class="form-label fw-bold">Số lượng:</label>
                         <div class="input-group w-50">
                             <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(-1)">-</button>
-                            <input type="number" id="quantity" class="form-control text-center" value="1" min="1" max="@Model.Product.StockQuantity">
+                            <input type="number" id="quantity" name="quantity" class="form-control text-center" value="1" min="1" max="@Model.Product.StockQuantity">
                             <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(1)">+</button>
                         </div>
                     </div>
 
-                    <!-- Add to Cart -->
-                    <button class="btn btn-primary w-100 text-uppercase mb-3" onclick="addToCart('@Model.Product.Id')">Thêm vào giỏ hàng</button>
+                    <!-- Add to Cart Form -->
+                    <form asp-action="AddToCart" asp-controller="Cart" method="post" class="mb-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Product.Id" />
+                        <input type="hidden" name="quantity" id="cart-quantity" value="1" />
+                        <input type="hidden" name="size" id="cart-size" value="S" />
+                        @if (userInfo != null && userInfo.UserId != null)
+                        {
+                            <input type="hidden" name="userId" value="@userInfo.UserId" />
+                        }
+                        <button type="submit" class="btn btn-red hvr-sweep-to-right dark-sweep w-100 text-uppercase">Thêm vào giỏ hàng</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -143,33 +172,75 @@
                 <p>Chưa có đánh giá nào cho sản phẩm này.</p>
             }
 
-            <!-- Add Rating Form (Logged-in Users Only) -->
-            @if (Model.IsLoggedIn)
+            <!-- Rating Form (Logged-in Users Only) -->
+            @if (userInfo != null && userInfo.UserId != null)
             {
                 <div class="mt-4">
-                    <h5 class="fw-bold mb-3">Thêm đánh giá của bạn</h5>
-                    <form id="rating-form">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Đánh giá:</label>
-                            <div class="star-rating">
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    <input type="radio" name="rating" id="star-@i" value="@i" required>
-                                    <label for="star-@i" style="color: gold; font-size: 1.5rem; cursor: pointer;">★</label>
-                                }
+                    @if (Model.UserRating != null)
+                    {
+                        <!-- Update/Delete Rating Form -->
+                        <h5 class="fw-bold mb-3">Đánh giá của bạn</h5>
+                        <form asp-action="UpdateRating" asp-controller="ProductDetails" method="post" class="update-rating-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@Model.Product.Id" />
+                            <input type="hidden" name="ratingId" value="@Model.UserRating.Id" />
+                            <input type="hidden" name="userId" value="@userInfo.UserId" />
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Đánh giá:</label>
+                                <div class="star-rating">
+                                    @for (int i = 5; i >= 1; i--)
+                                    {
+                                        <input type="radio" name="rating" id="update-star-@i" value="@i" required @(Model.UserRating.Value == i ? "checked" : "")>
+                                        <label for="update-star-@i" style="font-size: 1.5rem; cursor: pointer;">★</label>
+                                    }
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="comment" class="form-label fw-bold">Bình luận:</label>
-                            <textarea id="comment" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
-                    </form>
+                            <div class="mb-3">
+                                <label for="update-comment" class="form-label fw-bold">Bình luận:</label>
+                                <textarea name="comment" id="update-comment" class="form-control" rows="4" required>@Model.UserRating.Comment</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-red hvr-sweep-to-right dark-sweep me-2">Cập nhật đánh giá</button>
+                        </form>
+                        <!-- Delete Rating Form -->
+                        <div class="mt-4"></div>
+                        <form asp-action="DeleteRating" asp-controller="ProductDetails" method="post" style="display: inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@Model.Product.Id" />
+                            <input type="hidden" name="ratingId" value="@Model.UserRating.Id" />
+                            <input type="hidden" name="userId" value="@userInfo.UserId" />
+                            <button type="submit" class="btn btn-outline-gray hvr-sweep-to-right" onclick="return confirm('Bạn có chắc muốn xóa đánh giá này?');">Xóa đánh giá</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- Add Rating Form -->
+                        <h5 class="fw-bold mb-3">Thêm đánh giá của bạn</h5>
+                        <form asp-action="AddRating" asp-controller="ProductDetails" method="post" class="add-rating-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@Model.Product.Id" />
+                            <input type="hidden" name="userId" value="@userInfo.UserId" />
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Đánh giá:</label>
+                                <div class="star-rating">
+                                    @for (int i = 5; i >= 1; i--)
+                                    {
+                                        <input type="radio" name="rating" id="add-star-@i" value="@i" required>
+                                        <label for="add-star-@i" style="font-size: 1.5rem; cursor: pointer;">★</label>
+                                    }
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="add-comment" class="form-label fw-bold">Bình luận:</label>
+                                <textarea name="comment" id="add-comment" class="form-control" rows="4" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-red hvr-sweep-to-right dark-sweep">Gửi đánh giá</button>
+                        </form>
+                    }
                 </div>
             }
             else
             {
-                <p class="mt-3">Vui lòng <a href="@Url.Action("Login", "Account")">đăng nhập</a> để thêm đánh giá.</p>
+                <p class="mt-3">Vui lòng <a href="@Url.Action("Index", "Login")">đăng nhập</a> để thêm đánh giá.</p>
             }
         </div>
 
@@ -183,15 +254,12 @@
                         @foreach (var product in Model.RelatedProducts)
                         {
                             <div class="swiper-slide">
-                                <div class="product-card border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;">
+                                <div class="product-card border rounded-3 overflow-hidden bg-white" style="transition: box-shadow 0.3s ease; cursor: pointer;" onclick="window.location.href='@Url.Action("Index", "ProductDetails")?id=@product.Id'">
                                     <div class="card-img overflow-hidden" style="height: 20vh;">
-                                        <img src="@(product.ProductImages.Any() ? product.ProductImages.First().ImageUrl : "~/images/placeholder.jpg")"
-                                             alt="@product.Name" class="img-fluid w-100 h-100 object-fit-cover">
+                                        <img src="@(product.ProductImages.Any() ? product.ProductImages.First().ImageUrl : "~/images/placeholder.jpg")" alt="@product.Name" class="img-fluid w-100 h-100 object-fit-cover">
                                     </div>
                                     <div class="card-detail d-flex flex-column p-3">
-                                        <h5 class="fs-6 fw-bold mb-2">
-                                            <a href="@Url.Action("Index", "ProductDetails", new { id = product.Id })">@product.Name</a>
-                                        </h5>
+                                        <h5 class="fs-6 fw-bold mb-2">@product.Name</h5>
                                         <span class="fw-bold">$@product.Price.ToString("N2")</span>
                                     </div>
                                 </div>
@@ -254,48 +322,12 @@
             if (value < 1) value = 1;
             if (value > parseInt(quantityInput.max)) value = parseInt(quantityInput.max);
             quantityInput.value = value;
+            document.getElementById('cart-quantity').value = value; // Update hidden input for cart
         }
 
-        // Add to Cart (Reuse from ProductIndex.cshtml)
-        function addToCart(productId) {
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const size = document.getElementById('size').value;
-            fetch('/api/Cart/Add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: productId, quantity: quantity, size: size })
-            })
-            .then(response => response.ok ? alert('Product added to cart!') : alert('Failed to add product to cart.'))
-            .catch(error => {
-                console.error('Error adding to cart:', error);
-                alert('An error occurred while adding to cart.');
-            });
-        }
-
-        // Rating Form Submission
-        document.getElementById('rating-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const rating = document.querySelector('input[name="rating"]:checked')?.value;
-            const comment = document.getElementById('comment').value;
-            if (!rating || !comment) {
-                alert('Vui lòng chọn số sao và nhập bình luận.');
-                return;
-            }
-
-            fetch('https://localhost:5001/api/Ratings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productId: '@Model.Product.Id',
-                    value: parseInt(rating),
-                    comment: comment
-                })
-            })
-            .then(response => response.ok ? alert('Đánh giá đã được gửi!') : alert('Gửi đánh giá thất bại.'))
-            .catch(error => {
-                console.error('Error submitting rating:', error);
-                alert('Đã xảy ra lỗi khi gửi đánh giá.');
-            });
+        // Update size selection for cart
+        document.getElementById('size').addEventListener('change', function () {
+            document.getElementById('cart-size').value = this.value;
         });
     </script>
     <script src="js/jquery-1.11.0.min.js"></script>
@@ -304,18 +336,38 @@
 
     <!-- Star Rating Styling -->
     <style>
-        .star-rating input[type="radio"] {
-            display: none;
+        /* Base styles for both star ratings */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
         }
 
-        .star-rating label {
-            margin: 0 5px;
-        }
-
-            .star-rating input:checked ~ label,
-            .star-rating label:hover,
-            .star-rating label:hover ~ label {
-                color: orange !important;
+            .star-rating input[type="radio"] {
+                display: none;
             }
+
+            .star-rating label {
+                margin: 0 5px;
+                cursor: pointer;
+                color: #808080; /* Default gray for both forms */
+            }
+
+        /* Update Rating Form: Yellow (gold) for hover and selected */
+        .update-rating-form .star-rating input:checked ~ label,
+        .update-rating-form .star-rating label:hover,
+        .update-rating-form .star-rating label:hover ~ label {
+            color: #FFD700 !important; /* Gold for selected and hover */
+        }
+
+        /* Add Rating Form: Orange for hover and selected */
+        .add-rating-form .star-rating label:hover,
+        .add-rating-form .star-rating label:hover ~ label {
+            color: #FFA500 !important; /* Orange for hover */
+        }
+
+        .add-rating-form .star-rating input:checked ~ label {
+            color: #FFA500 !important; /* Orange for selected */
+        }
     </style>
 }

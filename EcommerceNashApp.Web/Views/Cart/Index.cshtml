@@ -1,11 +1,26 @@
-﻿@using EcommerceNashApp.Web.Models.Views
-@model CartPageView
+﻿@model EcommerceNashApp.Web.Models.Views.CartPageView
 @{
     ViewData["Title"] = "Giỏ Hàng";
 }
 
 <section id="cart" class="cart-page py-5">
     <div class="container-md">
+        <!-- Display Success or Error Messages -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
         <h1 class="display-6 text-center mb-5">Giỏ Hàng Của Bạn</h1>
         <div class="row">
             <!-- Checkout Stepper (Left) -->
@@ -39,7 +54,7 @@
                             {
                                 <div class="cart-item d-flex border-bottom pb-4 mb-4" data-cart-item-key="@item.Id">
                                     <div class="col-lg-2 col-md-3 col-sm-2 me-4">
-                                        <a href="@Url.Action("Index", "ProductDetails", new { id = item.ProductId })" title="product-image">
+                                        <a href='@Url.Action("Index", "ProductDetails")?id=@item.ProductId' title="product-image">
                                             <img src="@(item.Images[0].ImageUrl ?? "~/images/placeholder.jpg")" class="img-fluid rounded" alt="@item.ProductName">
                                         </a>
                                     </div>
@@ -83,7 +98,7 @@
                             <span class="fs-5 fw-bold">$@Model.Subtotal.ToString("F2")</span>
                         </div>
                         <div class="text-end">
-                            <a href="@Url.Action("Index", "Checkout")" class="btn btn-red btn-medium text-uppercase hvr-sweep-to-right">Tiến Hành Thanh Toán</a>
+                            <a href="@Url.Action("Index", "Checkout")" class="btn btn-red btn-medium text-uppercase hvr-sweep-to-right dark-sweep">Tiến Hành Thanh Toán</a>
                             @if (Model.Items.Any())
                             {
                                 <form asp-action="ClearCart" asp-controller="Cart" method="post" class="d-inline">

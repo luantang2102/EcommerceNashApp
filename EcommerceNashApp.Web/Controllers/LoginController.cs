@@ -1,97 +1,143 @@
-﻿using EcommerceNashApp.Web.Models.DTOs;
-using EcommerceNashApp.Web.Models.DTOs.Request;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using EcommerceNashApp.Web.Models;
+using EcommerceNashApp.Web.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Text.Json;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace EcommerceNashApp.Web.Controllers
 {
     public class LoginController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<LoginController> _logger;
 
-        public LoginController(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<LoginController> logger)
+        public LoginController(IHttpClientFactory httpClientFactory, ILogger<LoginController> logger)
         {
-            _httpClient = httpClientFactory.CreateClient("NashApp.Api");
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
-        // GET: /Login
-        [HttpGet]
         public IActionResult Index(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
-        // POST: /Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index([FromForm] LoginRequest model, string returnUrl = null)
+        public async Task<IActionResult> Index(string email, string password, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            if (!ModelState.IsValid)
+
+            var client = _httpClientFactory.CreateClient("NashApp.Api");
+            var formContent = new MultipartFormDataContent
             {
-                return View(model);
-            }
+                { new StringContent(email), "Email" },
+                { new StringContent(password), "Password" }
+            };
 
-            try
+            _logger.LogInformation("Calling /api/Auth/login for email: {Email}", email);
+            var response = await client.PostAsync("/api/Auth/login", formContent);
+
+            if (response.IsSuccessStatusCode)
             {
-                var formData = new MultipartFormDataContent
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<ApiDto<AuthDto>>(responseContent);
+                _logger.LogInformation("Login successful for user: {UserId}", apiResponse.Body.User.Id);
+
+                // Propagate API cookies to browser and CookieContainer
+                if (response.Headers.TryGetValues("Set-Cookie", out var setCookies))
                 {
-                    { new StringContent(model.Email), "email" },
-                    { new StringContent(model.Password), "password" },
-                };
-
-                _logger.LogInformation("Calling /api/Auth/login for email: {Email}", model.Email);
-                var response = await _httpClient.PostAsync("/api/Auth/login", formData);
-                var content = await response.Content.ReadAsStringAsync();
-                _logger.LogDebug("API response: {Content}", content);
-
-                var result = JsonSerializer.Deserialize<ApiDto<AuthDto>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-
-                if (response.IsSuccessStatusCode)
+                    if (client.GetType().GetProperty("Handler")?.GetValue(client) is HttpClientHandler handler && handler.UseCookies)
+                    {
+                        var cookieContainer = handler.CookieContainer;
+                        foreach (var cookieHeader in setCookies)
+                        {
+                            var cookieParts = cookieHeader.Split(';');
+                            var nameValue = cookieParts[0].Split('=');
+                            if (nameValue.Length == 2)
+                            {
+                                var cookie = new Cookie(nameValue[0].Trim(), nameValue[1].Trim())
+                                {
+                                    Domain = "localhost",
+                                    Path = "/",
+                                    Secure = true,
+                                    HttpOnly = cookieParts.Any(p => p.Trim().ToLower() == "httponly")
+                                };
+                                foreach (var part in cookieParts.Skip(1))
+                                {
+                                    var kv = part.Split('=');
+                                    if (kv.Length == 2 && kv[0].Trim().ToLower() == "expires")
+                                    {
+                                        if (DateTime.TryParse(kv[1].Trim(), out var expires))
+                                            cookie.Expires = expires;
+                                    }
+                                }
+                                cookieContainer.Add(new Uri("https://localhost:5001"), cookie);
+                                _logger.LogDebug("Added cookie to CookieContainer: {Name}={Value}", cookie.Name, cookie.Value.Substring(0, Math.Min(20, cookie.Value.Length)) + "...");
+                            }
+                            HttpContext.Response.Headers.Append("Set-Cookie", cookieHeader);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var cookie in setCookies)
+                        {
+                            HttpContext.Response.Headers.Append("Set-Cookie", cookie);
+                        }
+                    }
+                }
+                else
                 {
-                    // API sets jwt, refresh, and csrf cookies
-                    _logger.LogInformation("Login successful for user ID: {UserId}", result.Body.User.Id);
-
-                    // Create minimal claims for MVC authentication
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, result.Body.User.Id.ToString()),
-                        new Claim(ClaimTypes.Email, result.Body.User.Email ?? string.Empty),
-                        new Claim(ClaimTypes.Name, result.Body.User.UserName ?? "Anonymous"),
-                    };
-
-                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var principal = new ClaimsPrincipal(identity);
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
-                    {
-                        IsPersistent = true,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3) // Match jwt cookie
-                    });
-
-                    returnUrl = returnUrl ?? Url.Action("Index", "Home");
-                    _logger.LogInformation("Redirecting to {ReturnUrl}", returnUrl);
-                    return Redirect(returnUrl);
+                    _logger.LogWarning("No Set-Cookie headers found in /api/Auth/login response");
                 }
 
-                _logger.LogWarning("Login failed: {Message}", result?.Message);
-                ModelState.AddModelError("", result?.Message ?? "Email hoặc mật khẩu không đúng.");
-                return View(model);
+                // Store user info in session
+                var userInfo = new
+                {
+                    UserId = apiResponse.Body.User.Id,
+                    UserName = apiResponse.Body.User.UserName,
+                    Roles = apiResponse.Body.User.Roles
+                };
+                HttpContext.Session.SetString("UserInfo", JsonConvert.SerializeObject(userInfo));
+                _logger.LogInformation("Stored user info in session for UserId: {UserId}", userInfo.UserId);
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                return RedirectToAction("Index", "Home");
             }
-            catch (Exception ex)
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogError("Login failed: StatusCode={StatusCode}, Response={Content}", response.StatusCode, errorContent);
+            ViewData["Error"] = "Invalid email or password.";
+            return View();
+        }
+
+        // Helper to check authentication state
+        public bool IsAuthenticated()
+        {
+            var userInfoJson = HttpContext.Session.GetString("UserInfo");
+            var isAuthenticated = !string.IsNullOrEmpty(userInfoJson);
+            _logger.LogDebug("Checked authentication state: {IsAuthenticated}", isAuthenticated);
+            return isAuthenticated;
+        }
+
+        // Helper to get user info
+        public dynamic GetUserInfo()
+        {
+            var userInfoJson = HttpContext.Session.GetString("UserInfo");
+            if (!string.IsNullOrEmpty(userInfoJson))
             {
-                _logger.LogError(ex, "Error during login for email: {Email}", model.Email);
-                ModelState.AddModelError("", "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
-                return View(model);
+                return JsonConvert.DeserializeObject<dynamic>(userInfoJson);
             }
+            _logger.LogWarning("No user info found in session");
+            return null;
         }
     }
 }

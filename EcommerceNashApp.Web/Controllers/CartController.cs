@@ -1,59 +1,235 @@
 ﻿using EcommerceNashApp.Web.Models;
+using EcommerceNashApp.Web.Models.DTOs;
 using EcommerceNashApp.Web.Models.Views;
+using EcommerceNashApp.Web.Services;
 using EcommerceNashApp.Web.Services.Impl;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Web.Controllers
 {
-    [Authorize]
     public class CartController : Controller
     {
-        private readonly CartService _apiService;
+        private readonly ICartService _cartService;
+        private readonly ILogger<CartController> _logger;
 
-        public CartController(CartService apiService)
+        public CartController(ICartService cartService, ILogger<CartController> logger)
         {
-            _apiService = apiService;
+            _cartService = cartService;
+            _logger = logger;
+        }
+
+        private bool IsAuthenticated()
+        {
+            var userInfoJson = HttpContext.Session.GetString("UserInfo");
+            var isAuthenticated = !string.IsNullOrEmpty(userInfoJson);
+            _logger.LogDebug("Checked authentication state: {IsAuthenticated}", isAuthenticated);
+            return isAuthenticated;
         }
 
         public async Task<IActionResult> Index()
         {
-            var cart = await _apiService.GetCartAsync();
-            var model = new CartPageView
+            if (!IsAuthenticated())
             {
-                Items = cart.CartItems
-            };
-            return View(model);
+                _logger.LogWarning("User not authenticated, redirecting to login");
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+
+            try
+            {
+                _logger.LogInformation("Fetching cart for user");
+                var cart = await _cartService.GetCartAsync();
+                var model = new CartPageView
+                {
+                    Items = cart.CartItems
+                };
+                return View(model);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning("Unauthorized access in GetCartAsync: {Message}", ex.Message);
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching cart");
+                TempData["Error"] = "Không thể tải giỏ hàng. Vui lòng thử lại sau.";
+                return View(new CartPageView { Items = [] });
+            }
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddItem([FromBody] AddToCartRequest request)
+        {
+            if (!IsAuthenticated())
+            {
+                _logger.LogWarning("User not authenticated, returning Unauthorized for AddItem");
+                return Unauthorized();
+            }
+
+            try
+            {
+                _logger.LogInformation("Adding item to cart: ProductId={ProductId}, Quantity={Quantity}, Size={Size}",
+                    request.ProductId, request.Quantity, request.Size);
+                var cartItem = await _cartService.AddItemToCartAsync(Guid.Parse(request.ProductId), request.Quantity);
+                return Ok(new { Message = "Product added to cart" });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _logger.LogWarning("Unauthorized access when adding to cart");
+                return Unauthorized();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error adding to cart: {Error}", ex.Message);
+                return StatusCode(500, new { Message = "Failed to add product to cart" });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart(Guid productId, int quantity)
         {
-            await _apiService.AddItemToCartAsync(productId, quantity);
-            return RedirectToAction("Index");
+            if (!IsAuthenticated())
+            {
+                _logger.LogWarning("User not authenticated, redirecting to login");
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+
+            try
+            {
+                _logger.LogInformation("Adding item to cart: ProductId={ProductId}, Quantity={Quantity}", productId, quantity);
+                await _cartService.AddItemToCartAsync(productId, quantity);
+                TempData["Success"] = "Đã thêm sản phẩm vào giỏ hàng.";
+                return RedirectToAction("Index");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning("Unauthorized access in AddItemToCartAsync: {Message}", ex.Message);
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding item to cart");
+                TempData["Error"] = "Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.";
+                return RedirectToAction("Index");
+            }
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateCartItem(Guid cartItemId, int quantity)
         {
-            await _apiService.UpdateCartItemAsync(cartItemId, quantity);
-            return RedirectToAction("Index");
+            if (!IsAuthenticated())
+            {
+                _logger.LogWarning("User not authenticated, redirecting to login");
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+
+            if (quantity <= 0)
+            {
+                _logger.LogInformation("Quantity ({Quantity}) is 0 or negative, removing cart item: CartItemId={CartItemId}", quantity, cartItemId);
+                try
+                {
+                    await _cartService.DeleteCartItemAsync(cartItemId);
+                    TempData["Success"] = "Đã xóa sản phẩm khỏi giỏ hàng.";
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error removing cart item: CartItemId={CartItemId}", cartItemId);
+                    TempData["Error"] = "Không thể xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại.";
+                }
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                _logger.LogInformation("Updating cart item: CartItemId={CartItemId}, Quantity={Quantity}", cartItemId, quantity);
+                await _cartService.UpdateCartItemAsync(cartItemId, quantity);
+                TempData["Success"] = "Đã cập nhật giỏ hàng.";
+                return RedirectToAction("Index");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning("Unauthorized access in UpdateCartItemAsync: {Message}", ex.Message);
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating cart item");
+                TempData["Error"] = "Không thể cập nhật giỏ hàng. Vui lòng thử lại.";
+                return RedirectToAction("Index");
+            }
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveCartItem(Guid cartItemId)
         {
-            await _apiService.DeleteCartItemAsync(cartItemId);
-            return RedirectToAction("Index");
+            if (!IsAuthenticated())
+            {
+                _logger.LogWarning("User not authenticated, redirecting to login");
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+
+            try
+            {
+                _logger.LogInformation("Removing cart item: CartItemId={CartItemId}", cartItemId);
+                await _cartService.DeleteCartItemAsync(cartItemId);
+                TempData["Success"] = "Đã xóa sản phẩm khỏi giỏ hàng.";
+                return RedirectToAction("Index");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning("Unauthorized access in DeleteCartItemAsync: {Message}", ex.Message);
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing cart item");
+                TempData["Error"] = "Không thể xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại.";
+                return RedirectToAction("Index");
+            }
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearCart()
         {
-            await _apiService.ClearCartAsync();
-            return RedirectToAction("Index");
+            if (!IsAuthenticated())
+            {
+                _logger.LogWarning("User not authenticated, redirecting to login");
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+
+            try
+            {
+                _logger.LogInformation("Clearing cart");
+                await _cartService.ClearCartAsync();
+                TempData["Success"] = "Đã xóa toàn bộ giỏ hàng.";
+                return RedirectToAction("Index");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning("Unauthorized access in ClearCartAsync: {Message}", ex.Message);
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing cart");
+                TempData["Error"] = "Không thể xóa giỏ hàng. Vui lòng thử lại.";
+                return RedirectToAction("Index");
+            }
         }
+    }
+
+    public class AddToCartRequest
+    {
+        public string ProductId { get; set; }
+        public int Quantity { get; set; }
+        public string Size { get; set; }
     }
 }

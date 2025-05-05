@@ -1,92 +1,15 @@
-﻿<!-- Quick View Modal (#modaltoggle) -->
-<div class="modal fade" id="modaltoggle" aria-hidden="true" tabindex="-1">
-    <div class="modal-dialog modal-fullscreen-md-down modal-md modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-lg-12 col-md-12 me-3">
-                        <div class="image-holder">
-                            <img src="~/images/placeholder.jpg" alt="Product" class="img-fluid" id="quickViewImage">
-                        </div>
-                    </div>
-                    <div class="col-lg-12 col-md-12">
-                        <div class="summary">
-                            <div class="summary-content fs-6">
-                                <div class="product-header d-flex justify-content-between mt-4">
-                                    <h3 class="display-7" id="quickViewName">Đang tải...</h3>
-                                    <div class="modal-close-btn">
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                </div>
-                                <span class="product-price fs-3" id="quickViewPrice">$0.00</span>
-                                <div class="product-details">
-                                    <p class="fs-7" id="quickViewDescription">Đang tải mô tả...</p>
-                                </div>
-                                <div class="rating mt-2" id="quickViewRating">
-                                    <!-- Stars will be populated by JavaScript -->
-                                </div>
-                                <div class="variations-form shopify-cart mt-3">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="quantity d-flex pb-4">
-                                                <div class="qty-number qty-number-minus d-flex justify-content-center align-items-center text-center">
-                                                    <span class="increase-qty minus">
-                                                        <svg class="minus"><use xlink:href="#minus"></use></svg>
-                                                    </span>
-                                                </div>
-                                                <input type="number" id="quickViewQuantity" class="input-text text-center form-control" step="1" min="1" name="quantity" value="1" title="Số Lượng">
-                                                <div class="qty-number qty-number-plus d-flex justify-content-center align-items-center text-center">
-                                                    <span class="increase-qty plus">
-                                                        <svg class="plus"><use xlink:href="#plus"></use></svg>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6" id="quickViewStock">
-                                            <span class="text-danger">Đang kiểm tra kho...</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+﻿<!-- Render QuickViewModal View Component -->
+@{
+    Guid? productId = null;
+    if (ViewData["ProductId"] != null && Guid.TryParse(ViewData["ProductId"].ToString(), out var parsedId))
+    {
+        productId = parsedId;
+    }
+}
+@await Component.InvokeAsync("QuickViewModal", new { productId })
 
-<!-- Cart Modal (#modallong) -->
-<div class="modal fade" id="modallong" tabindex="-1" aria-modal="true" role="dialog">
-    <div class="modal-dialog modal-fullscreen-md-down modal-md modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title fs-5">Giỏ Hàng</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="shopping-cart">
-                    <div class="shopping-cart-content">
-                        <div id="cartItems" class="mini-cart cart-list p-0 mt-3">
-                            <!-- Cart items will be populated by JavaScript -->
-                        </div>
-                        <div class="mini-cart-total d-flex justify-content-between py-4">
-                            <span class="fs-6">Tổng Cộng:</span>
-                            <span class="special-price-code">
-                                <span class="price-amount amount fs-6" id="cartSubtotal">$0.00</span>
-                            </span>
-                        </div>
-                        <div class="modal-footer my-4 justify-content-center">
-                            <a href="@Url.Action("Index", "Cart")" class="btn btn-red hvr-sweep-to-right dark-sweep">Xem Giỏ Hàng</a>
-                            <a href="@Url.Action("Index", "Checkout")" class="btn btn-outline-gray hvr-sweep-to-right dark-sweep">Thanh Toán</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+<!-- Render CartModal View Component -->
+@await Component.InvokeAsync("CartModal")
 
 @section Scripts {
     <script>
@@ -94,99 +17,81 @@
             // Debugging: Log to confirm script is running
             console.log('Modal script loaded');
 
-            // Get CSRF token from cookie
+            // Get CSRF token from meta tag
             function getCsrfToken() {
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const [name, value] = cookie.trim().split('=');
-                    if (name === 'csrf') return value;
-                }
-                return null;
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                return meta ? meta.content : null;
             }
 
-            // Quick View: Load Product
-            async function loadQuickViewProduct(productId) {
+            // Fetch UserInfo from session
+            async function getUserInfo() {
                 try {
-                    const response = await fetch(`/api/Products/${productId}`);
-                    if (!response.ok) throw new Error('Failed to load product');
-                    const product = await response.json();
-                    const productData = product.data || product; // Adjust based on API response
-
-                    // Update modal content
-                    document.getElementById('quickViewImage').src = productData.productImages?.[0]?.imageUrl || '~/images/placeholder.jpg';
-                    document.getElementById('quickViewImage').alt = productData.name;
-                    document.getElementById('quickViewName').textContent = productData.name;
-                    document.getElementById('quickViewPrice').textContent = `$${productData.price.toFixed(2)}`;
-                    document.getElementById('quickViewDescription').textContent = productData.description;
-
-                    // Update rating
-                    const ratingContainer = document.getElementById('quickViewRating');
-                    const rating = Math.round(productData.averageRating * 2) / 2;
-                    const fullStars = Math.floor(rating);
-                    const halfStar = rating % 1 >= 0.5 ? 1 : 0;
-                    const emptyStars = 5 - fullStars - halfStar;
-                    ratingContainer.innerHTML = '';
-                    for (let i = 0; i < fullStars; i++) ratingContainer.innerHTML += '<span style="color: gold;">★</span>';
-                    if (halfStar) ratingContainer.innerHTML += '<span style="color: gold;">★</span>';
-                    for (let i = 0; i < emptyStars; i++) ratingContainer.innerHTML += '<span style="color: gray;">☆</span>';
-                    ratingContainer.innerHTML += ` (${productData.averageRating.toFixed(1)})`;
-
-                    // Update stock and add to cart
-                    const stockContainer = document.getElementById('quickViewStock');
-                    if (productData.stockQuantity <= 0) {
-                        stockContainer.innerHTML = '<span class="text-danger">Hết Hàng</span>';
-                    } else {
-                        stockContainer.innerHTML = `<button type="button" class="btn btn-medium btn-black hvr-sweep-to-right" onclick="addToCartQuickView('${productData.id}')">Thêm Vào Giỏ</button>`;
-                    }
+                    const response = await fetch('/api/Session/UserInfo');
+                    if (!response.ok) return null;
+                    const userInfo = await response.json();
+                    return userInfo.userId ? { userId: userInfo.userId } : null;
                 } catch (error) {
-                    console.error('Error loading product:', error);
-                    document.getElementById('quickViewName').textContent = 'Lỗi';
-                    document.getElementById('quickViewDescription').textContent = 'Không thể tải thông tin sản phẩm.';
-                    document.getElementById('quickViewStock').innerHTML = '<span class="text-danger">Lỗi tải dữ liệu</span>';
+                    console.error('Error fetching UserInfo:', error);
+                    return null;
                 }
             }
 
             // Quick View: Quantity Selector
-            const quickViewQuantityInput = document.getElementById('quickViewQuantity');
-            document.querySelector('.qty-number-minus')?.addEventListener('click', () => {
-                let value = parseInt(quickViewQuantityInput.value);
-                if (value > 1) quickViewQuantityInput.value = value - 1;
-            });
-            document.querySelector('.qty-number-plus')?.addEventListener('click', () => {
-                let value = parseInt(quickViewQuantityInput.value);
-                quickViewQuantityInput.value = value + 1;
-            });
+            window.updateQuantity = function(delta) {
+                const input = document.getElementById('quickViewQuantity');
+                let value = parseInt(input.value);
+                value = Math.max(1, value + delta);
+                input.value = value;
+            };
 
             // Quick View: Add to Cart
-            function addToCartQuickView(productId) {
+            window.addToCartQuickView = async function(productId) {
                 const quantity = parseInt(document.getElementById('quickViewQuantity').value);
-                fetch('/api/Cart/Add', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
-                    body: JSON.stringify({ productId, quantity })
-                })
-                .then(response => {
+                const size = document.getElementById('quickViewSize').value;
+                const userInfo = await getUserInfo();
+                const payload = {
+                    productId,
+                    quantity,
+                    size,
+                    userId: userInfo?.userId || null
+                };
+
+                try {
+                    const response = await fetch('/api/Cart/Add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': getCsrfToken()
+                        },
+                        body: JSON.stringify(payload)
+                    });
                     if (response.ok) {
                         alert('Sản phẩm đã được thêm vào giỏ!');
                         const modal = bootstrap.Modal.getInstance(document.getElementById('modaltoggle'));
                         modal.hide();
+                        // Open cart modal
+                        const cartModal = new bootstrap.Modal(document.getElementById('modallong'));
+                        cartModal.show();
+                        // Refresh cart modal by reloading the page
+                        window.location.reload();
                     } else {
-                        alert('Thêm vào giỏ thất bại.');
+                        const error = await response.json();
+                        alert(`Thêm vào giỏ thất bại: ${error.message || 'Lỗi không xác định.'}`);
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error adding to cart:', error);
                     alert('Đã xảy ra lỗi khi thêm vào giỏ.');
-                });
-            }
+                }
+            };
 
-            // Quick View: Attach event listeners
+            // Quick View: Open Modal
             document.querySelectorAll('[data-bs-target="#modaltoggle"]').forEach(button => {
                 button.addEventListener('click', (event) => {
                     event.stopPropagation();
                     const productId = button.dataset.productId;
                     if (productId) {
-                        loadQuickViewProduct(productId);
+                        // Reload page with productId to render QuickViewModal
+                        window.location.href = window.location.pathname + '?productId=' + encodeURIComponent(productId);
                     } else {
                         console.error('Product ID missing');
                         alert('Không thể mở chế độ xem nhanh.');
@@ -194,90 +99,54 @@
                 });
             });
 
-            // Cart: Fetch and Display Cart Items
-            async function loadCartItems() {
+            // Cart: Update Quantity
+            window.updateCartQuantity = async function(cartItemKey, quantity) {
+                if (quantity < 1) return;
+                const userInfo = await getUserInfo();
                 try {
-                    const response = await fetch('/api/Cart', {
-                        headers: { 'X-CSRF-TOKEN': getCsrfToken() }
+                    const response = await fetch('/api/Cart/Update', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': getCsrfToken()
+                        },
+                        body: JSON.stringify({ cartItemKey, quantity, userId: userInfo?.userId || null })
                     });
-                    const cart = await response.json();
-                    const cartItemsDiv = document.getElementById('cartItems');
-                    const subtotalSpan = document.getElementById('cartSubtotal');
-
-                    if (cart.data?.items?.length) {
-                        cartItemsDiv.innerHTML = cart.data.items.map(item => `
-                            <div class="mini-cart-item d-flex border-bottom pb-3" data-cart-item-key="${item.cartItemKey}">
-                                <div class="col-lg-2 col-md-3 col-sm-2 me-4">
-                                    <a href="@Url.Action("Index", "ProductDetails", new { id = new Guid() })" title="product-image">
-                                        <img src="${item.imageUrl || '~/images/placeholder.jpg'}" class="img-fluid" alt="${item.name}">
-                                    </a>
-                                </div>
-                                <div class="col-lg-9 col-md-8 col-sm-8">
-                                    <div class="product-header d-flex justify-content-between align-items-center mb-3">
-                                        <h4 class="product-title fs-6 me-5">${item.name}</h4>
-                                        <a href="#" class="remove" onclick="removeCartItem('${item.cartItemKey}'); return false;" aria-label="Remove this item">
-                                            <svg class="close"><use xlink:href="#close"></use></svg>
-                                        </a>
-                                    </div>
-                                    <div class="quantity-price d-flex justify-content-between align-items-center">
-                                        <div class="input-group product-qty">
-                                            <button type="button" class="quantity-left-minus btn btn-light rounded-0 rounded-start btn-number" onclick="updateCartQuantity('${item.cartItemKey}', ${item.quantity - 1})">
-                                                <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
-                                            </button>
-                                            <input type="text" name="quantity" class="form-control input-number quantity" value="${item.quantity}" readonly>
-                                            <button type="button" class="quantity-right-plus btn btn-light rounded-0 rounded-end btn-number" onclick="updateCartQuantity('${item.cartItemKey}', ${item.quantity + 1})">
-                                                <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
-                                            </button>
-                                        </div>
-                                        <div class="price-code">
-                                            <span class="product-price fs-6">$${item.price.toFixed(2)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('');
-                        subtotalSpan.textContent = `$${cart.data.subtotal.toFixed(2)}`;
+                    if (response.ok) {
+                        window.location.reload();
                     } else {
-                        cartItemsDiv.innerHTML = '<p class="text-center">Giỏ hàng trống.</p>';
-                        subtotalSpan.textContent = '$0.00';
+                        const error = await response.json();
+                        alert(`Cập nhật số lượng thất bại: ${error.message || 'Lỗi không xác định.'}`);
                     }
                 } catch (error) {
-                    console.error('Error loading cart:', error);
-                    document.getElementById('cartItems').innerHTML = '<p class="text-center text-danger">Lỗi khi tải giỏ hàng.</p>';
-                }
-            }
-
-            // Cart: Update Quantity
-            function updateCartQuantity(cartItemKey, quantity) {
-                if (quantity < 1) return;
-                fetch('/api/Cart/Update', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
-                    body: JSON.stringify({ cartItemKey, quantity })
-                })
-                .then(response => response.ok ? loadCartItems() : alert('Cập nhật số lượng thất bại.'))
-                .catch(error => {
                     console.error('Error updating quantity:', error);
                     alert('Đã xảy ra lỗi khi cập nhật số lượng.');
-                });
-            }
+                }
+            };
 
             // Cart: Remove Item
-            function removeCartItem(cartItemKey) {
-                fetch('/api/Cart/Remove', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
-                    body: JSON.stringify({ cartItemKey })
-                })
-                .then(response => response.ok ? loadCartItems() : alert('Xóa sản phẩm thất bại.'))
-                .catch(error => {
+            window.removeCartItem = async function(cartItemKey) {
+                const userInfo = await getUserInfo();
+                try {
+                    const response = await fetch('/api/Cart/Remove', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': getCsrfToken()
+                        },
+                        body: JSON.stringify({ cartItemKey, userId: userInfo?.userId || null })
+                    });
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert(`Xóa sản phẩm thất bại: ${error.message || 'Lỗi không xác định.'}`);
+                    }
+                } catch (error) {
                     console.error('Error removing item:', error);
                     alert('Đã xảy ra lỗi khi xóa sản phẩm.');
-                });
-            }
-
-            // Load cart items when modal opens
-            document.getElementById('modallong').addEventListener('shown.bs.modal', loadCartItems);
+                }
+            };
         });
     </script>
 }

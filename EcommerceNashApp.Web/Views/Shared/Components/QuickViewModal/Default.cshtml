@@ -1,0 +1,94 @@
+﻿@model EcommerceNashApp.Web.Models.Views.ProductView
+
+<div class="modal fade" id="modaltoggle" aria-hidden="true" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen-md-down modal-md modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-lg-12 col-md-12 me-3">
+                        <div class="image-holder">
+                            <img src="@(Model?.ProductImages.FirstOrDefault()?.ImageUrl ?? "~/images/placeholder.jpg")" alt="@(Model?.Name ?? "Product")" class="img-fluid" id="quickViewImage">
+                        </div>
+                    </div>
+                    <div class="col-lg-12 col-md-12">
+                        <div class="summary">
+                            <div class="summary-content fs-6">
+                                <div class="product-header d-flex justify-content-between mt-4">
+                                    <h3 class="display-7" id="quickViewName">@(Model?.Name ?? "Lỗi")</h3>
+                                    <div class="modal-close-btn">
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                </div>
+                                <span class="product-price fs-3" id="quickViewPrice">$@(Model?.Price.ToString("N2") ?? "0.00")</span>
+                                <div class="product-details">
+                                    <p class="fs-7" id="quickViewDescription">@(Model?.Description ?? "Không thể tải thông tin sản phẩm.")</p>
+                                </div>
+                                <div class="rating mt-2" id="quickViewRating">
+                                    @{
+                                        var rating = Model?.AverageRating ?? 0;
+                                        var fullStars = (int)Math.Floor(rating);
+                                        var halfStar = rating % 1 >= 0.5 ? 1 : 0;
+                                        var emptyStars = 5 - fullStars - halfStar;
+                                    }
+                                    @for (int i = 0; i < fullStars; i++)
+                                    {
+                                        <span style="color: gold;">★</span>
+                                    }
+                                    @if (halfStar == 1)
+                                    {
+                                        <span style="color: gold;">★</span>
+                                    }
+                                    @for (int i = 0; i < emptyStars; i++)
+                                    {
+                                        <span style="color: gray;">☆</span>
+                                    }
+                                    (@(Model?.AverageRating.ToString("N1") ?? "0.0"))
+                                </div>
+                                <div class="variations-form shopify-cart mt-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="quantity d-flex pb-4">
+                                                <div class="qty-number qty-number-minus d-flex justify-content-center align-items-center text-center">
+                                                    <span class="increase-qty minus" onclick="updateQuantity(-1)">
+                                                        <svg class="minus"><use xlink:href="#minus"></use></svg>
+                                                    </span>
+                                                </div>
+                                                <input type="number" id="quickViewQuantity" class="input-text text-center form-control" step="1" min="1" name="quantity" value="1" title="Số Lượng">
+                                                <div class="qty-number qty-number-plus d-flex justify-content-center align-items-center text-center">
+                                                    <span class="increase-qty plus" onclick="updateQuantity(1)">
+                                                        <svg class="plus"><use xlink:href="#plus"></use></svg>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="size-selector pb-4">
+                                                <label for="quickViewSize" class="form-label fw-bold">Kích thước:</label>
+                                                <select id="quickViewSize" name="size" class="form-select">
+                                                    <option value="S">S</option>
+                                                    <option value="M">M</option>
+                                                    <option value="L">L</option>
+                                                    <option value="XL">XL</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            @if (Model == null || Model.StockQuantity <= 0 || Model.Id == Guid.Empty)
+                                            {
+                                                <span class="text-danger">Hết Hàng</span>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-medium btn-black hvr-sweep-to-right" onclick="addToCartQuickView('@Model.Id')">Thêm Vào Giỏ</button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

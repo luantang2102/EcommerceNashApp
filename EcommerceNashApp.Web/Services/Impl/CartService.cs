@@ -1,178 +1,279 @@
-﻿using EcommerceNashApp.Web.Models;
-using EcommerceNashApp.Web.Models.DTOs;
-using Newtonsoft.Json;
-using System;
+﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using EcommerceNashApp.Web.Models;
+using EcommerceNashApp.Web.Models.DTOs;
 using EcommerceNashApp.Web.Models.DTOs.Request;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace EcommerceNashApp.Web.Services.Impl
 {
-    public class CartService
+    public class CartService : ICartService
     {
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CartService> _logger;
 
         public CartService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CartService> logger)
         {
-            _httpClientFactory = httpClientFactory;
             _httpClient = httpClientFactory.CreateClient("NashApp.Api");
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
         }
 
-        private void AddAuthorizationHeader()
+        private bool HasValidJwtToken()
         {
-            if (_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("jwt", out var jwtToken))
+            if (!_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("auth_jwt", out var jwtToken))
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                _logger.LogDebug("Added Authorization header with JWT: {JwtToken}", jwtToken.Substring(0, 10) + "...");
+                _logger.LogWarning("No auth_jwt cookie found");
+                return false;
             }
-            else
-            {
-                _logger.LogWarning("No jwt cookie found");
-            }
-        }
 
-        private void AddCsrfHeader()
-        {
-            if (_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("csrf", out var csrfToken))
+            if (!jwtToken.Contains("."))
             {
-                _httpClient.DefaultRequestHeaders.Remove("X-CSRF-TOKEN");
-                _httpClient.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrfToken);
-                _logger.LogDebug("Added X-CSRF-TOKEN header: {CsrfToken}", csrfToken);
+                _logger.LogError("JWT is malformed: {JwtToken}", jwtToken.Substring(0, Math.Min(20, jwtToken.Length)) + "...");
+                return false;
             }
-            else
+
+            try
             {
-                _logger.LogWarning("No csrf cookie found");
+                var handler = new JwtSecurityTokenHandler();
+                var token = handler.ReadJwtToken(jwtToken);
+                var exp = token.ValidTo;
+
+                // Check if token is expired
+                if (exp < DateTime.UtcNow)
+                {
+                    _logger.LogWarning("JWT is expired: ValidUntil={ValidUntil}, Now={Now}", exp, DateTime.UtcNow);
+                    return false;
+                }
+
+                _logger.LogDebug("JWT is valid until: {Expiration}", exp.ToString("o"));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse JWT token");
+                return false;
             }
         }
 
         private async Task<bool> RefreshTokenAsync()
         {
-            var client = _httpClientFactory.CreateClient("NashApp.Api");
-            _logger.LogInformation("Calling /api/Auth/refresh-token");
-            var response = await client.GetAsync("/api/Auth/refresh-token");
-            if (response.IsSuccessStatusCode)
+            if (!_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("refresh", out var refreshToken))
             {
-                _logger.LogInformation("Refresh token successful");
-                return true;
+                _logger.LogWarning("No refresh token cookie found, cannot refresh token");
+                return false;
             }
-            var content = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning("Refresh token failed: {StatusCode}, {Content}", response.StatusCode, content);
-            return false;
+
+            try
+            {
+                _logger.LogInformation("Attempting to refresh token");
+                var response = await _httpClient.GetAsync("/api/Auth/refresh-token");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation("Token refreshed successfully");
+                    return true;
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Refresh token failed: StatusCode={StatusCode}, Response={Content}",
+                    response.StatusCode, errorContent);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception during token refresh");
+                return false;
+            }
         }
 
-        private async Task<HttpResponseMessage> ExecuteWithRetryAsync(Func<Task<HttpResponseMessage>> action)
+        private async Task<HttpResponseMessage> ExecuteWithRetryAsync(Func<Task<HttpResponseMessage>> action, string operationName)
         {
-            AddAuthorizationHeader();
-            var response = await action();
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            // Check JWT token validity
+            if (!HasValidJwtToken())
             {
-                _logger.LogWarning("Received 401 Unauthorized, attempting to refresh token");
+                _logger.LogInformation("No valid JWT token found for {Operation}, attempting refresh", operationName);
+
                 if (await RefreshTokenAsync())
                 {
-                    _logger.LogInformation("Retrying API call with new jwt token");
-                    AddAuthorizationHeader();
-                    response = await action();
+                    if (!HasValidJwtToken())
+                    {
+                        _logger.LogError("Still no valid JWT token after refresh for {Operation}", operationName);
+                        throw new UnauthorizedAccessException("Authentication failed");
+                    }
                 }
                 else
                 {
-                    _logger.LogError("Token refresh failed, cannot retry API call");
+                    _logger.LogError("Failed to refresh token for {Operation}", operationName);
+                    throw new UnauthorizedAccessException("Authentication failed");
                 }
             }
+
+            // Execute the requested operation
+            HttpResponseMessage response;
+            try
+            {
+                response = await action();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception during {Operation}", operationName);
+                throw;
+            }
+
+            // Handle 401 Unauthorized by attempting to refresh token
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                _logger.LogWarning("{Operation} returned 401 Unauthorized, attempting token refresh", operationName);
+
+                if (await RefreshTokenAsync() && HasValidJwtToken())
+                {
+                    _logger.LogInformation("Token refreshed, retrying {Operation}", operationName);
+
+                    try
+                    {
+                        response = await action();
+
+                        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                        {
+                            _logger.LogError("Still unauthorized after token refresh for {Operation}", operationName);
+                            throw new UnauthorizedAccessException("Authentication failed after token refresh");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Exception during retry of {Operation} after token refresh", operationName);
+                        throw;
+                    }
+                }
+                else
+                {
+                    _logger.LogError("Failed to refresh token for {Operation}", operationName);
+                    throw new UnauthorizedAccessException("Authentication failed");
+                }
+            }
+
             return response;
         }
 
         public async Task<CartDto> GetCartAsync()
         {
             _logger.LogInformation("Fetching cart");
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
+
+            var response = await ExecuteWithRetryAsync(async () => {
                 return await _httpClient.GetAsync("/api/Cart");
-            });
+            }, "GetCartAsync");
+
             response.EnsureSuccessStatusCode();
+
             var content = await response.Content.ReadAsStringAsync();
             var apiResponse = JsonConvert.DeserializeObject<ApiDto<CartDto>>(content);
-            _logger.LogDebug("Cart fetched: {CartId}", apiResponse.Body.Id);
+
+            _logger.LogDebug("Cart fetched successfully: {CartId}, {ItemCount} items",
+                apiResponse.Body.Id, apiResponse.Body.CartItems?.Count ?? 0);
+
             return apiResponse.Body;
         }
 
         public async Task<CartItemDto> AddItemToCartAsync(Guid productId, int quantity)
         {
             _logger.LogInformation("Adding item to cart: ProductId={ProductId}, Quantity={Quantity}", productId, quantity);
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                AddCsrfHeader();
-                var request = new CartItemRequest { ProductId = productId, Quantity = quantity };
-                var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+
+            var request = new CartItemRequest { ProductId = productId, Quantity = quantity };
+            var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+
+            var response = await ExecuteWithRetryAsync(async () => {
                 return await _httpClient.PostAsync("/api/Cart/items", content);
-            });
+            }, "AddItemToCartAsync");
+
             response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
             var apiResponse = JsonConvert.DeserializeObject<ApiDto<CartItemDto>>(responseContent);
-            _logger.LogDebug("Item added: {CartItemId}", apiResponse.Body.Id);
+
+            _logger.LogDebug("Item added to cart: CartItemId={CartItemId}, ProductId={ProductId}, Quantity={Quantity}",
+                apiResponse.Body.Id, apiResponse.Body.ProductId, apiResponse.Body.Quantity);
+
             return apiResponse.Body;
         }
 
         public async Task<CartItemDto> UpdateCartItemAsync(Guid cartItemId, int quantity)
         {
-            _logger.LogInformation("Updating cart item: CartItemId={CartItemId}, Quantity={Quantity}", cartItemId, quantity);
-            var response = await ExecuteWithRetryAsync(async () =>
+            if (quantity <= 0)
             {
-                AddCsrfHeader();
-                var request = new CartItemRequest { Quantity = quantity };
-                var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+                _logger.LogWarning("Invalid quantity ({Quantity}) for cart item: CartItemId={CartItemId}", quantity, cartItemId);
+                throw new ArgumentException("Quantity must be greater than 0.", nameof(quantity));
+            }
+
+            _logger.LogInformation("Updating cart item: CartItemId={CartItemId}, Quantity={Quantity}", cartItemId, quantity);
+
+            var request = new CartItemRequest { Quantity = quantity };
+            var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+
+            var response = await ExecuteWithRetryAsync(async () => {
                 return await _httpClient.PutAsync($"/api/Cart/items/{cartItemId}", content);
-            });
+            }, "UpdateCartItemAsync");
+
             response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
             var apiResponse = JsonConvert.DeserializeObject<ApiDto<CartItemDto>>(responseContent);
-            _logger.LogDebug("Item updated: {CartItemId}", apiResponse.Body.Id);
+
+            _logger.LogDebug("Cart item updated: CartItemId={CartItemId}, Quantity={Quantity}",
+                apiResponse.Body.Id, apiResponse.Body.Quantity);
+
             return apiResponse.Body;
         }
 
         public async Task DeleteCartItemAsync(Guid cartItemId)
         {
             _logger.LogInformation("Deleting cart item: CartItemId={CartItemId}", cartItemId);
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                AddCsrfHeader();
+
+            var response = await ExecuteWithRetryAsync(async () => {
                 return await _httpClient.DeleteAsync($"/api/Cart/items/{cartItemId}");
-            });
+            }, "DeleteCartItemAsync");
+
             response.EnsureSuccessStatusCode();
-            _logger.LogDebug("Item deleted: {CartItemId}", cartItemId);
+
+            _logger.LogDebug("Cart item deleted: CartItemId={CartItemId}", cartItemId);
         }
 
         public async Task ClearCartAsync()
         {
             _logger.LogInformation("Clearing cart");
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                AddCsrfHeader();
+
+            var response = await ExecuteWithRetryAsync(async () => {
                 return await _httpClient.DeleteAsync("/api/Cart");
-            });
+            }, "ClearCartAsync");
+
             response.EnsureSuccessStatusCode();
-            _logger.LogDebug("Cart cleared");
+
+            _logger.LogDebug("Cart cleared successfully");
         }
 
         public async Task<string> CreateOrUpdatePaymentIntentAsync()
         {
             _logger.LogInformation("Creating or updating payment intent");
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                AddCsrfHeader();
+
+            var response = await ExecuteWithRetryAsync(async () => {
                 return await _httpClient.PostAsync("/api/Payment/intent", null);
-            });
+            }, "CreateOrUpdatePaymentIntentAsync");
+
             response.EnsureSuccessStatusCode();
+
             var content = await response.Content.ReadAsStringAsync();
             var apiResponse = JsonConvert.DeserializeObject<ApiDto<string>>(content);
-            _logger.LogDebug("Payment intent created: {PaymentIntentId}", apiResponse.Body);
+
+            _logger.LogDebug("Payment intent created: {PaymentIntentId}",
+                apiResponse.Body?.Substring(0, Math.Min(20, apiResponse.Body?.Length ?? 0)) + "...");
+
             return apiResponse.Body;
         }
     }

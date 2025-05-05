@@ -25,7 +25,8 @@ namespace EcommerceNashApp.Web.Controllers
                 // Log error but proceed with client-side cleanup
             }
 
-            Response.Cookies.Delete("jwt");
+            Response.Cookies.Delete("nash_session");
+            Response.Cookies.Delete("auth_jwt");
             Response.Cookies.Delete("refresh");
             Response.Cookies.Delete("csrf");
             return RedirectToAction("Index", "Home");
