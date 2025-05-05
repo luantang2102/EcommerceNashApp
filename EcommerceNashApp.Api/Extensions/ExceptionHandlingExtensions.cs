@@ -44,8 +44,7 @@ namespace EcommerceNashApp.Api.Extensions
                 {
                     OnMessageReceived = context =>
                     {
-                        // Extract token from the 'jwt' cookie for most requests
-                        var token = context.Request.Cookies["jwt"];
+                        var token = context.Request.Cookies["auth_jwt"];
                         if (!string.IsNullOrEmpty(token))
                         {
                             context.Token = token;

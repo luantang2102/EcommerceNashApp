@@ -7,16 +7,19 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
     public class JwtService : IJwtService
     {
         private readonly JwtSettings _jwt;
+        private readonly ILogger<JwtService> _logger;
 
-        public JwtService(IOptions<JwtSettings> jwtOptions)
+        public JwtService(IOptions<JwtSettings> jwtOptions, ILogger<JwtService> logger)
         {
             _jwt = jwtOptions.Value;
+            _logger = logger;
         }
 
         public string GenerateToken(AppUser user, IList<string> roles)
@@ -38,18 +41,27 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
                 issuer: _jwt.Issuer,
                 audience: _jwt.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_jwt.DurationInMinutes),
+                expires: DateTime.UtcNow.AddDays(3),
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            _logger.LogDebug("Generated JWT: {Token}", tokenString.Substring(0, Math.Min(20, tokenString.Length)) + "...");
+            if (!tokenString.Contains("."))
+            {
+                _logger.LogError("Generated JWT is malformed: {Token}", tokenString);
+            }
+            return tokenString;
         }
+
         public string GenerateRefreshToken()
         {
             var randomNumber = new byte[64];
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
+            var refreshToken = Convert.ToBase64String(randomNumber);
+            _logger.LogDebug("Generated Refresh Token: {Token}", refreshToken.Substring(0, Math.Min(20, refreshToken.Length)) + "...");
+            return refreshToken;
         }
     }
 }

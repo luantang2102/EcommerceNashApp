@@ -5,6 +5,7 @@ using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Exceptions;
+using EcommerceNashApp.Infrastructure.Extensions;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 cart = new Cart
                 {
                     UserId = userId,
-                    CartItems = new List<CartItem>()
+                    CartItems = []
                 };
                 await _cartRepository.CreateAsync(cart);
             }
@@ -67,7 +68,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 cart = new Cart
                 {
                     UserId = userId,
-                    CartItems = new List<CartItem>()
+                    CartItems = []
                 };
                 await _cartRepository.CreateAsync(cart);
             }
@@ -191,6 +192,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 Id = cartItem.Id,
                 ProductId = cartItem.ProductId,
                 ProductName = cartItem.Product.Name,
+                Images = cartItem.Product.ProductImages.Select(pi => pi.MapModelToResponse()).ToList(),
                 Quantity = cartItem.Quantity,
                 Price = cartItem.Price
             };

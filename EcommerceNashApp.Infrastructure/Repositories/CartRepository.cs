@@ -21,7 +21,8 @@ namespace EcommerceNashApp.Infrastructure.Repositories
         {
             return _context.Carts
                 .Include(x => x.CartItems)
-                .ThenInclude(x => x.Product);
+                .ThenInclude(x => x.Product)
+                .ThenInclude(x => x.ProductImages);
         }
 
         public async Task<Cart?> GetByIdAsync(Guid cartId)
@@ -29,6 +30,7 @@ namespace EcommerceNashApp.Infrastructure.Repositories
             return await _context.Carts
                 .Include(x => x.CartItems)
                 .ThenInclude(x => x.Product)
+                .ThenInclude(x => x.ProductImages)
                 .FirstOrDefaultAsync(x => x.Id == cartId);
         }
 
@@ -37,6 +39,7 @@ namespace EcommerceNashApp.Infrastructure.Repositories
             return await _context.Carts
                 .Include(x => x.CartItems)
                 .ThenInclude(x => x.Product)
+                .ThenInclude(x => x.ProductImages)
                 .FirstOrDefaultAsync(x => x.UserId == userId);
         }
 

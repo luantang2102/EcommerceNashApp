@@ -123,6 +123,23 @@ if (app.Environment.IsDevelopment())
 }
 
 // Middleware pipeline
+app.Use(async (context, next) =>
+{
+    var cookies = context.Request.Cookies;
+    var logger = context.RequestServices.GetService<ILogger<Program>>();
+
+    if (cookies.Any())
+    {
+        logger?.LogInformation("Cookies in request: {Cookies}",
+            string.Join(", ", cookies.Select(c => $"{c.Key}: {c.Value}")));
+    }
+    else
+    {
+        logger?.LogInformation("No cookies found in request.");
+    }
+
+    await next(context);
+});
 app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
