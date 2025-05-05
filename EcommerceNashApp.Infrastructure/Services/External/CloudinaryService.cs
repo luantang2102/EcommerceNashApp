@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Infrastructure.Services.External
 {
     public class CloudinaryService : IMediaService
     {

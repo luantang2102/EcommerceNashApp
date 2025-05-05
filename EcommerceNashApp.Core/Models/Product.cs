@@ -11,6 +11,7 @@ namespace EcommerceNashApp.Core.Models
         public bool InStock { get; set; } = true;
         public int StockQuantity { get; set; } = 0;
         public double AvarageRating { get; set; } = 0.0;
+        public bool IsFeatured { get; set; } = false;
 
         // Navigation properties
         public virtual ICollection<Category> Categories { get; set; } = [];

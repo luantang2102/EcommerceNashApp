@@ -37,7 +37,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 };
                 await _cartRepository.CreateAsync(cart);
             }
-            return MapToCartResponse(cart);
+            return cart.MapModelToResponse();
         }
 
         public async Task<CartItemResponse> AddItemToCartAsync(Guid userId, Guid productId, int quantity)
@@ -87,7 +87,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                     throw new AppException(ErrorCode.INSUFFICIENT_STOCK, attributes);
                 }
                 await _cartItemRepository.UpdateAsync(existingItem);
-                return MapToCartItemResponse(existingItem);
+                return existingItem.MapModelToResponse();
             }
 
             var cartItem = new CartItem
@@ -101,7 +101,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             cart.CartItems.Add(cartItem);
             await _cartRepository.UpdateAsync(cart);
 
-            return MapToCartItemResponse(cartItem);
+            return cartItem.MapModelToResponse();
         }
 
         public async Task<CartItemResponse> UpdateCartItemAsync(Guid cartItemId, int quantity)
@@ -138,7 +138,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             cartItem.Quantity = quantity;
             await _cartItemRepository.UpdateAsync(cartItem);
-            return MapToCartItemResponse(cartItem);
+            return cartItem.MapModelToResponse();
         }
 
         public async Task DeleteCartItemAsync(Guid cartItemId)
@@ -171,31 +171,6 @@ namespace EcommerceNashApp.Infrastructure.Services
             cart.PaymentIntentId = null;
             cart.ClientSecret = null;
             await _cartRepository.UpdateAsync(cart);
-        }
-
-        private CartResponse MapToCartResponse(Cart cart)
-        {
-            return new CartResponse
-            {
-                Id = cart.Id,
-                UserId = cart.UserId,
-                CartItems = cart.CartItems.Select(ci => MapToCartItemResponse(ci)).ToList(),
-                PaymentIntentId = cart.PaymentIntentId,
-                ClientSecret = cart.ClientSecret
-            };
-        }
-
-        private CartItemResponse MapToCartItemResponse(CartItem cartItem)
-        {
-            return new CartItemResponse
-            {
-                Id = cartItem.Id,
-                ProductId = cartItem.ProductId,
-                ProductName = cartItem.Product.Name,
-                Images = cartItem.Product.ProductImages.Select(pi => pi.MapModelToResponse()).ToList(),
-                Quantity = cartItem.Quantity,
-                Price = cartItem.Price
-            };
         }
     }
 }

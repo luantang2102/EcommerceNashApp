@@ -2,7 +2,6 @@
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Data.Configuration;
-using EcommerceNashApp.Infrastructure.Data.Configuration.Extended;
 using EcommerceNashApp.Infrastructure.Data.Configuration.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

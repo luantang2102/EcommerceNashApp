@@ -3,7 +3,7 @@ using EcommerceNashApp.Infrastructure.Data.Configuration.Base;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EcommerceNashApp.Infrastructure.Data.Configuration.Extended
+namespace EcommerceNashApp.Infrastructure.Data.Configuration
 {
     class OrderConfiguration : BaseEntityConfiguration<Order>
     {

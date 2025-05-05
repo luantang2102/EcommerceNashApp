@@ -4,6 +4,7 @@ using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Exceptions;
+using EcommerceNashApp.Infrastructure.Services.External;
 using Stripe;
 using System;
 using System.Threading.Tasks;

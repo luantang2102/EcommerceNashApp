@@ -27,7 +27,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             var query = _productRepository.GetAllAsync()
                 .Sort(productParams.OrderBy)
                 .Search(productParams.SearchTerm)
-                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice);
+                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice, productParams.IsFeatured);
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
@@ -58,7 +58,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             var query = _productRepository.GetByCategoryIdAsync(categoryId)
                 .Sort(productParams.OrderBy)
                 .Search(productParams.SearchTerm)
-                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice);
+                .Filter(productParams.Categories, productParams.Ratings, productParams.MinPrice, productParams.MaxPrice, productParams.IsFeatured);
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
@@ -78,7 +78,8 @@ namespace EcommerceNashApp.Infrastructure.Services
                 Price = productRequest.Price,
                 InStock = productRequest.InStock,
                 StockQuantity = productRequest.StockQuantity,
-                ProductImages = new List<ProductImage>()
+                IsFeatured = productRequest.IsFeatured,
+                ProductImages = []
             };
 
             if (productRequest.CategoryIds.Count > 0)
@@ -131,6 +132,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             product.Price = productRequest.Price;
             product.InStock = productRequest.InStock;
             product.StockQuantity = productRequest.StockQuantity;
+            product.IsFeatured = productRequest.IsFeatured;
             product.UpdatedDate = DateTime.UtcNow;
 
             var existingImages = product.ProductImages.ToList();

@@ -11,6 +11,7 @@ using EcommerceNashApp.Infrastructure.Data;
 using EcommerceNashApp.Infrastructure.Repositories;
 using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Infrastructure.Services.Auth;
+using EcommerceNashApp.Infrastructure.Services.External;
 using EcommerceNashApp.Infrastructure.Settings;
 using FluentValidation;
 using FluentValidation.AspNetCore;

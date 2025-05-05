@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Infrastructure.Services.External
 {
     public class StripeService
     {

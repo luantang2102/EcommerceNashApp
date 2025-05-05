@@ -26,7 +26,7 @@ namespace EcommerceNashApp.Infrastructure.Extentions
             return query.Where(x => x.Name.ToLower().Contains(lowerCaseTerm) || x.Description.ToLower().Contains(lowerCaseTerm));
         }
 
-        public static IQueryable<Product> Filter(this IQueryable<Product> query, string? categories, string? ratings, string? minPrice, string? maxPrice)
+        public static IQueryable<Product> Filter(this IQueryable<Product> query, string? categories, string? ratings, string? minPrice, string? maxPrice, bool? isFeatured)
         {
             var categoryList = new List<string>();
             var ratingList = new List<double>();
@@ -58,6 +58,11 @@ namespace EcommerceNashApp.Infrastructure.Extentions
                 query = query.Where(x => x.Price <= maxPriceValue);
             }
 
+            if (isFeatured.HasValue)
+            {
+                query = query.Where(x => x.IsFeatured == isFeatured.Value);
+            }
+
             return query;
         }
 
@@ -73,6 +78,7 @@ namespace EcommerceNashApp.Infrastructure.Extentions
                 InStock = product.InStock,
                 StockQuantity = product.StockQuantity,
                 AverageRating = averageRating,
+                IsFeatured = product.IsFeatured,
                 ProductImages = product.ProductImages.Select(pi => pi.MapModelToResponse()).ToList(),
                 Categories = product.Categories.Select(c => c.MapModelToResponse()).ToList(),
                 CreatedDate = product.CreatedDate,

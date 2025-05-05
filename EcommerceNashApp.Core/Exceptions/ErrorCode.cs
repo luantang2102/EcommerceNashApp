@@ -14,12 +14,13 @@ namespace EcommerceNashApp.Core.Exeptions
         public static readonly ErrorCode PASSWORDS_DO_NOT_MATCH = new(102, "Passwords do not match", StatusCodes.Status400BadRequest);
         public static readonly ErrorCode IDENTITY_CREATION_FAILED = new(103, "Identity creation failed", StatusCodes.Status500InternalServerError);
 
-        // Access related errors (400-499)
+        // Access and token related errors (400-499)
         public static readonly ErrorCode UNAUTHORIZED_ACCESS = new(401, "Unauthorized access", StatusCodes.Status401Unauthorized);
         public static readonly ErrorCode ACCESS_DENIED = new(403, "Access denied to view or modify this resource", StatusCodes.Status403Forbidden);
         public static readonly ErrorCode INVALID_OR_EXPIRED_REFRESH_TOKEN = new(404, "Invalid or expired refresh token", StatusCodes.Status401Unauthorized);
         public static readonly ErrorCode INVALID_CLAIM = new(405, "Invalid claim", StatusCodes.Status403Forbidden);
         public static readonly ErrorCode INVALID_CSRF_TOKEN = new(406, "Invalid csrf token", StatusCodes.Status403Forbidden);
+        public static readonly ErrorCode CANNOT_SET_JWT = new(407, "Cannot set malformed JWT in cookie", StatusCodes.Status500InternalServerError);
 
         // Product related errors (600-699)
         public static readonly ErrorCode PRODUCT_NOT_FOUND = new(600, "Product not found", StatusCodes.Status404NotFound);

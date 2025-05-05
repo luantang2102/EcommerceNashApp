@@ -10,5 +10,6 @@ namespace EcommerceNashApp.Infrastructure.Helpers.Params
         public string? Ratings { get; set; }
         public string? MinPrice { get; set; }
         public string? MaxPrice { get; set; }
+        public bool? IsFeatured { get; set; }
     }
 }
