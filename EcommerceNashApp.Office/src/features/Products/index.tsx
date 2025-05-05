@@ -25,7 +25,7 @@ import {
   DialogActions,
   Switch,
   FormControlLabel,
-  Grid,
+  Grid, 
   CircularProgress,
   Alert,
   Snackbar,
@@ -151,6 +151,14 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
       })}
     </>
   );
+};
+
+const formatVND = (price: number) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    minimumFractionDigits: 0, // No decimals for VND
+  }).format(price);
 };
 
 export default function ProductList() {
@@ -668,7 +676,7 @@ export default function ProductList() {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
-                      ${product.price.toFixed(2)}
+                      {formatVND(product.price)}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -832,9 +840,9 @@ export default function ProductList() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
+              <TextField
                   name="price"
-                  label="Price ($)"
+                  label="Price (VND)" // Updated label to reflect VND
                   type="number"
                   fullWidth
                   required
@@ -842,7 +850,8 @@ export default function ProductList() {
                   onChange={handleNumericInputChange}
                   margin="normal"
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    endAdornment: <InputAdornment position="end">₫</InputAdornment>, // Changed to VND symbol
+                    inputProps: { step: 1, min: 0 }, // Ensure whole numbers
                   }}
                 />
               </Grid>
