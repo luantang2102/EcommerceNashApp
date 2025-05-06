@@ -1,5 +1,4 @@
 ﻿using EcommerceNashApp.Web.Models.Views;
-using EcommerceNashApp.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Web.Controllers.Components

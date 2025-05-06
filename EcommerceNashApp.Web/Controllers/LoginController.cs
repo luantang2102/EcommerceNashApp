@@ -1,12 +1,9 @@
-﻿using EcommerceNashApp.Web.Models;
-using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Shared.DTOs.Auth.Response;
+using EcommerceNashApp.Shared.DTOs.Wrapper;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Microsoft.Extensions.Logging;
 using System.Net;
+using System.Text;
 
 namespace EcommerceNashApp.Web.Controllers
 {
@@ -46,7 +43,7 @@ namespace EcommerceNashApp.Web.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonConvert.DeserializeObject<ApiDto<AuthDto>>(responseContent);
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AuthResponse>>(responseContent);
                 _logger.LogInformation("Login successful for user: {UserId}", apiResponse.Body.User.Id);
 
                 // Propagate API cookies to browser and CookieContainer

@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Shared.DTOs.Wrapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Web.Controllers
@@ -39,7 +39,7 @@ namespace EcommerceNashApp.Web.Controllers
                 };
 
                 var response = await _httpClient.PostAsync("/api/Auth/forgot-password", formData);
-                var result = await response.Content.ReadFromJsonAsync<ApiDto<object>>();
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
 
                 if (response.IsSuccessStatusCode)
                 {

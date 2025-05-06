@@ -56,14 +56,14 @@
                         <h5 class="fw-bold mb-3">Giá</h5>
                         <div class="price-range">
                             <div class="d-flex justify-content-between mb-2">
-                                <span id="price-min">$0</span>
-                                <span id="price-max">$5,000,000</span>
+                                <span id="price-min">0 ₫</span>
+                                <span id="price-max">5,000,000 ₫</span>
                             </div>
                             <input type="range" class="form-range mb-2" id="price-range-min" min="0" max="5000000" value="@(Model.MinPrice?.ToString("F0") ?? "0")">
                             <input type="range" class="form-range" id="price-range-max" min="0" max="5000000" value="@(Model.MaxPrice?.ToString("F0") ?? "5000000")">
                             <div class="d-flex justify-content-between mt-2">
-                                <span>Từ: $<span id="current-min-price">@(Model.MinPrice?.ToString("N0") ?? "0")</span></span>
-                                <span>Đến: $<span id="current-max-price">@(Model.MaxPrice?.ToString("N0") ?? "5,000,000")</span></span>
+                                <span>Từ: <span id="current-min-price">@(Model.MinPrice?.ToString("N0") ?? "0") ₫</span></span>
+                                <span>Đến: <span id="current-max-price">@(Model.MaxPrice?.ToString("N0") ?? "5,000,000") ₫</span></span>
                             </div>
                             <input type="hidden" id="minPrice" name="minPrice" value="@(Model.MinPrice?.ToString() ?? "0")">
                             <input type="hidden" id="maxPrice" name="maxPrice" value="@(Model.MaxPrice?.ToString() ?? "5000000")">
@@ -129,7 +129,7 @@
                                             </h3>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-2">
-                                            <span class="fw-bold">$@product.Price.ToString("N2")</span>
+                                            <span class="fw-bold">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:N0}", product.Price) ₫</span>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-2">
                                             <span class="fs-7">Tồn kho: @product.StockQuantity</span>

@@ -1,5 +1,6 @@
-﻿using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Shared.DTOs.Response;
+using EcommerceNashApp.Shared.DTOs.Wrapper;
+using EcommerceNashApp.Shared.Paginations;
 using EcommerceNashApp.Web.Models.Views;
 using System.Text.Json;
 using System.Web;
@@ -16,46 +17,52 @@ namespace EcommerceNashApp.Web.Services.Impl
             _logger = logger;
         }
 
-        public ProductView MapProductDtoToView(ProductDto productDto)
+        public ProductView MapProductResponseToView(ProductResponse productResponse)
         {
             return new ProductView
             {
-                Id = productDto.Id,
-                Name = productDto.Name,
-                Description = productDto.Description,
-                Price = productDto.Price,
-                StockQuantity = productDto.StockQuantity,
-                AverageRating = productDto.AverageRating,
-                ProductImages = productDto.ProductImages?.Select(MapProductImageDtoToView).ToList() ?? new List<ProductImageView>()
+                Id = productResponse.Id,
+                Name = productResponse.Name,
+                Description = productResponse.Description,
+                Price = productResponse.Price,
+                StockQuantity = productResponse.StockQuantity,
+                AverageRating = productResponse.AverageRating,
+                ProductImages = productResponse.ProductImages?.Select(MapProductImageResponseToView).ToList() ?? new List<ProductImageView>()
             };
         }
 
-        public ProductImageView MapProductImageDtoToView(ProductImageDto productImageDto)
+        public ProductImageView MapProductImageResponseToView(ProductImageResponse productImageResponse)
         {
             return new ProductImageView
             {
-                Id = productImageDto.Id,
-                ImageUrl = productImageDto.ImageUrl,
-                PublicId = productImageDto.PublicId,
-                IsMain = productImageDto.IsMain
+                Id = productImageResponse.Id,
+                ImageUrl = productImageResponse.ImageUrl,
+                PublicId = productImageResponse.PublicId,
+                IsMain = productImageResponse.IsMain
             };
         }
 
-        public ProductRatingView MapRatingDtoToView(RatingDto ratingDto)
+        public ProductRatingView MapRatingResponseToView(RatingResponse ratingResponse)
         {
             return new ProductRatingView
             {
-                Id = ratingDto.Id,
-                Value = ratingDto.Value,
-                Comment = ratingDto.Comment,
-                Username = ratingDto.User.UserName ?? "Anonymous",
-                CreatedDate = ratingDto.CreatedDate
+                Id = ratingResponse.Id,
+                Value = ratingResponse.Value,
+                Comment = ratingResponse.Comment,
+                Username = ratingResponse.User.UserName ?? "Anonymous",
+                CreatedDate = ratingResponse.CreatedDate
             };
         }
 
         public async Task<PagedList<ProductView>> GetProductsAsync(PaginationParams paginationParams, CancellationToken cancellationToken)
         {
             var queryString = $"pageNumber={paginationParams.PageNumber}&pageSize={paginationParams.PageSize}";
+            return await FetchProductsAsync($"api/Products?{queryString}", paginationParams.PageNumber, paginationParams.PageSize, cancellationToken);
+        }
+
+        public async Task<PagedList<ProductView>> GetFeaturedProductsAsync(PaginationParams paginationParams, CancellationToken cancellationToken)
+        {
+            var queryString = $"pageNumber={paginationParams.PageNumber}&pageSize={paginationParams.PageSize}&isFeatured=true";
             return await FetchProductsAsync($"api/Products?{queryString}", paginationParams.PageNumber, paginationParams.PageSize, cancellationToken);
         }
 
@@ -94,10 +101,10 @@ namespace EcommerceNashApp.Web.Services.Impl
                 var response = await _httpClient.GetAsync($"api/Products/{id}", cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<ProductDto>>(cancellationToken);
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ProductResponse>>(cancellationToken);
                 if (apiResponse?.Body != null)
                 {
-                    return MapProductDtoToView(apiResponse.Body);
+                    return MapProductResponseToView(apiResponse.Body);
                 }
                 _logger.LogWarning("No product found for ID {ProductId}", id);
             }
@@ -120,10 +127,10 @@ namespace EcommerceNashApp.Web.Services.Impl
                 var response = await _httpClient.GetAsync($"api/Ratings/product/{productId}", cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<IEnumerable<RatingDto>>>(cancellationToken);
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IEnumerable<RatingResponse>>>(cancellationToken);
                 if (apiResponse?.Body != null)
                 {
-                    return apiResponse.Body.Select(MapRatingDtoToView).ToList();
+                    return apiResponse.Body.Select(MapRatingResponseToView).ToList();
                 }
                 _logger.LogWarning("No ratings found for product ID {ProductId}", productId);
             }
@@ -135,7 +142,7 @@ namespace EcommerceNashApp.Web.Services.Impl
             {
                 _logger.LogError(ex, "Failed to deserialize ratings response for product ID {ProductId}", productId);
             }
-            return new List<ProductRatingView>();
+            return [];
         }
 
         private async Task<PagedList<ProductView>> FetchProductsAsync(string requestUri, int pageNumber, int pageSize, CancellationToken cancellationToken)
@@ -146,7 +153,7 @@ namespace EcommerceNashApp.Web.Services.Impl
                 var response = await _httpClient.GetAsync(requestUri, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<List<ProductDto>>>(cancellationToken);
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<ProductResponse>>>(cancellationToken);
 
                 // Try both "Pagination" and "pagination" headers
                 var paginationHeader = response.Headers.Contains("Pagination")
@@ -167,7 +174,7 @@ namespace EcommerceNashApp.Web.Services.Impl
                         );
                         if (pagination != null)
                         {
-                            var productViews = apiResponse.Body.Select(MapProductDtoToView).ToList();
+                            var productViews = apiResponse.Body.Select(MapProductResponseToView).ToList();
                             var result = new PagedList<ProductView>(
                                 productViews,
                                 pagination.TotalCount,

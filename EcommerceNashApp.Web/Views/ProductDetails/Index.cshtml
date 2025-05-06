@@ -42,22 +42,29 @@
 
         <div class="row">
             <div class="col-lg-6 mb-4 mb-lg-0">
-                <!-- Swipeable Image Gallery -->
+                <!-- Swipeable Image Gallery with Zoom -->
                 <div class="swiper product-image-swiper bg-white rounded shadow-sm">
                     <div class="swiper-wrapper">
                         @if (Model.Product.ProductImages.Any())
                         {
                             foreach (var image in Model.Product.ProductImages)
                             {
+                                <!-- Added zoom-container and zoom-overlay for hover effect -->
                                 <div class="swiper-slide">
-                                    <img src="@image.ImageUrl" alt="@Model.Product.Name" class="img-fluid w-100" style="height: 50vh; object-fit: cover;">
+                                    <div class="zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 50vh;" data-image="@image.ImageUrl">
+                                        <img src="@image.ImageUrl" alt="@Model.Product.Name" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                                        <div class="zoom-overlay"></div>
+                                    </div>
                                 </div>
                             }
                         }
                         else
                         {
                             <div class="swiper-slide">
-                                <img src="~/images/placeholder.jpg" alt="@Model.Product.Name" class="img-fluid w-100" style="height: 50vh; object-fit: cover;">
+                                <div class="zoom-container" style="position: relative; overflow: hidden; width: 100%; height: 50vh;" data-image="~/images/placeholder.jpg">
+                                    <img src="~/images/placeholder.jpg" alt="@Model.Product.Name" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                                    <div class="zoom-overlay"></div>
+                                </div>
                             </div>
                         }
                     </div>
@@ -71,7 +78,7 @@
                 <div class="bg-white p-4 rounded shadow-sm">
                     <h2 class="fw-bold mb-3">@Model.Product.Name</h2>
                     <p class="text-muted mb-2">Mã sản phẩm: @Model.Product.Id</p>
-                    <h3 class="fw-bold text-primary mb-3">$@Model.Product.Price.ToString("N2")</h3>
+                    <h3 class="fw-bold text-primary mb-3">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:N0}", Model.Product.Price) ₫</h3>
                     <p class="mb-3">Tồn kho: @Model.Product.StockQuantity</p>
 
                     <!-- Size Selection -->
@@ -260,7 +267,7 @@
                                     </div>
                                     <div class="card-detail d-flex flex-column p-3">
                                         <h5 class="fs-6 fw-bold mb-2">@product.Name</h5>
-                                        <span class="fw-bold">$@product.Price.ToString("N2")</span>
+                                        <span class="fw-bold">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:N0}", product.Price) ₫</span>
                                     </div>
                                 </div>
                             </div>
@@ -275,9 +282,28 @@
     </div>
 </section>
 
+<!-- Zoom Modal -->
+<div class="modal fade" id="zoomModal" tabindex="-1" aria-labelledby="zoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">
+        <div class="modal-content border-0" style="background: transparent;">
+            <div class="modal-header bg-light" style="padding: 1rem; margin-bottom: 0;">
+                <h5 class="modal-title" id="zoomModalLabel" style="margin: 0;">Xem ảnh phóng to</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3" style="background: #f8f9fa;">
+                <div class="d-flex justify-content-center align-items-center" style="max-height: calc(80vh - 60px);">
+                    <img id="zoomModalImage" src="" alt="Zoomed Image" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <!-- Swiper.js -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <!-- Bootstrap JS (required for modal) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -292,6 +318,17 @@
             navigation: {
                 nextEl: '.swiper-button-next',
                 prevEl: '.swiper-button-prev',
+            },
+            touchRatio: 1,
+            on: {
+                touchStart: function () {
+                    if (document.querySelector('.zoom-overlay:hover')) {
+                        this.allowTouchMove = false;
+                    }
+                },
+                touchEnd: function () {
+                    this.allowTouchMove = true;
+                },
             },
         });
 
@@ -322,21 +359,62 @@
             if (value < 1) value = 1;
             if (value > parseInt(quantityInput.max)) value = parseInt(quantityInput.max);
             quantityInput.value = value;
-            document.getElementById('cart-quantity').value = value; // Update hidden input for cart
+            document.getElementById('cart-quantity').value = value;
         }
 
         // Update size selection for cart
         document.getElementById('size').addEventListener('change', function () {
             document.getElementById('cart-size').value = this.value;
         });
+
+        // Zoom functionality
+        document.querySelectorAll('.zoom-container').forEach(container => {
+            const img = container.querySelector('img');
+            const overlay = container.querySelector('.zoom-overlay');
+            const imageUrl = container.dataset.image;
+
+            // Hover zoom
+            container.addEventListener('mousemove', function (e) {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Calculate background position as percentage
+                const xPercent = (x / rect.width) * 100;
+                const yPercent = (y / rect.height) * 100;
+
+                // Update overlay styles
+                overlay.style.display = 'block';
+                overlay.style.backgroundImage = `url(${imageUrl})`;
+                overlay.style.backgroundPosition = `${xPercent}% ${yPercent}%`;
+                overlay.style.left = `${x}px`;
+                overlay.style.top = `${y}px`;
+            });
+
+            container.addEventListener('mouseenter', function () {
+                overlay.style.display = 'block';
+            });
+
+            container.addEventListener('mouseleave', function () {
+                overlay.style.display = 'none';
+            });
+
+            // Click to open modal
+            container.addEventListener('click', function () {
+                const modalImage = document.getElementById('zoomModalImage');
+                modalImage.src = imageUrl;
+                const modal = new bootstrap.Modal(document.getElementById('zoomModal'));
+                modal.show();
+            });
+        });
     </script>
     <script src="js/jquery-1.11.0.min.js"></script>
     <script src="js/plugins.js"></script>
     <script src="js/script.js"></script>
 
-    <!-- Star Rating Styling -->
+    <!-- Styling for Zoom and Modal -->
     <style>
-        /* Base styles for both star ratings */
+        /* Star rating styles */
         .star-rating {
             display: flex;
             flex-direction: row-reverse;
@@ -350,24 +428,83 @@
             .star-rating label {
                 margin: 0 5px;
                 cursor: pointer;
-                color: #808080; /* Default gray for both forms */
+                color: #808080;
             }
 
-        /* Update Rating Form: Yellow (gold) for hover and selected */
         .update-rating-form .star-rating input:checked ~ label,
         .update-rating-form .star-rating label:hover,
         .update-rating-form .star-rating label:hover ~ label {
-            color: #FFD700 !important; /* Gold for selected and hover */
+            color: #FFD700 !important;
         }
 
-        /* Add Rating Form: Orange for hover and selected */
         .add-rating-form .star-rating label:hover,
         .add-rating-form .star-rating label:hover ~ label {
-            color: #FFA500 !important; /* Orange for hover */
+            color: #FFA500 !important;
         }
 
         .add-rating-form .star-rating input:checked ~ label {
-            color: #FFA500 !important; /* Orange for selected */
+            color: #FFA500 !important;
+        }
+
+        /* Zoom overlay for hover */
+        .zoom-overlay {
+            display: none;
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background-size: 700%; /* 2x zoom */
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .zoom-container {
+            cursor: zoom-in;
+        }
+
+        /* Swiper navigation buttons */
+        .swiper-button-prev,
+        .swiper-button-next {
+            color: #fff;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .swiper-button-prev:after,
+            .swiper-button-next:after {
+                font-size: 20px;
+            }
+
+        /* Modal styling */
+        #zoomModal .modal-content {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        #zoomModal .modal-header {
+            border-bottom: none;
+            padding: 1rem;
+        }
+
+        #zoomModal .modal-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        #zoomModalImage {
+            transition: transform 0.3s ease;
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
         }
     </style>
 }

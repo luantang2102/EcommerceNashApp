@@ -1,14 +1,17 @@
-﻿using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Shared.DTOs.Request;
+using EcommerceNashApp.Shared.DTOs.Response;
+using System;
+using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Web.Services
 {
     public interface ICartService
     {
-        Task<CartItemDto> AddItemToCartAsync(Guid productId, int quantity);
-        Task ClearCartAsync();
-        Task<string> CreateOrUpdatePaymentIntentAsync();
+        Task<CartResponse> GetCartAsync();
+        Task<CartItemResponse> AddItemToCartAsync(Guid productId, int quantity);
+        Task<CartItemResponse> UpdateCartItemAsync(Guid cartItemId, int quantity);
         Task DeleteCartItemAsync(Guid cartItemId);
-        Task<CartDto> GetCartAsync();
-        Task<CartItemDto> UpdateCartItemAsync(Guid cartItemId, int quantity);
+        Task ClearCartAsync();
+        Task<ShippingAddressRequest> GetSavedAddressAsync();
     }
 }

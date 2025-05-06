@@ -1,0 +1,48 @@
+﻿@model EcommerceNashApp.Web.Models.Views.ShippingAddressView
+
+<div class="row g-3">
+    <div class="col-12">
+        <label for="ShippingAddress_FullName" class="form-label">Họ và Tên</label>
+        <input name="ShippingAddress.FullName" class="form-control" id="ShippingAddress_FullName" required />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label for="ShippingAddress_Address1" class="form-label">Địa Chỉ</label>
+        <input name="ShippingAddress.Address1" class="form-control" id="ShippingAddress_Address1" required />
+        <span asp-validation-for="Address1" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label for="ShippingAddress_Address2" class="form-label">Địa Chỉ (Tùy Chọn)</label>
+        <input name="ShippingAddress.Address2" class="form-control" id="ShippingAddress_Address2" />
+    </div>
+    <div class="col-md-6">
+        <label for="ShippingAddress_City" class="form-label">Thành Phố</label>
+        <input name="ShippingAddress.City" class="form-control" id="ShippingAddress_City" required />
+        <span asp-validation-for="City" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label for="ShippingAddress_State" class="form-label">Tỉnh/Thành</label>
+        <input name="ShippingAddress.State" class="form-control" id="ShippingAddress_State" required />
+        <span asp-validation-for="State" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label for="ShippingAddress_Zip" class="form-label">Mã Bưu Điện</label>
+        <input name="ShippingAddress.Zip" class="form-control" id="ShippingAddress_Zip" required />
+        <span asp-validation-for="Zip" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label for="ShippingAddress_Country" class="form-label">Quốc Gia</label>
+        <input name="ShippingAddress.Country" class="form-control" id="ShippingAddress_Country" required />
+        <span asp-validation-for="Country" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input name="ShippingAddress.SaveAddress" class="form-check-input" type="checkbox" id="ShippingAddress_SaveAddress" />
+            <label class="form-check-label" for="ShippingAddress_SaveAddress">Lưu địa chỉ này</label>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

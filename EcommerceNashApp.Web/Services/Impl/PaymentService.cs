@@ -1,22 +1,19 @@
-﻿using EcommerceNashApp.Shared.DTOs.Request;
-using EcommerceNashApp.Shared.DTOs.Response;
-using EcommerceNashApp.Shared.DTOs.Wrapper;
+﻿using EcommerceNashApp.Shared.DTOs.Wrapper;
 using Newtonsoft.Json;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Web.Services.Impl
 {
-    public class CartService : ICartService
+    public class PaymentService : IPaymentService
     {
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ILogger<CartService> _logger;
+        private readonly ILogger<PaymentService> _logger;
 
-        public CartService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CartService> logger)
+        public PaymentService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<PaymentService> logger)
         {
             _httpClient = httpClientFactory.CreateClient("NashApp.Api");
             _httpContextAccessor = httpContextAccessor;
@@ -157,127 +154,22 @@ namespace EcommerceNashApp.Web.Services.Impl
             return response;
         }
 
-        public async Task<CartResponse> GetCartAsync()
+        public async Task<string> CreateOrUpdatePaymentIntentAsync()
         {
-            _logger.LogInformation("Fetching cart");
+            _logger.LogInformation("Creating or updating payment intent");
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.GetAsync("/api/Cart");
-            }, "GetCartAsync");
+                return await _httpClient.PostAsync("/api/Payment/intent", null);
+            }, "CreateOrUpdatePaymentIntentAsync");
 
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<CartResponse>>(content);
+            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<string>>(content);
 
-            _logger.LogDebug("Cart fetched successfully: {CartId}, {ItemCount} items",
-                apiResponse.Body.Id, apiResponse.Body.CartItems?.Count ?? 0);
-
-            return apiResponse.Body;
-        }
-
-        public async Task<CartItemResponse> AddItemToCartAsync(Guid productId, int quantity)
-        {
-            _logger.LogInformation("Adding item to cart: ProductId={ProductId}, Quantity={Quantity}", productId, quantity);
-
-            var request = new CartItemRequest { ProductId = productId, Quantity = quantity };
-            var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.PostAsync("/api/Cart/items", content);
-            }, "AddItemToCartAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<CartItemResponse>>(responseContent);
-
-            _logger.LogDebug("Item added to cart: CartItemId={CartItemId}, ProductId={ProductId}, Quantity={Quantity}",
-                apiResponse.Body.Id, apiResponse.Body.ProductId, apiResponse.Body.Quantity);
-
-            return apiResponse.Body;
-        }
-
-        public async Task<CartItemResponse> UpdateCartItemAsync(Guid cartItemId, int quantity)
-        {
-            if (quantity <= 0)
-            {
-                _logger.LogWarning("Invalid quantity ({Quantity}) for cart item: CartItemId={CartItemId}", quantity, cartItemId);
-                throw new ArgumentException("Quantity must be greater than 0.", nameof(quantity));
-            }
-
-            _logger.LogInformation("Updating cart item: CartItemId={CartItemId}, Quantity={Quantity}", cartItemId, quantity);
-
-            var request = new CartItemRequest { Quantity = quantity };
-            var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.PutAsync($"/api/Cart/items/{cartItemId}", content);
-            }, "UpdateCartItemAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<CartItemResponse>>(responseContent);
-
-            _logger.LogDebug("Cart item updated: CartItemId={CartItemId}, Quantity={Quantity}",
-                apiResponse.Body.Id, apiResponse.Body.Quantity);
-
-            return apiResponse.Body;
-        }
-
-        public async Task DeleteCartItemAsync(Guid cartItemId)
-        {
-            _logger.LogInformation("Deleting cart item: CartItemId={CartItemId}", cartItemId);
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.DeleteAsync($"/api/Cart/items/{cartItemId}");
-            }, "DeleteCartItemAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            _logger.LogDebug("Cart item deleted: CartItemId={CartItemId}", cartItemId);
-        }
-
-        public async Task ClearCartAsync()
-        {
-            _logger.LogInformation("Clearing cart");
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.DeleteAsync("/api/Cart");
-            }, "ClearCartAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            _logger.LogDebug("Cart cleared successfully");
-        }
-
-        public async Task<ShippingAddressRequest> GetSavedAddressAsync()
-        {
-            _logger.LogInformation("Fetching saved address");
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.GetAsync("/api/UserProfile/address");
-            }, "GetSavedAddressAsync");
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                _logger.LogDebug("No saved address found");
-                return null;
-            }
-
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<ShippingAddressRequest>>(content);
-
-            _logger.LogDebug("Saved address fetched successfully");
+            _logger.LogDebug("Payment intent created: {PaymentIntentId}",
+                apiResponse.Body?.Substring(0, Math.Min(20, apiResponse.Body?.Length ?? 0)) + "...");
 
             return apiResponse.Body;
         }

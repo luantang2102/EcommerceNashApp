@@ -1,12 +1,6 @@
-﻿using EcommerceNashApp.Web.Models;
-using EcommerceNashApp.Web.Models.DTOs;
-using EcommerceNashApp.Web.Models.Views;
+﻿using EcommerceNashApp.Web.Models.Views;
 using EcommerceNashApp.Web.Services;
-using EcommerceNashApp.Web.Services.Impl;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Web.Controllers
 {

@@ -1,5 +1,5 @@
-﻿using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Shared.DTOs.Response;
+using EcommerceNashApp.Shared.Paginations;
 using EcommerceNashApp.Web.Models.Views;
 
 public interface IProductService
@@ -17,6 +17,7 @@ public interface IProductService
         CancellationToken cancellationToken = default);
     Task<ProductView> GetProductByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<List<ProductRatingView>> GetProductRatingsAsync(Guid productId, CancellationToken cancellationToken);
-    ProductView MapProductDtoToView(ProductDto productDto);
-    ProductImageView MapProductImageDtoToView(ProductImageDto productImageDto);
+    ProductView MapProductResponseToView(ProductResponse productResponse);
+    ProductImageView MapProductImageResponseToView(ProductImageResponse productImageResponse);
+    Task<PagedList<ProductView>> GetFeaturedProductsAsync(PaginationParams paginationParams, CancellationToken cancellationToken);
 }

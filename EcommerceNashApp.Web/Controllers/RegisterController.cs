@@ -1,11 +1,11 @@
-﻿using EcommerceNashApp.Web.Models.DTOs;
-using EcommerceNashApp.Web.Models.DTOs.Request;
+﻿using EcommerceNashApp.Shared.DTOs.Auth.Request;
+using EcommerceNashApp.Shared.DTOs.Auth.Response;
+using EcommerceNashApp.Shared.DTOs.Wrapper;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 
 namespace EcommerceNashApp.Web.Controllers
 {
@@ -66,7 +66,7 @@ namespace EcommerceNashApp.Web.Controllers
                 var content = await response.Content.ReadAsStringAsync();
                 _logger.LogDebug("API response: {Content}", content);
 
-                var result = JsonSerializer.Deserialize<ApiDto<AuthDto>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                var result = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
                 if (response.IsSuccessStatusCode)
                 {

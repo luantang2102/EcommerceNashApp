@@ -1,6 +1,6 @@
-﻿using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Web.Models.DTOs;
-using EcommerceNashApp.Web.Models.DTOs.Request;
+﻿using EcommerceNashApp.Shared.DTOs.Request;
+using EcommerceNashApp.Shared.DTOs.Response;
+using EcommerceNashApp.Shared.DTOs.Wrapper;
 using EcommerceNashApp.Web.Models.Views;
 using System.Text;
 using System.Text.Json;
@@ -20,16 +20,16 @@ namespace EcommerceNashApp.Web.Services.Impl
             _httpContextAccessor = httpContextAccessor;
         }
 
-        private ProductRatingView MapRatingDtoToView(RatingDto ratingDto)
+        private ProductRatingView MapRatingResponseToView(RatingResponse ratingResponse)
         {
             return new ProductRatingView
             {
-                Id = ratingDto.Id,
-                Value = ratingDto.Value,
-                Comment = ratingDto.Comment,
-                Username = ratingDto.User?.UserName ?? "Anonymous",
-                CreatedDate = ratingDto.CreatedDate,
-                UserId = ratingDto.User.Id // Map Guid UserId
+                Id = ratingResponse.Id,
+                Value = ratingResponse.Value,
+                Comment = ratingResponse.Comment,
+                Username = ratingResponse.User?.UserName ?? "Anonymous",
+                CreatedDate = ratingResponse.CreatedDate,
+                UserId = ratingResponse.User.Id // Map Guid UserId
             };
         }
 
@@ -41,10 +41,10 @@ namespace EcommerceNashApp.Web.Services.Impl
                 var response = await _httpClient.GetAsync($"api/Ratings/product/{productId}", cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<IEnumerable<RatingDto>>>(cancellationToken);
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<IEnumerable<RatingResponse>>>(cancellationToken);
                 if (apiResponse?.Body != null)
                 {
-                    return apiResponse.Body.Select(MapRatingDtoToView).ToList();
+                    return apiResponse.Body.Select(MapRatingResponseToView).ToList();
                 }
                 _logger.LogWarning("No ratings found for product ID {ProductId}", productId);
             }
@@ -91,11 +91,11 @@ namespace EcommerceNashApp.Web.Services.Impl
                 var response = await _httpClient.PostAsync("api/Ratings", content, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<RatingDto>>(cancellationToken);
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<RatingResponse>>(cancellationToken);
                 if (apiResponse?.Body != null)
                 {
                     _logger.LogInformation("Rating created successfully for user {UserId} on product {ProductId}", userId, productId);
-                    return MapRatingDtoToView(apiResponse.Body);
+                    return MapRatingResponseToView(apiResponse.Body);
                 }
                 throw new Exception("Failed to create rating: Empty response");
             }
@@ -117,11 +117,11 @@ namespace EcommerceNashApp.Web.Services.Impl
                 var response = await _httpClient.PutAsync($"api/Ratings/{ratingId}", content, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<RatingDto>>(cancellationToken);
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<RatingResponse>>(cancellationToken);
                 if (apiResponse?.Body != null)
                 {
                     _logger.LogInformation("Rating {RatingId} updated successfully for user {UserId}", ratingId, userId);
-                    return MapRatingDtoToView(apiResponse.Body);
+                    return MapRatingResponseToView(apiResponse.Body);
                 }
                 throw new Exception("Failed to update rating: Empty response");
             }

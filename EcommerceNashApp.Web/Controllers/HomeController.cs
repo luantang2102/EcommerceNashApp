@@ -22,7 +22,7 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var products = await _productService.GetProductsAsync(
+        var products = await _productService.GetFeaturedProductsAsync(
             new PaginationParams
             {
                 PageNumber = 1,

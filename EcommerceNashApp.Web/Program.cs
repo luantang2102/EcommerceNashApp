@@ -1,10 +1,7 @@
+using EcommerceNashApp.Web.Configurations;
 using EcommerceNashApp.Web.Services;
 using EcommerceNashApp.Web.Services.Impl;
 using System.Net.Http.Headers;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System.Net;
-using Newtonsoft.Json.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,11 +27,15 @@ builder.Services.AddSession(options =>
     options.Cookie.MaxAge = TimeSpan.FromDays(3);
 });
 
+builder.Services.Configure<StripeConfig>(builder.Configuration.GetSection("Stripe"));
+
 // Register services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddHttpContextAccessor();
 
 // Configure HttpClient for NashApp API

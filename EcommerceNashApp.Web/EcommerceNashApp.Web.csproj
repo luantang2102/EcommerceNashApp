@@ -7,7 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="NewFolder\**" />
+    <Compile Remove="Views\Shared\Test\**" />
+    <Content Remove="NewFolder\**" />
+    <Content Remove="Views\Shared\Test\**" />
+    <None Remove="NewFolder\**" />
+    <None Remove="Views\Shared\Test\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Stripe.net" Version="48.1.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
   </ItemGroup>
 

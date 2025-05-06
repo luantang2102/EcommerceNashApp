@@ -1,0 +1,55 @@
+﻿@model EcommerceNashApp.Web.Models.Views.CheckoutView
+
+<h4 class="mb-4">Xem Lại Đơn Hàng</h4>
+<div class="row g-3">
+    <div class="col-12">
+        <h5>Địa Chỉ Giao Hàng</h5>
+        @if (Model.ShippingAddress != null && !string.IsNullOrEmpty(Model.ShippingAddress.FullName))
+        {
+            <p>
+                @Model.ShippingAddress.FullName<br />
+                @Model.ShippingAddress.Address1
+                @if (!string.IsNullOrEmpty(Model.ShippingAddress.Address2))
+                {
+                    <br />
+
+                    @Model.ShippingAddress.Address2
+                }
+                <br />
+                @Model.ShippingAddress.City, @Model.ShippingAddress.State @Model.ShippingAddress.Zip<br />
+                @Model.ShippingAddress.Country
+            </p>
+        }
+        else
+        {
+            <p class="text-danger">Không có địa chỉ giao hàng. Vui lòng quay lại bước 1.</p>
+        }
+    </div>
+    <div class="col-12">
+        <h5>Sản Phẩm</h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sản Phẩm</th>
+                    <th>Số Lượng</th>
+                    <th>Giá</th>
+                    <th>Tổng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Cart.Items)
+                {
+                    <tr>
+                        <td>@item.ProductName</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.Price.ToString("C", new System.Globalization.CultureInfo("vi-VN"))</td>
+                        <td>@((item.Price * item.Quantity).ToString("C", new System.Globalization.CultureInfo("vi-VN")))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="fw-bold">
+            Tổng Cộng: @Model.Cart.Items.Sum(i => i.Price * i.Quantity).ToString("C", new System.Globalization.CultureInfo("vi-VN"))
+        </p>
+    </div>
+</div>

@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Web.Services.Impl
 {
-    public class CartService : ICartService
+    public class OrderService : IOrderService
     {
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ILogger<CartService> _logger;
+        private readonly ILogger<OrderService> _logger;
 
-        public CartService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<CartService> logger)
+        public OrderService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<OrderService> logger)
         {
             _httpClient = httpClientFactory.CreateClient("NashApp.Api");
             _httpContextAccessor = httpContextAccessor;
@@ -157,129 +157,61 @@ namespace EcommerceNashApp.Web.Services.Impl
             return response;
         }
 
-        public async Task<CartResponse> GetCartAsync()
+        public async Task<int> CreateOrderAsync(OrderRequest request)
         {
-            _logger.LogInformation("Fetching cart");
+            _logger.LogInformation("Creating order with SaveAddress={SaveAddress}", request.SaveAddress);
 
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.GetAsync("/api/Cart");
-            }, "GetCartAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<CartResponse>>(content);
-
-            _logger.LogDebug("Cart fetched successfully: {CartId}, {ItemCount} items",
-                apiResponse.Body.Id, apiResponse.Body.CartItems?.Count ?? 0);
-
-            return apiResponse.Body;
-        }
-
-        public async Task<CartItemResponse> AddItemToCartAsync(Guid productId, int quantity)
-        {
-            _logger.LogInformation("Adding item to cart: ProductId={ProductId}, Quantity={Quantity}", productId, quantity);
-
-            var request = new CartItemRequest { ProductId = productId, Quantity = quantity };
             var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.PostAsync("/api/Cart/items", content);
-            }, "AddItemToCartAsync");
+                return await _httpClient.PostAsync("/api/Order/create", content);
+            }, "CreateOrderAsync");
 
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<CartItemResponse>>(responseContent);
+            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<int>>(responseContent);
 
-            _logger.LogDebug("Item added to cart: CartItemId={CartItemId}, ProductId={ProductId}, Quantity={Quantity}",
-                apiResponse.Body.Id, apiResponse.Body.ProductId, apiResponse.Body.Quantity);
-
-            return apiResponse.Body;
-        }
-
-        public async Task<CartItemResponse> UpdateCartItemAsync(Guid cartItemId, int quantity)
-        {
-            if (quantity <= 0)
-            {
-                _logger.LogWarning("Invalid quantity ({Quantity}) for cart item: CartItemId={CartItemId}", quantity, cartItemId);
-                throw new ArgumentException("Quantity must be greater than 0.", nameof(quantity));
-            }
-
-            _logger.LogInformation("Updating cart item: CartItemId={CartItemId}, Quantity={Quantity}", cartItemId, quantity);
-
-            var request = new CartItemRequest { Quantity = quantity };
-            var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.PutAsync($"/api/Cart/items/{cartItemId}", content);
-            }, "UpdateCartItemAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<CartItemResponse>>(responseContent);
-
-            _logger.LogDebug("Cart item updated: CartItemId={CartItemId}, Quantity={Quantity}",
-                apiResponse.Body.Id, apiResponse.Body.Quantity);
+            _logger.LogDebug("Order created successfully: OrderId={OrderId}", apiResponse.Body);
 
             return apiResponse.Body;
         }
 
-        public async Task DeleteCartItemAsync(Guid cartItemId)
+        public async Task<OrderResponse> GetOrderAsync(Guid orderId)
         {
-            _logger.LogInformation("Deleting cart item: CartItemId={CartItemId}", cartItemId);
+            _logger.LogInformation("Fetching order: OrderId={OrderId}", orderId);
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.DeleteAsync($"/api/Cart/items/{cartItemId}");
-            }, "DeleteCartItemAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            _logger.LogDebug("Cart item deleted: CartItemId={CartItemId}", cartItemId);
-        }
-
-        public async Task ClearCartAsync()
-        {
-            _logger.LogInformation("Clearing cart");
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.DeleteAsync("/api/Cart");
-            }, "ClearCartAsync");
-
-            response.EnsureSuccessStatusCode();
-
-            _logger.LogDebug("Cart cleared successfully");
-        }
-
-        public async Task<ShippingAddressRequest> GetSavedAddressAsync()
-        {
-            _logger.LogInformation("Fetching saved address");
-
-            var response = await ExecuteWithRetryAsync(async () =>
-            {
-                return await _httpClient.GetAsync("/api/UserProfile/address");
-            }, "GetSavedAddressAsync");
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                _logger.LogDebug("No saved address found");
-                return null;
-            }
+                return await _httpClient.GetAsync($"/api/Order/{orderId}");
+            }, "GetOrderAsync");
 
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<ShippingAddressRequest>>(content);
+            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<OrderResponse>>(content);
 
-            _logger.LogDebug("Saved address fetched successfully");
+            _logger.LogDebug("Order fetched successfully: OrderId={OrderId}", apiResponse.Body.Id);
 
             return apiResponse.Body;
+        }
+
+        public async Task UpdateOrderStatusAsync(Guid orderId, string status)
+        {
+            _logger.LogInformation("Updating order status: OrderId={OrderId}, Status={Status}", orderId, status);
+
+            var request = new { Status = status };
+            var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+
+            var response = await ExecuteWithRetryAsync(async () =>
+            {
+                return await _httpClient.PutAsync($"/api/Order/{orderId}/status", content);
+            }, "UpdateOrderStatusAsync");
+
+            response.EnsureSuccessStatusCode();
+
+            _logger.LogDebug("Order status updated: OrderId={OrderId}, Status={Status}", orderId, status);
         }
     }
 }

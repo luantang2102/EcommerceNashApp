@@ -1,14 +1,9 @@
 ﻿using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Web.Models.Views;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading;
-using System.Threading.Tasks;
-using EcommerceNashApp.Web.Services.Impl;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Text.Json;
 using EcommerceNashApp.Web.Models;
+using EcommerceNashApp.Web.Models.Views;
 using EcommerceNashApp.Web.Services;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace EcommerceNashApp.Web.Controllers
 {

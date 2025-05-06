@@ -1,4 +1,5 @@
-﻿using EcommerceNashApp.Web.Models.DTOs;
+﻿using EcommerceNashApp.Shared.DTOs.Response;
+using EcommerceNashApp.Shared.DTOs.Wrapper;
 using EcommerceNashApp.Web.Models.Views;
 
 namespace EcommerceNashApp.Web.Services.Impl
@@ -14,14 +15,14 @@ namespace EcommerceNashApp.Web.Services.Impl
             _logger = logger;
         }
 
-        public CategoryView MapCategoryDtoToView(CategoryDto categoryDto)
+        public CategoryView MapCategoryResponseToView(CategoryResponse categoryResponse)
         {
             return new CategoryView
             {
-                Id = categoryDto.Id,
-                Description = categoryDto.Description,
-                Name = categoryDto.Name,
-                SubCategories = categoryDto.SubCategories.Select(x => MapCategoryDtoToView(x)).ToList()
+                Id = categoryResponse.Id,
+                Description = categoryResponse.Description,
+                Name = categoryResponse.Name,
+                SubCategories = categoryResponse.SubCategories.Select(x => MapCategoryResponseToView(x)).ToList()
             };
         }
         public async Task<List<CategoryView>> GetCategoriesTreeAsync(CancellationToken cancellationToken)
@@ -33,11 +34,11 @@ namespace EcommerceNashApp.Web.Services.Impl
             response.EnsureSuccessStatusCode();
 
             // Fixing the generic type usage and syntax issues
-            var apiResponse = await response.Content.ReadFromJsonAsync<ApiDto<List<CategoryDto>>>(cancellationToken);
+            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<CategoryResponse>>>(cancellationToken);
 
             if (apiResponse?.Body != null)
             {
-                var categoryViews = apiResponse.Body.Select(x => MapCategoryDtoToView(x)).ToList();
+                var categoryViews = apiResponse.Body.Select(x => MapCategoryResponseToView(x)).ToList();
 
                 return categoryViews;
             }

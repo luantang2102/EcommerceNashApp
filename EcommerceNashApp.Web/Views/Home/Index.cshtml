@@ -4,7 +4,6 @@
     ViewData["Title"] = "Trang Chủ";
 }
 
-
 <section id="intro" class="position-relative mt-4">
     <div class="container-lg">
         <div class="swiper main-swiper">
@@ -79,7 +78,7 @@
         <div class="display-header d-flex align-items-center justify-content-between">
             <h2 class="section-title text-uppercase">Sản Phẩm Nổi Bật</h2>
             <div class="btn-right">
-                <a href="index.html" class="d-inline-block text-uppercase text-hover fw-bold">Xem tất cả</a>
+                <a asp-controller="Products" asp-action="Index" class="d-inline-block text-uppercase text-hover fw-bold">Xem tất cả</a>
             </div>
         </div>
         <div class="product-content p-3">
@@ -105,7 +104,8 @@
                                     </h3>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span class="card-price fw-bold">$@product.Price.ToString("F2")</span>
+                                    <!-- Updated price display to use VND formatting -->
+                                    <span class="card-price fw-bold">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:N0}", product.Price) ₫</span>
                                     <span class="card-stock fs-7">Tồn kho: @product.StockQuantity</span>
                                 </div>
                                 <div class="mt-2">
