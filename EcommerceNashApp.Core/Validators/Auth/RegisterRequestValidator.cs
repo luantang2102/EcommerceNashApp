@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
+﻿using EcommerceNashApp.Shared.DTOs.Auth.Request;
 using FluentValidation;
 
 namespace EcommerceNashApp.Core.Validators.Auth

@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.DTOs.Response
+﻿namespace EcommerceNashApp.Shared.DTOs.Response
 {
     public class CategoryResponse
     {

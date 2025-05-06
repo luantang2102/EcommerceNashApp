@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.DTOs.Auth.Request
+﻿namespace EcommerceNashApp.Shared.DTOs.Auth.Request
 {
     public class RegisterRequest
     {

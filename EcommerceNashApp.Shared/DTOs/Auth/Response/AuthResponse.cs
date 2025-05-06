@@ -1,6 +1,6 @@
-﻿using EcommerceNashApp.Core.DTOs.Response;
+﻿using EcommerceNashApp.Shared.DTOs.Response;
 
-namespace EcommerceNashApp.Core.DTOs.Auth.Response
+namespace EcommerceNashApp.Shared.DTOs.Auth.Response
 {
     public class AuthResponse
     {

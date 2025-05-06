@@ -1,5 +1,5 @@
-﻿using EcommerceNashApp.Core.DTOs.Response;
-using EcommerceNashApp.Core.Models.Extended;
+﻿using EcommerceNashApp.Core.Models.Extended;
+using EcommerceNashApp.Shared.DTOs.Response;
 
 namespace EcommerceNashApp.Infrastructure.Extensions
 {
@@ -13,7 +13,7 @@ namespace EcommerceNashApp.Infrastructure.Extensions
                 FirstName = userProfile.FirstName,
                 LastName = userProfile.LastName,
                 PhoneNumber = userProfile.PhoneNumber,
-                Address = userProfile.Address,
+                Address = userProfile.Address.ToString(),
                 CreatedDate = userProfile.CreatedDate,
                 UpdatedDate = userProfile.UpdatedDate,
                 UserId = userProfile.UserId,

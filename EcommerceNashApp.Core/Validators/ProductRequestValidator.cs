@@ -1,4 +1,4 @@
-﻿using EcommerceNashApp.Core.DTOs.Request;
+﻿using EcommerceNashApp.Shared.DTOs.Request;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 

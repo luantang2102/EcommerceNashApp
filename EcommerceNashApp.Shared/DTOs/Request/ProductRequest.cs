@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace EcommerceNashApp.Core.DTOs.Request
+namespace EcommerceNashApp.Shared.DTOs.Request
 {
     public class ProductRequest
     {

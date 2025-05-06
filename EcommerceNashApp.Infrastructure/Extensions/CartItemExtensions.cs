@@ -1,10 +1,5 @@
-﻿using EcommerceNashApp.Core.DTOs.Response;
-using EcommerceNashApp.Core.Models.Extended;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using EcommerceNashApp.Core.Models.Extended;
+using EcommerceNashApp.Shared.DTOs.Response;
 
 namespace EcommerceNashApp.Infrastructure.Extensions
 {

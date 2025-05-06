@@ -1,5 +1,4 @@
-﻿using EcommerceNashApp.Core.DTOs.Response;
-using EcommerceNashApp.Core.Models.Base;
+﻿using EcommerceNashApp.Core.Models.Base;
 
 namespace EcommerceNashApp.Core.Models.Extended
 {

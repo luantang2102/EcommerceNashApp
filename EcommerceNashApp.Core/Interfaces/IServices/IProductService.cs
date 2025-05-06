@@ -1,6 +1,6 @@
-﻿using EcommerceNashApp.Core.DTOs.Request;
-using EcommerceNashApp.Core.DTOs.Response;
-using EcommerceNashApp.Infrastructure.Helpers.Params;
+﻿using EcommerceNashApp.Infrastructure.Helpers.Params;
+using EcommerceNashApp.Shared.DTOs.Request;
+using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
 
 namespace EcommerceNashApp.Core.Interfaces.IServices

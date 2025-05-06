@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.DTOs.Auth.Response
+﻿namespace EcommerceNashApp.Shared.DTOs.Auth.Response
 {
     public class TokenResponse
     {

@@ -1,17 +1,13 @@
-﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
-using EcommerceNashApp.Core.DTOs.Auth.Response;
-using EcommerceNashApp.Core.Exeptions;
+﻿using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Auth;
-using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
+using EcommerceNashApp.Shared.DTOs.Auth.Request;
+using EcommerceNashApp.Shared.DTOs.Auth.Response;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {

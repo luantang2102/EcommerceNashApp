@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace EcommerceNashApp.Core.DTOs.Response
+﻿namespace EcommerceNashApp.Shared.DTOs.Response
 {
     public class OrderResponse
     {

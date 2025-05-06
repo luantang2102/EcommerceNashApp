@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Web.Models.DTOs.Request
+﻿namespace EcommerceNashApp.Shared.DTOs.Request
 {
     public class CartItemRequest
     {

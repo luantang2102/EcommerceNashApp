@@ -1,12 +1,12 @@
-﻿using EcommerceNashApp.Core.DTOs.Request;
-using EcommerceNashApp.Core.DTOs.Response;
-using EcommerceNashApp.Core.Exeptions;
+﻿using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extentions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
+using EcommerceNashApp.Shared.DTOs.Request;
+using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
 
 namespace EcommerceNashApp.Infrastructure.Services

@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.DTOs.Wrapper
+﻿namespace EcommerceNashApp.Shared.DTOs.Wrapper
 {
     public class ApiResponse<T>
     {

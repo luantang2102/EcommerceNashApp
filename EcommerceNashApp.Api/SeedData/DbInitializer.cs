@@ -27,8 +27,6 @@ namespace EcommerceNashApp.Api.SeedData
             await SeedCategory(dbContext);
             await SeedSubCategories(dbContext);
             await SeedProducts(dbContext);
-            await SeedUserProfiles(dbContext, userManager);
-            await SeedOrders(dbContext);
             await SeedOrderItems(dbContext);
             await SeedRatings(dbContext, userManager);
         }
@@ -198,76 +196,6 @@ namespace EcommerceNashApp.Api.SeedData
             }
         }
 
-        private static async Task SeedUserProfiles(AppDbContext context, UserManager<AppUser> userManager)
-        {
-            if (!context.UserProfiles.Any())
-            {
-                var userProfiles = new List<(string Email, string FirstName, string LastName, string PhoneNumber, string Address)>
-                {
-                    ("luantang.work@gmail.com", "Luan", "Tang", "123-456-7890", "123 User Street, City"),
-                    ("admin@gmail.com", "Admin", "User", "987-654-3210", "456 Admin Avenue, City"),
-                    ("john.doe@gmail.com", "John", "Doe", "555-123-4567", "789 Oak Lane, City"),
-                    ("jane.doe@gmail.com", "Jane", "Doe", "555-987-6543", "101 Pine Road, City"),
-                    ("mary.smith@gmail.com", "Mary", "Smith", "555-456-7890", "202 Maple Drive, City")
-                };
-
-                foreach (var profileData in userProfiles)
-                {
-                    var user = await userManager.FindByEmailAsync(profileData.Email);
-                    if (user != null)
-                    {
-                        var userProfile = new UserProfile
-                        {
-                            FirstName = profileData.FirstName,
-                            LastName = profileData.LastName,
-                            PhoneNumber = profileData.PhoneNumber,
-                            Address = profileData.Address,
-                            UserId = user.Id
-                        };
-                        await context.UserProfiles.AddAsync(userProfile);
-                    }
-                }
-
-                await context.SaveChangesAsync();
-            }
-        }
-
-        private static async Task SeedOrders(AppDbContext context)
-        {
-            if (!context.Orders.Any())
-            {
-                var userProfile = await context.UserProfiles
-                    .FirstOrDefaultAsync(up => up.Address == "123 User Street, City");
-
-                if (userProfile != null)
-                {
-                    var orders = new List<Order>
-                    {
-                        new Order
-                        {
-                            TotalAmount = 30.0,
-                            Status = "Pending",
-                            OrderDate = DateTime.UtcNow,
-                            ShippingAddress = "123 User Street, City",
-                            PaymentMethod = "Credit Card",
-                            UserProfileId = userProfile.Id
-                        },
-                        new Order
-                        {
-                            TotalAmount = 20.0,
-                            Status = "Shipped",
-                            OrderDate = DateTime.UtcNow.AddDays(-2),
-                            ShippingAddress = "123 User Street, City",
-                            PaymentMethod = "PayPal",
-                            UserProfileId = userProfile.Id
-                        }
-                    };
-
-                    await context.Orders.AddRangeAsync(orders);
-                    await context.SaveChangesAsync();
-                }
-            }
-        }
 
         private static async Task SeedOrderItems(AppDbContext context)
         {

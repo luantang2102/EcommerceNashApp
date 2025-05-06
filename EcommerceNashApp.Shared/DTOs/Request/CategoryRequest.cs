@@ -1,4 +1,4 @@
-﻿namespace EcommerceNashApp.Core.DTOs.Request
+﻿namespace EcommerceNashApp.Shared.DTOs.Request
 {
     public class CategoryRequest
     {

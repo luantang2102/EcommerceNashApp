@@ -1,5 +1,5 @@
-﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
-using EcommerceNashApp.Core.DTOs.Auth.Response;
+﻿using EcommerceNashApp.Shared.DTOs.Auth.Request;
+using EcommerceNashApp.Shared.DTOs.Auth.Response;
 
 namespace EcommerceNashApp.Core.Interfaces.IServices.Auth
 {

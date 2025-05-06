@@ -1,73 +1,67 @@
-﻿using EcommerceNashApp.Core.DTOs.Response;
-using EcommerceNashApp.Core.Exeptions;
+﻿using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Exceptions;
-using EcommerceNashApp.Infrastructure.Repositories;
+using EcommerceNashApp.Shared.DTOs.Request;
+using EcommerceNashApp.Shared.DTOs.Response;
 using Stripe;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IOrderItemRepository _orderItemRepository;
         private readonly ICartRepository _cartRepository;
         private readonly ICartItemRepository _cartItemRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IUserProfileRepository _userProfileRepository;
 
         public OrderService(
             IOrderRepository orderRepository,
-            IOrderItemRepository orderItemRepository,
             ICartRepository cartRepository,
             ICartItemRepository cartItemRepository,
-            IProductRepository productRepository)
+            IProductRepository productRepository,
+            IUserProfileRepository userProfileRepository)
         {
             _orderRepository = orderRepository;
-            _orderItemRepository = orderItemRepository;
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _productRepository = productRepository;
+            _userProfileRepository = userProfileRepository;
         }
 
-        public async Task<OrderResponse> CreateOrderAsync(Guid userProfileId, string shippingAddress, string paymentMethod, string paymentIntentId)
+        public async Task CreateOrderAsync(Guid userId, bool saveAddress, ShippingAddressRequest shippingAddress)
         {
-            var cart = await _cartRepository.GetByUserIdAsync(userProfileId);
+            var cart = await _cartRepository.GetByUserIdAsync(userId);
             if (cart == null || !cart.CartItems.Any())
             {
                 var attributes = new Dictionary<string, object>
                 {
-                    { "userId", userProfileId }
+                    { "userId", userId }
                 };
-                throw new AppException(ErrorCode.CART_EMPTY, attributes);
+                throw new AppException(ErrorCode.CART_NOT_FOUND, attributes);
             }
 
-            if (cart.PaymentIntentId != paymentIntentId)
+            // Verify PaymentIntent status
+            if (string.IsNullOrEmpty(cart.PaymentIntentId))
             {
                 var attributes = new Dictionary<string, object>
                 {
-                    { "paymentIntentId", paymentIntentId }
+                    { "userId", userId }
                 };
                 throw new AppException(ErrorCode.INVALID_PAYMENT_INTENT, attributes);
             }
 
-            // Confirm PaymentIntent
             var service = new PaymentIntentService();
-            var paymentIntent = await service.ConfirmAsync(paymentIntentId, new PaymentIntentConfirmOptions
-            {
-                PaymentMethod = paymentMethod
-            });
-
+            var paymentIntent = await service.GetAsync(cart.PaymentIntentId);
             if (paymentIntent.Status != "succeeded")
             {
                 var attributes = new Dictionary<string, object>
                 {
-                    { "paymentIntentId", paymentIntentId },
+                    { "paymentIntentId", cart.PaymentIntentId },
                     { "status", paymentIntent.Status }
                 };
                 throw new AppException(ErrorCode.PAYMENT_FAILED, attributes);
@@ -101,37 +95,49 @@ namespace EcommerceNashApp.Infrastructure.Services
                 await _productRepository.UpdateAsync(product);
             }
 
+            // Concatenate shipping address fields
+            var addressParts = new List<string>
+            {
+                shippingAddress.FullName,
+                shippingAddress.Address1,
+                shippingAddress.Address2,
+                shippingAddress.City,
+                shippingAddress.State,
+                shippingAddress.Zip,
+                shippingAddress.Country
+            }.Where(part => !string.IsNullOrEmpty(part));
+            var concatenatedAddress = string.Join(", ", addressParts);
+
             var order = new Order
             {
-                UserProfileId = userProfileId,
+                UserProfileId = userId,
                 TotalAmount = totalAmount + 50000, // Add delivery fee
                 Status = "Confirmed",
                 OrderDate = DateTime.UtcNow,
-                ShippingAddress = shippingAddress,
-                PaymentMethod = paymentMethod,
-                PaymentIntentId = paymentIntentId,
-                OrderItems = new List<OrderItem>()
+                ShippingAddress = concatenatedAddress,
+                PaymentIntentId = cart.PaymentIntentId,
+                OrderItems = cart.CartItems.Select(ci => new OrderItem
+                {
+                    ProductId = ci.ProductId,
+                    Quantity = ci.Quantity,
+                    Price = ci.Price
+                }).ToList()
             };
 
-            foreach (var cartItem in cart.CartItems)
+            if (saveAddress)
             {
-                var orderItem = new OrderItem
+                var userProfile = await _userProfileRepository.GetByIdAsync(userId);
+                if (userProfile != null)
                 {
-                    ProductId = cartItem.ProductId,
-                    Quantity = cartItem.Quantity,
-                    Price = cartItem.Price,
-                    Order = order
-                };
-                order.OrderItems.Add(orderItem);
-                await _orderItemRepository.CreateAsync(orderItem);
+                    userProfile.Address = concatenatedAddress;
+                    await _userProfileRepository.UpdateAsync(userProfile);
+                }
             }
 
             await _orderRepository.CreateAsync(order);
 
-            // Clear the cart after order creation
+            // Clear the cart
             await ClearCartAsync(cart);
-
-            return MapToOrderResponse(order);
         }
 
         public async Task<OrderResponse> GetOrderByIdAsync(Guid orderId)
@@ -185,12 +191,12 @@ namespace EcommerceNashApp.Infrastructure.Services
                 Status = order.Status,
                 OrderDate = order.OrderDate,
                 ShippingAddress = order.ShippingAddress,
-                PaymentMethod = order.PaymentMethod,
+                PaymentMethod = "Card", // Assuming card payment via Stripe
                 OrderItems = order.OrderItems.Select(oi => new OrderItemResponse
                 {
                     Id = oi.Id,
                     ProductId = oi.ProductId,
-                    ProductName = oi.Product.Name,
+                    ProductName = oi.Product?.Name ?? "Unknown",
                     Quantity = oi.Quantity,
                     Price = oi.Price
                 }).ToList()

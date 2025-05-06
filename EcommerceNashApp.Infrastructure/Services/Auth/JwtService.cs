@@ -1,14 +1,14 @@
-﻿using EcommerceNashApp.Core.Interfaces.IServices.Auth;
+﻿using EcommerceNashApp.Core.Exeptions;
+using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Settings;
+using EcommerceNashApp.Infrastructure.Exceptions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using EcommerceNashApp.Infrastructure.Exceptions;
-using EcommerceNashApp.Core.Exeptions;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {

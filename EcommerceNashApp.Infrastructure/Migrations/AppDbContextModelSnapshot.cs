@@ -151,7 +151,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.Category", b =>
@@ -191,7 +191,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasIndex("ParentCategoryId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.Extended.CartItem", b =>
@@ -228,7 +228,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.Extended.Order", b =>
@@ -275,7 +275,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.Extended.OrderItem", b =>
@@ -312,7 +312,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.Extended.UserProfile", b =>
@@ -354,7 +354,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserProfiles");
+                    b.ToTable("UserProfiles", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.Product", b =>
@@ -398,7 +398,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.ProductImage", b =>
@@ -435,7 +435,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("EcommerceNashApp.Core.Models.Rating", b =>
@@ -472,7 +472,7 @@ namespace EcommerceNashApp.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Ratings");
+                    b.ToTable("Ratings", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>

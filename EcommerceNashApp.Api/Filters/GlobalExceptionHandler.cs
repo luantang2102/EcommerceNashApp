@@ -1,5 +1,5 @@
-﻿using EcommerceNashApp.Core.DTOs.Wrapper;
-using EcommerceNashApp.Infrastructure.Exceptions;
+﻿using EcommerceNashApp.Infrastructure.Exceptions;
+using EcommerceNashApp.Shared.DTOs.Wrapper;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 

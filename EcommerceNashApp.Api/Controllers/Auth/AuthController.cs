@@ -1,12 +1,11 @@
 ﻿using EcommerceNashApp.Api.Controllers.Base;
 using EcommerceNashApp.Api.Extensions;
 using EcommerceNashApp.Api.Filters;
-using EcommerceNashApp.Core.DTOs.Auth.Request;
-using EcommerceNashApp.Core.DTOs.Auth.Response;
-using EcommerceNashApp.Core.DTOs.Wrapper;
 using EcommerceNashApp.Core.Interfaces.IServices.Auth;
+using EcommerceNashApp.Shared.DTOs.Auth.Request;
+using EcommerceNashApp.Shared.DTOs.Auth.Response;
+using EcommerceNashApp.Shared.DTOs.Wrapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace EcommerceNashApp.Api.Controllers.Auth
 {
