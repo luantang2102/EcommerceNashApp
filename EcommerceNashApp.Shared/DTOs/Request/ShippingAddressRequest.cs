@@ -15,5 +15,6 @@ namespace EcommerceNashApp.Shared.DTOs.Request
         public string State { get; set; }
         public string Zip { get; set; }
         public string Country { get; set; }
+        public bool SaveAddress { get; set; }
     }
 }

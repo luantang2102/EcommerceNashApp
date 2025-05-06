@@ -21,8 +21,8 @@ namespace EcommerceNashApp.Api.Controllers
         public async Task<IActionResult> CreateOrUpdatePaymentIntent()
         {
             var userId = User.GetUserId();
-            await _paymentService.CreateOrUpdatePaymentIntentAsync(userId);
-            return Ok(new ApiResponse<string>(200, "Payment intent created or updated successfully", "created/updated"));
+            var cliSecret = await _paymentService.CreateOrUpdatePaymentIntentAsync(userId) ?? "";
+            return Ok(new ApiResponse<string>(200, "Payment intent created or updated successfully", cliSecret));
         }
     }
 }

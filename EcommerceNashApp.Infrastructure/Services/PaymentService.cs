@@ -17,7 +17,7 @@ namespace EcommerceNashApp.Infrastructure.Services
             _stripeService = stripeService;
         }
 
-        public async Task CreateOrUpdatePaymentIntentAsync(Guid userId)
+        public async Task<string?> CreateOrUpdatePaymentIntentAsync(Guid userId)
         {
             var cart = await _cartRepository.GetByUserIdAsync(userId);
             if (cart == null)
@@ -34,12 +34,16 @@ namespace EcommerceNashApp.Infrastructure.Services
                 cart.PaymentIntentId = null;
                 cart.ClientSecret = null;
                 await _cartRepository.UpdateAsync(cart);
+
+                return null;
             }
 
             var paymentIntent = await _stripeService.CreateOrUpdatePaymentIntent(cart);
             cart.PaymentIntentId = paymentIntent.Id;
             cart.ClientSecret = paymentIntent.ClientSecret;
             await _cartRepository.UpdateAsync(cart);
+
+            return cart.ClientSecret;
         }
     }
 }

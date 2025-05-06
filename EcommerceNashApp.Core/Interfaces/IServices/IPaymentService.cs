@@ -2,6 +2,6 @@
 {
     public interface IPaymentService
     {
-        Task CreateOrUpdatePaymentIntentAsync(Guid userId);
+        Task<string?> CreateOrUpdatePaymentIntentAsync(Guid userId);
     }
 }
