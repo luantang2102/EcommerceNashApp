@@ -1,28 +1,24 @@
 ﻿using EcommerceNashApp.Shared.DTOs.Auth.Request;
 using EcommerceNashApp.Shared.DTOs.Auth.Response;
 using EcommerceNashApp.Shared.DTOs.Wrapper;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Text.Json;
+using Newtonsoft.Json;
+using System.Net;
+using System.Text;
 
 namespace EcommerceNashApp.Web.Controllers
 {
     public class RegisterController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<RegisterController> _logger;
 
-        public RegisterController(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<RegisterController> logger)
+        public RegisterController(IHttpClientFactory httpClientFactory, ILogger<RegisterController> logger)
         {
-            _httpClient = httpClientFactory.CreateClient("NashApp.Api");
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
-        // GET: /Register
         [HttpGet]
         public IActionResult Index(string returnUrl = null)
         {
@@ -30,7 +26,6 @@ namespace EcommerceNashApp.Web.Controllers
             return View();
         }
 
-        // POST: /Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index([FromForm] RegisterRequest model, string returnUrl = null)
@@ -49,53 +44,96 @@ namespace EcommerceNashApp.Web.Controllers
 
             try
             {
+                var client = _httpClientFactory.CreateClient("NashApp.Api");
                 var formData = new MultipartFormDataContent
                 {
-                    { new StringContent(model.UserName), "userName" },
-                    { new StringContent(model.Email), "email" },
-                    { new StringContent(model.Password), "password" },
-                    { new StringContent(model.ConfirmPassword), "confirmPassword" }
+                    { new StringContent(model.UserName), "UserName" },
+                    { new StringContent(model.Email), "Email" },
+                    { new StringContent(model.Password), "Password" },
+                    { new StringContent(model.ConfirmPassword), "ConfirmPassword" }
                 };
                 if (!string.IsNullOrEmpty(model.ImageUrl))
                 {
-                    formData.Add(new StringContent(model.ImageUrl), "imageUrl");
+                    formData.Add(new StringContent(model.ImageUrl), "ImageUrl");
                 }
 
                 _logger.LogInformation("Calling /api/Auth/register for email: {Email}", model.Email);
-                var response = await _httpClient.PostAsync("/api/Auth/register", formData);
-                var content = await response.Content.ReadAsStringAsync();
-                _logger.LogDebug("API response: {Content}", content);
-
-                var result = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                var response = await client.PostAsync("/api/Auth/register", formData);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // API sets jwt, refresh, and csrf cookies
-                    _logger.LogInformation("Registration successful for user ID: {UserId}", result.Body.User.Id);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AuthResponse>>(responseContent);
+                    _logger.LogInformation("Registration successful for user: {UserId}", apiResponse.Body.User.Id);
 
-                    // Create claims for MVC authentication
-                    var claims = new List<Claim>
+                    // Propagate API cookies to browser and CookieContainer
+                    if (response.Headers.TryGetValues("Set-Cookie", out var setCookies))
                     {
-                        new Claim(ClaimTypes.NameIdentifier, result.Body.User.Id.ToString()),
-                        new Claim(ClaimTypes.Email, result.Body.User.Email ?? string.Empty),
-                        new Claim(ClaimTypes.Name, result.Body.User.UserName ?? "Anonymous"),
+                        if (client.GetType().GetProperty("Handler")?.GetValue(client) is HttpClientHandler handler && handler.UseCookies)
+                        {
+                            var cookieContainer = handler.CookieContainer;
+                            foreach (var cookieHeader in setCookies)
+                            {
+                                var cookieParts = cookieHeader.Split(';');
+                                var nameValue = cookieParts[0].Split('=');
+                                if (nameValue.Length == 2)
+                                {
+                                    var cookie = new Cookie(nameValue[0].Trim(), nameValue[1].Trim())
+                                    {
+                                        Domain = "localhost",
+                                        Path = "/",
+                                        Secure = true,
+                                        HttpOnly = cookieParts.Any(p => p.Trim().ToLower() == "httponly")
+                                    };
+                                    foreach (var part in cookieParts.Skip(1))
+                                    {
+                                        var kv = part.Split('=');
+                                        if (kv.Length == 2 && kv[0].Trim().ToLower() == "expires")
+                                        {
+                                            if (DateTime.TryParse(kv[1].Trim(), out var expires))
+                                                cookie.Expires = expires;
+                                        }
+                                    }
+                                    cookieContainer.Add(new Uri("https://localhost:5001"), cookie);
+                                    _logger.LogDebug("Added cookie to CookieContainer: {Name}={Value}", cookie.Name, cookie.Value.Substring(0, Math.Min(20, cookie.Value.Length)) + "...");
+                                }
+                                HttpContext.Response.Headers.Append("Set-Cookie", cookieHeader);
+                            }
+                        }
+                        else
+                        {
+                            foreach (var cookie in setCookies)
+                            {
+                                HttpContext.Response.Headers.Append("Set-Cookie", cookie);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No Set-Cookie headers found in /api/Auth/register response");
+                    }
+
+                    // Store user info in session
+                    var userInfo = new
+                    {
+                        UserId = apiResponse.Body.User.Id,
+                        UserName = apiResponse.Body.User.UserName,
+                        Roles = apiResponse.Body.User.Roles
                     };
+                    HttpContext.Session.SetString("UserInfo", JsonConvert.SerializeObject(userInfo));
+                    _logger.LogInformation("Stored user info in session for UserId: {UserId}", userInfo.UserId);
 
-                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var principal = new ClaimsPrincipal(identity);
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     {
-                        IsPersistent = true,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3) // Match jwt cookie
-                    });
-
-                    returnUrl = string.IsNullOrEmpty(returnUrl) ? Url.Action("Index", "Home") : returnUrl;
-                    _logger.LogInformation("Redirecting to {ReturnUrl}", returnUrl);
-                    return Redirect(returnUrl);
+                        return Redirect(returnUrl);
+                    }
+                    return RedirectToAction("Index", "Home");
                 }
 
-                _logger.LogWarning("Registration failed: {Message}", result?.Message);
-                ModelState.AddModelError("", result?.Message ?? "Email đã được sử dụng.");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                var errorResponse = JsonConvert.DeserializeObject<ApiResponse<AuthResponse>>(errorContent);
+                _logger.LogWarning("Registration failed: {Message}", errorResponse?.Message);
+                ModelState.AddModelError("", errorResponse?.Message ?? "Email đã được sử dụng.");
                 return View(model);
             }
             catch (Exception ex)

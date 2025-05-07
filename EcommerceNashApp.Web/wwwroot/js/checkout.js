@@ -179,6 +179,7 @@ async function handleSubmit(e) {
                 setLoading(false);
             }
         } else if (document.getElementById('payment-element')) {
+            console.log(`${window.location.origin}/Checkout/Return`);
             const { error } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {

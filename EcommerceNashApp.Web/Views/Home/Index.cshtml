@@ -2,6 +2,7 @@
 @model HomeView
 @{
     ViewData["Title"] = "Trang Chủ";
+    Layout = "_Layout";
 }
 
 <section id="intro" class="position-relative mt-4">
@@ -10,38 +11,38 @@
             <div class="swiper-wrapper">
                 <div class="swiper-slide">
                     <div class="card d-flex flex-row align-items-end border-0 large jarallax-keep-img">
-                        <img src="images/hero-image-1.png" alt="giày" class="img-fluid jarallax-img">
+                        <img src="/images/hero-image-1.png" alt="giày" class="img-fluid jarallax-img">
                     </div>
                 </div>
                 <div class="swiper-slide">
                     <div class="row g-4">
                         <div class="col-lg-12 mb-4">
                             <div class="card d-flex flex-row align-items-end border-0 jarallax-keep-img">
-                                <img src="images/hero-image-2.png" alt="giày" class="img-fluid jarallax-img">
+                                <img src="/images/hero-image-2.png" alt="giày" class="img-fluid jarallax-img">
                             </div>
                         </div>
-                        <div class="col-lg-12 ">
+                        <div class="col-lg-12">
                             <div class="card d-flex flex-row align-items-end border-0 jarallax-keep-img">
-                                <img src="images/hero-image-3.png" alt="giày" class="img-fluid jarallax-img">
+                                <img src="/images/hero-image-3.png" alt="giày" class="img-fluid jarallax-img">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="swiper-slide">
                     <div class="card d-flex flex-row align-items-end border-0 large jarallax-keep-img">
-                        <img src="images/hero-image-4.png" alt="giày" class="img-fluid jarallax-img">
+                        <img src="/images/hero-image-4.png" alt="giày" class="img-fluid jarallax-img">
                     </div>
                 </div>
                 <div class="swiper-slide">
                     <div class="row g-4">
                         <div class="col-lg-12 mb-4">
                             <div class="card d-flex flex-row align-items-end border-0 jarallax-keep-img">
-                                <img src="images/hero-image-5.png" alt="giày" class="img-fluid jarallax-img">
+                                <img src="/images/hero-image-5.png" alt="giày" class="img-fluid jarallax-img">
                             </div>
                         </div>
                         <div class="col-lg-12">
                             <div class="card d-flex flex-row align-items-end border-0 jarallax-keep-img">
-                                <img src="images/hero-image-6.png" alt="giày" class="img-fluid jarallax-img">
+                                <img src="/images/hero-image-6.png" alt="giày" class="img-fluid jarallax-img">
                             </div>
                         </div>
                     </div>
@@ -94,7 +95,7 @@
                                 }
                                 else
                                 {
-                                    <img src="images/placeholder.jpg" alt="@product.Name" class="product-image img-fluid w-100 h-100 object-fit-cover">
+                                    <img src="/images/placeholder.jpg" alt="@product.Name" class="product-image img-fluid w-100 h-100 object-fit-cover">
                                 }
                             </div>
                             <div class="card-detail flex-grow-1 d-flex flex-column p-3 overflow-hidden">
@@ -104,14 +105,13 @@
                                     </h3>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <!-- Updated price display to use VND formatting -->
                                     <span class="card-price fw-bold">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:N0}", product.Price) ₫</span>
                                     <span class="card-stock fs-7">Tồn kho: @product.StockQuantity</span>
                                 </div>
                                 <div class="mt-2">
                                     <span class="card-rating fs-7">
                                         @{
-                                            var rating = Math.Round(product.AverageRating * 2) / 2; // Round to nearest 0.5
+                                            var rating = Math.Round(product.AverageRating * 2) / 2;
                                             var fullStars = (int)Math.Floor(rating);
                                             var halfStar = (rating % 1) >= 0.5 ? 1 : 0;
                                             var emptyStars = 5 - fullStars - halfStar;
@@ -122,7 +122,7 @@
                                             }
                                             if (halfStar == 1)
                                             {
-                                                <span style="color: gold;">★</span> <!-- Could use a half-star icon if desired -->
+                                                <span style="color: gold;">★</span>
                                             }
                                             for (var i = 0; i < emptyStars; i++)
                                             {
@@ -131,8 +131,6 @@
                                         }
                                     </span>
                                 </div>
-
-                                <!-- Added cart buttons to the bottom of the card -->
                                 <div class="cart-button d-flex gap-2 justify-content-center align-items-center mt-3" onclick="event.stopPropagation()">
                                     <button type="button" class="btn btn-light p-2" data-bs-toggle="modal" data-bs-target="#modallong" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: background-color 0.3s ease, transform 0.2s ease;" onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.transform='scale(1.1)';" onmouseout="this.style.backgroundColor=''; this.style.transform='';">
                                         <svg class="shopping-carriage">
@@ -153,7 +151,3 @@
         </div>
     </div>
 </section>
-
-<script src="js/jquery-1.11.0.min.js"></script>
-<script src="js/plugins.js"></script>
-<script src="js/script.js"></script>

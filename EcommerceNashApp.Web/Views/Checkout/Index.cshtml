@@ -1,41 +1,10 @@
 ﻿@model EcommerceNashApp.Web.Models.Views.CheckoutView
 @{
     ViewData["Title"] = "Thanh Toán";
-    Layout = null;
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Nash | Xây dựng thể thao của bạn</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="author" content="TemplatesJungle">
-    <meta name="keywords" content="Online Store">
-    <meta name="description" content="Nash - Building your sports">
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' https://js.stripe.com https://checkout.stripe.com 'unsafe-inline' https://cdn.jsdelivr.net;
-        style-src 'self' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com https://fonts.googleapis.com https://fonts.gstatic.com;
-        font-src 'self' data:;
-        img-src 'self' data: https://*.stripe.com https://res.cloudinary.com;
-        frame-src https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com;
-        connect-src 'self' https://api.stripe.com https://hooks.stripe.com https://checkout.stripe.com http://localhost:* ws://localhost:*;
-        object-src 'none';
-    ">
-
-    <link rel="shortcut icon" type="image/x-icon" href="/images/web-icon.png" />
-
-    <link rel="stylesheet" href="/css/vendor.css">
-    <link rel="stylesheet" type="text/css" href="/style.css">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,900;1,900&family=Source+Sans+Pro:wght@400;600;700;900&display=swap" rel="stylesheet">
-
+@section Styles {
     <style>
         #address-element, #payment-element {
             padding: 10px;
@@ -83,143 +52,16 @@
             margin-bottom: 10px;
         }
     </style>
-</head>
-<body>
-    @await Html.PartialAsync("_SvgSymbols")
+}
 
-    <div class="preloader" style="position: fixed;top:0;left:0;width: 100%;height: 100%;background-color: #fff;display: flex;align-items: center;justify-content: center;z-index: 9999;">
-        <svg version="1.1" id="L4" width="100" height="100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-             viewBox="0 0 50 100" enable-background="new 0 0 0 0" xml:space="preserve">
-        <circle fill="#111" stroke="none" cx="6" cy="50" r="6">
-        <animate attributeName="opacity" dur="1s" values="0;1;0" repeatCount="indefinite" begin="0.1" />
-            </circle>
-        <circle fill="#111" stroke="none" cx="26" cy="50" r="6">
-        <animate attributeName="opacity" dur="1s" values="0;1;0" repeatCount="indefinite" begin="0.2" />
-            </circle>
-        <circle fill="#111" stroke="none" cx="46" cy="50" r="6">
-        <animate attributeName="opacity" dur="1s" values="0;1;0" repeatCount="indefinite" begin="0.3" />
-            </circle>
-        </svg>
-    </div>
-
-    @await Html.PartialAsync("_Header")
-
-    <section id="checkout" class="checkout-page py-5">
-        <div class="container-md">
-            <h1 class="display-6 text-center mb-5">Thanh Toán</h1>
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    @TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-            <div class="row">
-                <div class="col-lg-3 col-md-12 mb-4">
-                    <div class="checkout-stepper bg-light p-4 rounded-3">
-                        <ul class="list-unstyled">
-                            <li class="step @(Model.CurrentStep >= 1 ? "active" : "") d-flex align-items-center mb-3">
-                                <span class="step-number rounded-circle @(Model.CurrentStep >= 1 ? "bg-dark text-white" : "bg-gray text-dark") d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">1</span>
-                                <span class="step-title fw-bold">Địa Chỉ Giao Hàng</span>
-                            </li>
-                            <li class="step @(Model.CurrentStep >= 2 ? "active" : "") d-flex align-items-center mb-3">
-                                <span class="step-number rounded-circle @(Model.CurrentStep >= 2 ? "bg-dark text-white" : "bg-gray text-dark") d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">2</span>
-                                <span class="step-title">Xem Lại Đơn Hàng</span>
-                            </li>
-                            <li class="step @(Model.CurrentStep >= 3 ? "active" : "") d-flex align-items-center">
-                                <span class="step-number rounded-circle @(Model.CurrentStep >= 3 ? "bg-dark text-white" : "bg-gray text-dark") d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">3</span>
-                                <span class="step-title">Thanh Toán</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-9 col-md-12">
-                    <div class="bg-white p-4 rounded-3 border">
-                        @if (Model.CurrentStep <= 3)
-                        {
-                            <form id="payment-form" asp-action="NextStep" asp-controller="Checkout" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" asp-for="CurrentStep" id="current-step" />
-                                <input type="hidden" asp-for="SessionId" />
-                                <div asp-validation-summary="All" class="validation-summary-errors"></div>
-                                @switch (Model.CurrentStep)
-                                {
-                                    case 1:
-                                        <h4 class="mb-4">Địa Chỉ Giao Hàng</h4>
-                                        <div id="init-error" class="text-danger"></div>
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <label class="form-label">Địa Chỉ</label>
-                                                <div id="address-element" class="form-control"></div>
-                                                <span id="address-message" class="text-danger"></span>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="form-check">
-                                                    <input asp-for="ShippingAddress.SaveAddress" class="form-check-input" type="checkbox" id="save-address" name="ShippingAddress.SaveAddress" />
-                                                    <label class="form-check-label" for="save-address">Lưu địa chỉ này</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        break;
-                                    case 2:
-                                        <partial name="_OrderReview" model="Model" />
-                                        break;
-                                    case 3:
-                                        <h4 class="mb-4">Phương Thức Thanh Toán</h4>
-                                        <div id="init-error" class="text-danger"></div>
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <div id="payment-element" class="form-control"></div>
-                                                <span id="payment-message" class="text-danger"></span>
-                                            </div>
-                                        </div>
-                                        break;
-                                }
-                                <div class="d-flex justify-content-between mt-4">
-                                    @if (Model.CurrentStep > 1)
-                                    {
-                                        <form asp-action="PreviousStep" asp-controller="Checkout" method="post">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" asp-for="CurrentStep" />
-                                            <button type="submit" class="btn btn-outline-gray btn-medium text-uppercase">Quay Lại</button>
-                                        </form>
-                                    }
-                                    <button type="submit" id="submit" class="btn btn-red btn-medium text-uppercase hvr-sweep-to-right dark-sweep">
-                                        <span id="button-text">@(Model.CurrentStep == 3 ? "Thanh Toán" : "Tiếp Theo")</span>
-                                    </button>
-                                </div>
-                            </form>
-                            <form id="create-payment-intent-form" asp-controller="Checkout" asp-action="CreatePaymentIntent" method="post" style="display: none;">
-                                @Html.AntiForgeryToken()
-                            </form>
-                        }
-                        else
-                        {
-                            @if (Model.PaymentSucceeded)
-                            {
-                                <h4>Cảm ơn bạn!</h4>
-                                <p>Đơn hàng của bạn đã được xác nhận. Một email xác nhận sẽ được gửi đến bạn.</p>
-                                <a href="@Url.Action("Index", "Home")" class="btn btn-red btn-medium text-uppercase">Tiếp tục mua sắm</a>
-                            }
-                            else
-                            {
-                                <h4>Thanh toán không thành công</h4>
-                                <p>@Model.PaymentMessage</p>
-                                <button type="button" class="btn btn-red btn-medium text-uppercase" onclick="window.location.href='@Url.Action("Index", "Checkout")'">Thử Lại</button>
-                            }
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    @await Html.PartialAsync("_Footer")
-
-    <script src="/js/jquery-1.11.0.min.js"></script>
-    <script src="/js/plugins.js"></script>
-    <script src="/js/script.js"></script>
+@section Scripts {
+    <!-- Load jQuery validation -->
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.13.1/dist/jquery.validate.min.js"></script>
+    <!-- Load Stripe script -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Load checkout.js after Stripe -->
+    <script src="~/js/checkout.js"></script>
+    <!-- Load unobtrusive validation -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             function loadUnobtrusiveScript() {
@@ -242,10 +84,8 @@
             loadUnobtrusiveScript();
         });
     </script>
-    <script src="https://js.stripe.com/v3/"></script>
-    <script src="/js/checkout.js"></script>
+    <!-- Override jQuery easing -->
     <script>
-        // Override the swing easing function to ensure compatibility with jQuery 1.11.0
         jQuery.extend(jQuery.easing, {
             swing: function (x, t, b, c, d) {
                 t = t || 0;
@@ -256,5 +96,114 @@
             }
         });
     </script>
-</body>
-</html>
+}
+
+<section id="checkout" class="checkout-page py-5">
+    <div class="container-md">
+        <h1 class="display-6 text-center mb-5">Thanh Toán</h1>
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        <div class="row">
+            <div class="col-lg-3 col-md-12 mb-4">
+                <div class="checkout-stepper bg-light p-4 rounded-3">
+                    <ul class="list-unstyled">
+                        <li class="step @(Model.CurrentStep >= 1 ? "active" : "") d-flex align-items-center mb-3">
+                            <span class="step-number rounded-circle @(Model.CurrentStep >= 1 ? "bg-dark text-white" : "bg-gray text-dark") d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">1</span>
+                            <span class="step-title fw-bold">Địa Chỉ Giao Hàng</span>
+                        </li>
+                        <li class="step @(Model.CurrentStep >= 2 ? "active" : "") d-flex align-items-center mb-3">
+                            <span class="step-number rounded-circle @(Model.CurrentStep >= 2 ? "bg-dark text-white" : "bg-gray text-dark") d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">2</span>
+                            <span class="step-title">Xem Lại Đơn Hàng</span>
+                        </li>
+                        <li class="step @(Model.CurrentStep >= 3 ? "active" : "") d-flex align-items-center">
+                            <span class="step-number rounded-circle @(Model.CurrentStep >= 3 ? "bg-dark text-white" : "bg-gray text-dark") d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">3</span>
+                            <span class="step-title">Thanh Toán</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-9 col-md-12">
+                <div class="bg-white p-4 rounded-3 border">
+                    @if (Model.CurrentStep <= 3)
+                    {
+                        <form id="payment-form" asp-action="NextStep" asp-controller="Checkout" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="CurrentStep" id="current-step" />
+                            <input type="hidden" asp-for="SessionId" />
+                            <div asp-validation-summary="All" class="validation-summary-errors"></div>
+                            @switch (Model.CurrentStep)
+                            {
+                                case 1:
+                                    <h4 class="mb-4">Địa Chỉ Giao Hàng</h4>
+                                    <div id="init-error" class="text-danger"></div>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Địa Chỉ</label>
+                                            <div id="address-element" class="form-control"></div>
+                                            <span id="address-message" class="text-danger"></span>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input asp-for="ShippingAddress.SaveAddress" class="form-check-input" type="checkbox" id="save-address" name="ShippingAddress.SaveAddress" />
+                                                <label class="form-check-label" for="save-address">Lưu địa chỉ này</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    break;
+                                case 2:
+                                    <partial name="_OrderReview" model="Model" />
+                                    break;
+                                case 3:
+                                    <h4 class="mb-4">Phương Thức Thanh Toán</h4>
+                                    <div id="init-error" class="text-danger"></div>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <div id="payment-element" class="form-control"></div>
+                                            <span id="payment-message" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    break;
+                            }
+                            <div class="d-flex justify-content-between mt-4">
+                                @if (Model.CurrentStep > 1)
+                                {
+                                    <form asp-action="PreviousStep" asp-controller="Checkout" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" asp-for="CurrentStep" />
+                                        <button type="submit" class="btn btn-outline-gray btn-medium text-uppercase">Quay Lại</button>
+                                    </form>
+                                }
+                                <button type="submit" id="submit" class="btn btn-red btn-medium text-uppercase hvr-sweep-to-right dark-sweep">
+                                    <span id="button-text">@(Model.CurrentStep == 3 ? "Thanh Toán" : "Tiếp Theo")</span>
+                                </button>
+                            </div>
+                        </form>
+                        <form id="create-payment-intent-form" asp-controller="Checkout" asp-action="CreatePaymentIntent" method="post" style="display: none;">
+                            @Html.AntiForgeryToken()
+                        </form>
+                    }
+                    else
+                    {
+                        @if (Model.PaymentSucceeded)
+                        {
+                            <h4>Cảm ơn bạn!</h4>
+                            <p>Đơn hàng của bạn đã được xác nhận. Một email xác nhận sẽ được gửi đến bạn.</p>
+                            <a href="@Url.Action("Index", "Home")" class="btn btn-red btn-medium text-uppercase">Tiếp tục mua sắm</a>
+                        }
+                        else
+                        {
+                            <h4>Thanh toán không thành công</h4>
+                            <p>@Model.PaymentMessage</p>
+                            <button type="button" class="btn btn-red btn-medium text-uppercase" onclick="window.location.href='@Url.Action("Index", "Checkout")'">Thử Lại</button>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
