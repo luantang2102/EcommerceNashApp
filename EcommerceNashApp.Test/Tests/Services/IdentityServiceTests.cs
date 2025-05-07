@@ -1,10 +1,10 @@
-﻿using EcommerceNashApp.Core.DTOs.Auth.Request;
-using EcommerceNashApp.Core.Exeptions;
+﻿using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Services.Auth;
+using EcommerceNashApp.Shared.DTOs.Auth.Request;
 using Moq;
 
 namespace EcommerceNashApp.Tests.Services
@@ -13,13 +13,15 @@ namespace EcommerceNashApp.Tests.Services
     {
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly Mock<IJwtService> _jwtServiceMock;
+        private readonly Mock<ICartRepository> _cartRepositoryMock;
         private readonly IdentityService _identityService;
 
         public IdentityServiceTests()
         {
             _userRepositoryMock = new Mock<IUserRepository>();
             _jwtServiceMock = new Mock<IJwtService>();
-            _identityService = new IdentityService(_userRepositoryMock.Object, _jwtServiceMock.Object);
+            _cartRepositoryMock = new Mock<ICartRepository>();
+            _identityService = new IdentityService(_userRepositoryMock.Object, _cartRepositoryMock.Object, _jwtServiceMock.Object);
         }
 
         [Fact]
@@ -76,8 +78,7 @@ namespace EcommerceNashApp.Tests.Services
                 RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(1)
             };
             var roles = new List<string> { "User" };
-            _userRepositoryMock.Setup(r => r.GetAllAsync())
-                .Returns(new List<AppUser> { user }.AsQueryable());
+            _userRepositoryMock.Setup(r => r.FindByRefreshTokenAsync(refreshTokenRequest.RefreshToken)).ReturnsAsync(user);
             _userRepositoryMock.Setup(r => r.GetRolesAsync(user)).ReturnsAsync(roles);
             _jwtServiceMock.Setup(j => j.GenerateToken(user, roles)).Returns("new-jwt-token");
             _jwtServiceMock.Setup(j => j.GenerateRefreshToken()).Returns("new-refresh-token");
@@ -107,8 +108,7 @@ namespace EcommerceNashApp.Tests.Services
                 RefreshToken = refreshTokenRequest.RefreshToken,
                 RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1)
             };
-            _userRepositoryMock.Setup(r => r.GetAllAsync())
-                .Returns(new List<AppUser> { user }.AsQueryable());
+            _userRepositoryMock.Setup(r => r.FindByRefreshTokenAsync(refreshTokenRequest.RefreshToken)).ReturnsAsync(user);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<AppException>(() => _identityService.RefreshTokenAsync(refreshTokenRequest));
@@ -207,10 +207,7 @@ namespace EcommerceNashApp.Tests.Services
             // Arrange
             var userId = Guid.NewGuid();
             var user = new AppUser { Id = userId, UserName = "TestUser", Email = "test@example.com" };
-            var roles = new List<string> { "User" };
-            _userRepositoryMock.Setup(r => r.GetAllAsync())
-                .Returns(new List<AppUser> { user }.AsQueryable());
-            _userRepositoryMock.Setup(r => r.GetRolesAsync(user)).ReturnsAsync(roles);
+            _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
             // Act
             var result = await _identityService.GetCurrentUserAsync(userId);
@@ -219,8 +216,7 @@ namespace EcommerceNashApp.Tests.Services
             Assert.NotNull(result);
             Assert.NotNull(result.User);
             Assert.Equal(user.UserName, result.User.UserName);
-            Assert.Equal(roles, result.User.Roles);
-            Assert.Equal("", result.CsrfToken); // CsrfToken is set to empty string in service
+            Assert.Equal("", result.CsrfToken);
         }
 
         [Fact]
@@ -228,8 +224,7 @@ namespace EcommerceNashApp.Tests.Services
         {
             // Arrange
             var userId = Guid.NewGuid();
-            _userRepositoryMock.Setup(r => r.GetAllAsync())
-                .Returns(new List<AppUser>().AsQueryable());
+            _userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((AppUser)null);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<AppException>(() => _identityService.GetCurrentUserAsync(userId));

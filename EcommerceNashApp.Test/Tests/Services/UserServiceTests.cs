@@ -4,6 +4,8 @@ using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Services;
+using EcommerceNashApp.Shared.Paginations;
+using EcommerceNashApp.Shared.Paginations.Service;
 using Moq;
 
 namespace EcommerceNashApp.Test.Tests.Services
@@ -12,11 +14,13 @@ namespace EcommerceNashApp.Test.Tests.Services
     {
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly UserService _userService;
+        private readonly Mock<IPaginationService> _paginationServiceMock;
 
         public UserServiceTests()
         {
             _userRepositoryMock = new Mock<IUserRepository>();
-            _userService = new UserService(_userRepositoryMock.Object);
+            _paginationServiceMock = new Mock<IPaginationService>();
+            _userService = new UserService(_userRepositoryMock.Object, _paginationServiceMock.Object);
         }
 
         [Fact]
@@ -28,6 +32,8 @@ namespace EcommerceNashApp.Test.Tests.Services
             _userRepositoryMock.Setup(r => r.GetUsersInRoleAsync("User")).ReturnsAsync(users);
             _userRepositoryMock.Setup(r => r.GetAllAsync()).Returns(users.AsQueryable());
             _userRepositoryMock.Setup(r => r.GetRolesAsync(It.IsAny<AppUser>())).ReturnsAsync(new List<string> { "User" });
+            _paginationServiceMock.Setup(p => p.EF_ToPagedList(It.IsAny<IQueryable<AppUser>>(), It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(new PagedList<AppUser>(users, 1, 1, 10));
 
             // Act
             var result = await _userService.GetUsersAsync(userParams);

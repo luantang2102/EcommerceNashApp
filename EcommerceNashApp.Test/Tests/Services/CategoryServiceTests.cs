@@ -1,10 +1,15 @@
-﻿using EcommerceNashApp.Core.DTOs.Request;
-using EcommerceNashApp.Core.Exeptions;
+﻿using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Helpers.Params;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Exceptions;
+using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Infrastructure.Services;
+using EcommerceNashApp.Shared.DTOs.Request;
+using EcommerceNashApp.Shared.DTOs.Response;
+using EcommerceNashApp.Shared.Paginations;
+using EcommerceNashApp.Shared.Paginations.Service;
+using EcommerceNashApp.Shared.Paginations.Service.Impl;
 using Moq;
 
 namespace EcommerceNashApp.Test.Tests.Services
@@ -13,11 +18,13 @@ namespace EcommerceNashApp.Test.Tests.Services
     {
         private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
         private readonly CategoryService _categoryService;
+        private readonly Mock<IPaginationService> _paginationServiceMock;
 
         public CategoryServiceTests()
         {
             _categoryRepositoryMock = new Mock<ICategoryRepository>();
-            _categoryService = new CategoryService(_categoryRepositoryMock.Object);
+            _paginationServiceMock = new Mock<IPaginationService>();
+            _categoryService = new CategoryService(_categoryRepositoryMock.Object, _paginationServiceMock.Object);
         }
 
         [Fact]
@@ -27,6 +34,9 @@ namespace EcommerceNashApp.Test.Tests.Services
             var categoryParams = new CategoryParams { PageNumber = 1, PageSize = 10 };
             var categories = new List<Category> { new Category { Id = Guid.NewGuid(), Name = "Test Category", Description = "Test Desc" } };
             _categoryRepositoryMock.Setup(r => r.GetAllAsync()).Returns(categories.AsQueryable());
+            _paginationServiceMock
+                .Setup(p => p.EF_ToPagedList(It.IsAny<IQueryable<CategoryResponse>>(), It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(new PagedList<CategoryResponse>(categories.Select(c => c.MapModelToResponse()).ToList(), 1, 1, 10));
 
             // Act
             var result = await _categoryService.GetCategoriesAsync(categoryParams);

@@ -1,0 +1,86 @@
+<assemblies timestamp="05/07/2025 04:45:58">
+  <assembly name="D:\Coding\Nash-Project\Assignment_1\EcommerceNashApp\EcommerceNashApp.Test\bin\Debug\net9.0\EcommerceNashApp.Infrastructure.Test.dll" run-date="2025-05-07" run-time="04:45:58" total="23" passed="23" failed="0" skipped="0" time="0.573" errors="0">
+    <errors />
+    <collection total="4" passed="4" failed="0" skipped="0" name="Test collection for EcommerceNashApp.Test.Services.ProductServiceTests" time="0.068">
+      <test name="EcommerceNashApp.Test.Services.ProductServiceTests.CreateProductAsync_WithValidRequest_ReturnsProductResponse" type="EcommerceNashApp.Test.Services.ProductServiceTests" method="CreateProductAsync_WithValidRequest_ReturnsProductResponse" time="0.0596298" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Services.ProductServiceTests.GetProductByIdAsync_WhenProductExists_ReturnsProductResponse" type="EcommerceNashApp.Test.Services.ProductServiceTests" method="GetProductByIdAsync_WhenProductExists_ReturnsProductResponse" time="0.0032359" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Services.ProductServiceTests.GetProductByIdAsync_WhenProductNotFound_ThrowsAppException" type="EcommerceNashApp.Test.Services.ProductServiceTests" method="GetProductByIdAsync_WhenProductNotFound_ThrowsAppException" time="0.0008991" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Services.ProductServiceTests.GetProductsAsync_ReturnsPagedList" type="EcommerceNashApp.Test.Services.ProductServiceTests" method="GetProductsAsync_ReturnsPagedList" time="0.0045304" result="Pass">
+        <traits />
+      </test>
+    </collection>
+    <collection total="3" passed="3" failed="0" skipped="0" name="Test collection for EcommerceNashApp.Test.Tests.Services.CategoryServiceTests" time="0.065">
+      <test name="EcommerceNashApp.Test.Tests.Services.CategoryServiceTests.DeleteCategoryAsync_WhenCategoryHasSubCategories_ThrowsAppException" type="EcommerceNashApp.Test.Tests.Services.CategoryServiceTests" method="DeleteCategoryAsync_WhenCategoryHasSubCategories_ThrowsAppException" time="0.0551259" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Tests.Services.CategoryServiceTests.CreateCategoryAsync_WithValidRequest_ReturnsCategoryResponse" type="EcommerceNashApp.Test.Tests.Services.CategoryServiceTests" method="CreateCategoryAsync_WithValidRequest_ReturnsCategoryResponse" time="0.0029997" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Tests.Services.CategoryServiceTests.GetCategoriesAsync_ReturnsPagedList" type="EcommerceNashApp.Test.Tests.Services.CategoryServiceTests" method="GetCategoriesAsync_ReturnsPagedList" time="0.0068574" result="Pass">
+        <traits />
+      </test>
+    </collection>
+    <collection total="2" passed="2" failed="0" skipped="0" name="Test collection for EcommerceNashApp.Test.Tests.Services.JwtServiceTests" time="0.090">
+      <test name="EcommerceNashApp.Test.Tests.Services.JwtServiceTests.GenerateToken_WithValidUser_ReturnsToken" type="EcommerceNashApp.Test.Tests.Services.JwtServiceTests" method="GenerateToken_WithValidUser_ReturnsToken" time="0.0886682" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Tests.Services.JwtServiceTests.GenerateRefreshToken_ReturnsNonEmptyToken" type="EcommerceNashApp.Test.Tests.Services.JwtServiceTests" method="GenerateRefreshToken_ReturnsNonEmptyToken" time="0.0009217" result="Pass">
+        <traits />
+      </test>
+    </collection>
+    <collection total="2" passed="2" failed="0" skipped="0" name="Test collection for EcommerceNashApp.Test.Tests.Services.RatingServiceTests" time="0.063">
+      <test name="EcommerceNashApp.Test.Tests.Services.RatingServiceTests.CreateRatingAsync_WhenRatingExists_ThrowsAppException" type="EcommerceNashApp.Test.Tests.Services.RatingServiceTests" method="CreateRatingAsync_WhenRatingExists_ThrowsAppException" time="0.0556679" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Tests.Services.RatingServiceTests.CreateRatingAsync_WithValidRequest_ReturnsRatingResponse" type="EcommerceNashApp.Test.Tests.Services.RatingServiceTests" method="CreateRatingAsync_WithValidRequest_ReturnsRatingResponse" time="0.0078157" result="Pass">
+        <traits />
+      </test>
+    </collection>
+    <collection total="3" passed="3" failed="0" skipped="0" name="Test collection for EcommerceNashApp.Test.Tests.Services.UserServiceTests" time="0.064">
+      <test name="EcommerceNashApp.Test.Tests.Services.UserServiceTests.GetUserByIdAsync_WhenUserNotFound_ThrowsAppException" type="EcommerceNashApp.Test.Tests.Services.UserServiceTests" method="GetUserByIdAsync_WhenUserNotFound_ThrowsAppException" time="0.0535952" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Tests.Services.UserServiceTests.GetUserByIdAsync_WhenUserExists_ReturnsUserResponse" type="EcommerceNashApp.Test.Tests.Services.UserServiceTests" method="GetUserByIdAsync_WhenUserExists_ReturnsUserResponse" time="0.0049675" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Test.Tests.Services.UserServiceTests.GetUsersAsync_ReturnsPagedList" type="EcommerceNashApp.Test.Tests.Services.UserServiceTests" method="GetUsersAsync_ReturnsPagedList" time="0.0052885" result="Pass">
+        <traits />
+      </test>
+    </collection>
+    <collection total="9" passed="9" failed="0" skipped="0" name="Test collection for EcommerceNashApp.Tests.Services.IdentityServiceTests" time="0.082">
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.GetCurrentUserAsync_WithValidUserId_ReturnsAuthResponse" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="GetCurrentUserAsync_WithValidUserId_ReturnsAuthResponse" time="0.0561182" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.RegisterAsync_WithMismatchedPasswords_ThrowsAppException" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="RegisterAsync_WithMismatchedPasswords_ThrowsAppException" time="0.0028268" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.RefreshTokenAsync_WithExpiredToken_ThrowsAppException" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="RefreshTokenAsync_WithExpiredToken_ThrowsAppException" time="0.0022718" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.RegisterAsync_WithDuplicateEmail_ThrowsAppException" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="RegisterAsync_WithDuplicateEmail_ThrowsAppException" time="0.0013783" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.LoginAsync_WithInvalidCredentials_ThrowsAppException" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="LoginAsync_WithInvalidCredentials_ThrowsAppException" time="0.0020349" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.GetCurrentUserAsync_WithInvalidUserId_ThrowsAppException" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="GetCurrentUserAsync_WithInvalidUserId_ThrowsAppException" time="0.0009500" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.LoginAsync_WithValidCredentials_ReturnsTokenResponse" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="LoginAsync_WithValidCredentials_ReturnsTokenResponse" time="0.0105833" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.RefreshTokenAsync_WithValidToken_ReturnsTokenResponse" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="RefreshTokenAsync_WithValidToken_ReturnsTokenResponse" time="0.0025501" result="Pass">
+        <traits />
+      </test>
+      <test name="EcommerceNashApp.Tests.Services.IdentityServiceTests.RegisterAsync_WithValidRequest_ReturnsTokenResponse" type="EcommerceNashApp.Tests.Services.IdentityServiceTests" method="RegisterAsync_WithValidRequest_ReturnsTokenResponse" time="0.0035586" result="Pass">
+        <traits />
+      </test>
+    </collection>
+  </assembly>
+</assemblies>
