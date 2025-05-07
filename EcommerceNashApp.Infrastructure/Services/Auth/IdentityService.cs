@@ -7,7 +7,6 @@ using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Auth.Request;
 using EcommerceNashApp.Shared.DTOs.Auth.Response;
-using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Services.Auth
 {
@@ -84,8 +83,8 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
 
         public async Task<TokenResponse> RefreshTokenAsync(RefreshTokenRequest dto)
         {
-            var user = await _userRepository.GetAllAsync()
-                .FirstOrDefaultAsync(u => u.RefreshToken == dto.RefreshToken);
+            // Using the repository method instead of direct EF Core query
+            var user = await _userRepository.FindByRefreshTokenAsync(dto.RefreshToken);
 
             if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
@@ -206,7 +205,7 @@ namespace EcommerceNashApp.Infrastructure.Services.Auth
 
         public async Task<AuthResponse> GetCurrentUserAsync(Guid userId)
         {
-            var user = await _userRepository.GetAllAsync().FirstOrDefaultAsync(x => x.Id == userId);
+            var user = await _userRepository.GetByIdAsync(userId);
 
             if (user == null)
             {

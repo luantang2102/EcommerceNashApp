@@ -8,6 +8,8 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
+using EcommerceNashApp.Shared.Paginations.Service;
+using EcommerceNashApp.Shared.Paginations.Service.Impl;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceNashApp.Infrastructure.Services
@@ -15,11 +17,13 @@ namespace EcommerceNashApp.Infrastructure.Services
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _categoryRepository;
-
-        public CategoryService(ICategoryRepository categoryRepository)
+        private readonly IPaginationService _paginationService;
+        public CategoryService(ICategoryRepository categoryRepository, IPaginationService paginationService)
         {
             _categoryRepository = categoryRepository;
+            _paginationService = paginationService;
         }
+
 
         public async Task<PagedList<CategoryResponse>> GetCategoriesAsync(CategoryParams categoryParams)
         {
@@ -42,11 +46,11 @@ namespace EcommerceNashApp.Infrastructure.Services
             query = query
                 .Sort(categoryParams.OrderBy)
                 .Search(categoryParams.SearchTerm)
-                .Filter(categoryParams.Level);
+                .Filter(categoryParams.Level, categoryParams.IsActive);
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
-            return await PagedList<CategoryResponse>.ToPagedList(
+            return await _paginationService.EF_ToPagedList(
                 projectedQuery,
                 categoryParams.PageNumber,
                 categoryParams.PageSize
@@ -55,7 +59,10 @@ namespace EcommerceNashApp.Infrastructure.Services
 
         public async Task<List<CategoryResponse>> GetCategoriesTreeAsync()
         {
-            var rootCategories = await _categoryRepository.GetRootCategoriesAsync().ToListAsync();
+            var rootCategories = await _categoryRepository
+                .GetRootCategoriesAsync()
+                .Where(x => x.IsActive)    
+                .ToListAsync();
             return rootCategories.Select(c => MapCategoryToResponse(c)).ToList();
         }
 

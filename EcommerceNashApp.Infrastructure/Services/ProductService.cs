@@ -8,6 +8,7 @@ using EcommerceNashApp.Infrastructure.Helpers.Params;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
+using EcommerceNashApp.Shared.Paginations.Service;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
@@ -15,12 +16,14 @@ namespace EcommerceNashApp.Infrastructure.Services
     {
         private readonly IProductRepository _productRepository;
         private readonly IMediaService _mediaService;
-
-        public ProductService(IProductRepository productRepository, IMediaService cloudinaryService)
+        private readonly IPaginationService _paginationService;
+        public ProductService(IProductRepository productRepository, IMediaService mediaService, IPaginationService paginationService)
         {
             _productRepository = productRepository;
-            _mediaService = cloudinaryService;
+            _mediaService = mediaService;
+            _paginationService = paginationService;
         }
+
 
         public async Task<PagedList<ProductResponse>> GetProductsAsync(ProductParams productParams)
         {
@@ -31,7 +34,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
-            return await PagedList<ProductResponse>.ToPagedList(
+            return await _paginationService.EF_ToPagedList(
                 projectedQuery,
                 productParams.PageNumber,
                 productParams.PageSize
@@ -62,7 +65,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             var projectedQuery = query.Select(x => x.MapModelToResponse());
 
-            return await PagedList<ProductResponse>.ToPagedList(
+            return await _paginationService.EF_ToPagedList(
                 projectedQuery,
                 productParams.PageNumber,
                 productParams.PageSize

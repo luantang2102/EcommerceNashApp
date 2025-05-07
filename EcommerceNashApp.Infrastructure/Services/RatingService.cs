@@ -8,16 +8,20 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
+using EcommerceNashApp.Shared.Paginations.Service;
+using EcommerceNashApp.Shared.Paginations.Service.Impl;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
     public class RatingService : IRatingService
     {
         private readonly IRatingRepository _ratingRepository;
+        private readonly IPaginationService _paginationService;
 
-        public RatingService(IRatingRepository ratingRepository)
+        public RatingService(IRatingRepository ratingRepository, IPaginationService paginationService)
         {
             _ratingRepository = ratingRepository;
+            _paginationService = paginationService;
         }
 
         public async Task<PagedList<RatingResponse>> GetRatingsAsync(RatingParams ratingParams)
@@ -27,7 +31,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             var projectedQuery = query.Select(x => x.MapModelToReponse());
 
-            return await PagedList<RatingResponse>.ToPagedList(
+            return await _paginationService.EF_ToPagedList(
                 projectedQuery,
                 ratingParams.PageNumber,
                 ratingParams.PageSize
@@ -56,7 +60,7 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             var projectedQuery = query.Select(x => x.MapModelToReponse());
 
-            return await PagedList<RatingResponse>.ToPagedList(
+            return await _paginationService.EF_ToPagedList(
                 projectedQuery,
                 ratingParams.PageNumber,
                 ratingParams.PageSize

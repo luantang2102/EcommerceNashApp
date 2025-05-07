@@ -14,5 +14,6 @@ namespace EcommerceNashApp.Core.Interfaces.IRepositories
         Task UpdateAsync(AppUser user);
         Task<bool> CreateAsync(AppUser user, string password);
         Task AddToRoleAsync(AppUser user, string role);
+        Task<AppUser?> FindByRefreshTokenAsync(string refreshToken);
     }
 }

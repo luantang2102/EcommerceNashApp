@@ -7,16 +7,20 @@ using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
+using EcommerceNashApp.Shared.Paginations.Service;
+using EcommerceNashApp.Shared.Paginations.Service.Impl;
 
 namespace EcommerceNashApp.Infrastructure.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IPaginationService _paginationService;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository,IPaginationService paginationService)
         {
             _userRepository = userRepository;
+            _paginationService = paginationService;
         }
 
         public async Task<PagedList<UserResponse>> GetUsersAsync(UserParams userParams)
@@ -29,7 +33,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 .Search(userParams.SearchTerm)
                 .Sort(userParams.OrderBy);
 
-            var pagedList = await PagedList<AppUser>.ToPagedList(
+            var pagedList = await _paginationService.EF_ToPagedList(
                 query,
                 userParams.PageNumber,
                 userParams.PageSize

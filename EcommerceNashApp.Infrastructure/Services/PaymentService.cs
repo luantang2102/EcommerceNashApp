@@ -9,12 +9,12 @@ namespace EcommerceNashApp.Infrastructure.Services
     public class PaymentService : IPaymentService
     {
         private readonly ICartRepository _cartRepository;
-        private readonly StripeService _stripeService;
+        private readonly StripeService stripeService;
 
         public PaymentService(ICartRepository cartRepository, StripeService stripeService)
         {
             _cartRepository = cartRepository;
-            _stripeService = stripeService;
+            this.stripeService = stripeService;
         }
 
         public async Task<string?> CreateOrUpdatePaymentIntentAsync(Guid userId)
@@ -38,7 +38,7 @@ namespace EcommerceNashApp.Infrastructure.Services
                 return null;
             }
 
-            var paymentIntent = await _stripeService.CreateOrUpdatePaymentIntent(cart);
+            var paymentIntent = await stripeService.CreateOrUpdatePaymentIntent(cart);
             cart.PaymentIntentId = paymentIntent.Id;
             cart.ClientSecret = paymentIntent.ClientSecret;
             await _cartRepository.UpdateAsync(cart);

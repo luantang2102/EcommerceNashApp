@@ -68,4 +68,11 @@ public class UserRepository : IUserRepository
     {
         await _userManager.AddToRoleAsync(user, role);
     }
+
+    // New method to find user by refresh token
+    public async Task<AppUser?> FindByRefreshTokenAsync(string refreshToken)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+    }
 }

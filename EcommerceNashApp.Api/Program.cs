@@ -13,6 +13,8 @@ using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Infrastructure.Services.Auth;
 using EcommerceNashApp.Infrastructure.Services.External;
 using EcommerceNashApp.Infrastructure.Settings;
+using EcommerceNashApp.Shared.Paginations.Service;
+using EcommerceNashApp.Shared.Paginations.Service.Impl;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
@@ -99,6 +101,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<StripeService>();
+builder.Services.AddScoped<IPaginationService, EF_PaginationService>();
 
 
 // Exception handling and authentication

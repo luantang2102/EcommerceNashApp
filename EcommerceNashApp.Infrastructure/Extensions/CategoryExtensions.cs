@@ -15,7 +15,6 @@ namespace EcommerceNashApp.Infrastructure.Extensions
             return query;
         }
 
-
         public static IQueryable<Category> Search(this IQueryable<Category> query, string? searchTerm)
         {
             if (string.IsNullOrEmpty(searchTerm)) return query;
@@ -23,12 +22,16 @@ namespace EcommerceNashApp.Infrastructure.Extensions
             return query.Where(x => x.Name.ToLower().Contains(lowerCaseTerm) || x.Description.ToLower().Contains(lowerCaseTerm));
         }
 
-        public static IQueryable<Category> Filter(this IQueryable<Category> query, string? level)
+        public static IQueryable<Category> Filter(this IQueryable<Category> query, string? level, bool? isActive)
         {
             if (!string.IsNullOrEmpty(level))
             {
                 var levelValue = int.TryParse(level, out var parsedLevel) ? parsedLevel : 0;
                 query = query.Where(x => x.Level == levelValue);
+            }
+            if (isActive.HasValue)
+            {
+                query = query.Where(x => x.IsActive == isActive.Value);
             }
             return query;
         }
