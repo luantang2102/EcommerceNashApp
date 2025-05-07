@@ -15,7 +15,7 @@ Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "EcommerceNashApp.Office", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceNashApp.Shared", "EcommerceNashApp.Shared\EcommerceNashApp.Shared.csproj", "{245C5DE7-50CF-4197-83DC-767DCD13A85F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceNashApp.Test", "EcommerceNashApp.Test\EcommerceNashApp.Test.csproj", "{F621A005-F998-423A-84C0-E77799A19E48}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceNashApp.Infrastructure.Test", "EcommerceNashApp.Test\EcommerceNashApp.Infrastructure.Test.csproj", "{F621A005-F998-423A-84C0-E77799A19E48}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
