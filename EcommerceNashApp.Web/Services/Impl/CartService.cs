@@ -163,7 +163,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.GetAsync("/api/Cart");
+                return await _httpClient.GetAsync("/api/Cart?IsActive=True");
             }, "GetCartAsync");
 
             response.EnsureSuccessStatusCode();
