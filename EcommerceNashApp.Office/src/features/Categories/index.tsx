@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   TextField,
@@ -29,6 +29,7 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Checkbox,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -40,6 +41,8 @@ import {
   Save as SaveIcon,
   ContentCopy as ContentCopyIcon,
   Clear as ClearIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
 } from "@mui/icons-material";
 import {
   setParams,
@@ -68,6 +71,9 @@ export default function CategoryList() {
   );
   const { data, isLoading, error, refetch, isFetching } = useFetchCategoriesQuery(params);
   const [search, setSearch] = useState(params.searchTerm || "");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { data: selectedCategory, isLoading: isLoadingCategory } = useFetchCategoryByIdQuery(
     selectedCategoryId || "",
@@ -88,6 +94,13 @@ export default function CategoryList() {
     parentCategoryId: null,
   });
 
+  // Validation state
+  const [errors, setErrors] = useState<{
+    name?: string;
+    description?: string;
+    parentCategoryId?: string;
+  }>({});
+
   // Notification state
   const [notification, setNotification] = useState({
     open: false,
@@ -96,16 +109,15 @@ export default function CategoryList() {
   });
 
   // Debounced search handler
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       dispatch(setParams({ searchTerm: value.trim() || undefined }));
-      dispatch(setPageNumber(1)); // Reset to first page on new search
+      dispatch(setPageNumber(1));
     }, 500),
     [dispatch]
   );
 
-  // Reset form when dialog opens/closes or selected category changes
+  // Reset form and errors when dialog opens/closes or selected category changes
   useEffect(() => {
     if (isCreateFormOpen && selectedCategoryId && selectedCategory) {
       setFormData({
@@ -114,6 +126,7 @@ export default function CategoryList() {
         isActive: selectedCategory.isActive,
         parentCategoryId: selectedCategory.parentCategoryId,
       });
+      setErrors({});
     } else if (isCreateFormOpen && !selectedCategoryId) {
       setFormData({
         name: "",
@@ -121,6 +134,7 @@ export default function CategoryList() {
         isActive: true,
         parentCategoryId: null,
       });
+      setErrors({});
     }
   }, [isCreateFormOpen, selectedCategoryId, selectedCategory]);
 
@@ -129,6 +143,29 @@ export default function CategoryList() {
     setSearch(params.searchTerm || "");
   }, [params.searchTerm]);
 
+  // Form validation
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    // Name validation
+    if (!formData.name?.trim()) {
+      newErrors.name = "Category name is required.";
+    }
+
+    // Description validation
+    if (!formData.description?.trim()) {
+      newErrors.description = "Description is required.";
+    }
+
+    // ParentCategoryId validation
+    if (formData.parentCategoryId && !/^[a-zA-Z0-9-]+$/.test(formData.parentCategoryId)) {
+      newErrors.parentCategoryId = "Parent Category ID must be alphanumeric or include hyphens.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Form handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -136,6 +173,7 @@ export default function CategoryList() {
       ...prev,
       [name]: value,
     }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,6 +204,15 @@ export default function CategoryList() {
 
   // Form submission
   const handleSaveCategory = async () => {
+    if (!validateForm()) {
+      setNotification({
+        open: true,
+        message: "Please fix the errors in the form before saving.",
+        severity: "error",
+      });
+      return;
+    }
+
     try {
       const categoryFormData = new FormData();
 
@@ -201,12 +248,13 @@ export default function CategoryList() {
     }
   };
 
-  // Delete confirmation
+  // Delete handlers
   const handleConfirmDelete = async () => {
     if (selectedCategoryId) {
       try {
         await deleteCategory(selectedCategoryId).unwrap();
         dispatch(setSelectedCategoryId(null));
+        setSelectedCategoryIds((prev) => prev.filter((id) => id !== selectedCategoryId));
         setNotification({
           open: true,
           message: "Category deleted successfully",
@@ -224,6 +272,107 @@ export default function CategoryList() {
     }
   };
 
+  const handleDeleteAllSelected = async () => {
+    try {
+      for (const id of selectedCategoryIds) {
+        await deleteCategory(id).unwrap();
+      }
+      setSelectedCategoryIds([]);
+      setNotification({
+        open: true,
+        message: `${selectedCategoryIds.length} category(ies) deleted successfully`,
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("Failed to delete categories:", err);
+      setNotification({
+        open: true,
+        message: "Failed to delete some categories",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleCheckboxChange = (id: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allCategoryIds = data?.items.map((category) => category.id) || [];
+      setSelectedCategoryIds(allCategoryIds);
+    } else {
+      setSelectedCategoryIds([]);
+    }
+  };
+
+  // Sorting handler
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Sorted items
+  const sortedItems = useMemo(() => {
+    if (!data?.items || !sortField) return data?.items || [];
+
+    const items = [...data.items];
+
+    return items.sort((a, b) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let valueA: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let valueB: any;
+
+      switch (sortField) {
+        case "name":
+          valueA = a.name?.toLowerCase() || "";
+          valueB = b.name?.toLowerCase() || "";
+          break;
+        case "description":
+          valueA = a.description?.toLowerCase() || "";
+          valueB = b.description?.toLowerCase() || "";
+          break;
+        case "level":
+          valueA = a.level ?? 0;
+          valueB = b.level ?? 0;
+          break;
+        case "isActive":
+          valueA = a.isActive ? 1 : 0;
+          valueB = b.isActive ? 1 : 0;
+          break;
+        case "createdDate":
+          valueA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+          valueB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+          break;
+        case "updatedDate":
+          valueA = a.updatedDate ? new Date(a.updatedDate).getTime() : 0;
+          valueB = b.updatedDate ? new Date(b.updatedDate).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [data?.items, sortField, sortDirection]);
+
+  // Paginate sorted items
+  const paginatedItems = useMemo(() => {
+    if (!data?.pagination) return sortedItems;
+    const startIndex = (data.pagination.currentPage - 1) * data.pagination.pageSize;
+    const endIndex = startIndex + data.pagination.pageSize;
+    return sortedItems.slice(startIndex, endIndex);
+  }, [sortedItems, data?.pagination]);
+
   // Search and pagination
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -233,6 +382,8 @@ export default function CategoryList() {
 
   const handleClearSearch = () => {
     setSearch("");
+    setSortField(undefined);
+    setSortDirection("asc");
     dispatch(setParams({ searchTerm: undefined }));
     dispatch(setPageNumber(1));
   };
@@ -266,6 +417,7 @@ export default function CategoryList() {
       isActive: true,
       parentCategoryId: null,
     });
+    setErrors({});
   };
 
   const handleCloseDeleteDialog = () => {
@@ -376,15 +528,29 @@ export default function CategoryList() {
             }}
             disabled={isFetching}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleCreateClick}
-            startIcon={<AddCircleIcon />}
-            sx={{ borderRadius: "8px", textTransform: "none" }}
-          >
-            Add New Category
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {selectedCategoryIds.length > 0 && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteAllSelected}
+                startIcon={<DeleteIcon />}
+                sx={{ borderRadius: "8px", textTransform: "none" }}
+                disabled={isDeleting}
+              >
+                Delete Selected ({selectedCategoryIds.length})
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleCreateClick}
+              startIcon={<AddCircleIcon />}
+              sx={{ borderRadius: "8px", textTransform: "none" }}
+            >
+              Add New Category
+            </Button>
+          </Box>
         </Box>
 
         <Divider sx={{ mb: 2 }} />
@@ -394,21 +560,98 @@ export default function CategoryList() {
           <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Level</TableCell>
-                <TableCell align="center">Status</TableCell>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={
+                      (data?.items?.length ?? 0) > 0 &&
+                      selectedCategoryIds.length === data?.items.length
+                    }
+                    indeterminate={
+                      selectedCategoryIds.length > 0 &&
+                      selectedCategoryIds.length < (data?.items.length ?? 0)
+                    }
+                    onChange={handleSelectAllChange}
+                  />
+                </TableCell>
+                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("name")}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Name
+                    {sortField === "name" &&
+                      (sortDirection === "asc" ? (
+                        <ArrowUpwardIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownwardIcon fontSize="small" />
+                      ))}
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("description")}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Description
+                    {sortField === "description" &&
+                      (sortDirection === "asc" ? (
+                        <ArrowUpwardIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownwardIcon fontSize="small" />
+                      ))}
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("level")}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Level
+                    {sortField === "level" &&
+                      (sortDirection === "asc" ? (
+                        <ArrowUpwardIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownwardIcon fontSize="small" />
+                      ))}
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("isActive")} align="center">
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    Status
+                    {sortField === "isActive" &&
+                      (sortDirection === "asc" ? (
+                        <ArrowUpwardIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownwardIcon fontSize="small" />
+                      ))}
+                  </Box>
+                </TableCell>
                 <TableCell>Parent Category</TableCell>
-                <TableCell>Created Date</TableCell>
-                <TableCell>Updated Date</TableCell>
+                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("createdDate")}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Created Date
+                    {sortField === "createdDate" &&
+                      (sortDirection === "asc" ? (
+                        <ArrowUpwardIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownwardIcon fontSize="small" />
+                      ))}
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("updatedDate")}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Updated Date
+                    {sortField === "updatedDate" &&
+                      (sortDirection === "asc" ? (
+                        <ArrowUpwardIcon fontSize="small" />
+                      ) : (
+                        <ArrowDownwardIcon fontSize="small" />
+                      ))}
+                  </Box>
+                </TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {data?.items.map((category) => (
-                <TableRow
-                  key={category.id}
-                >
+              {paginatedItems.map((category) => (
+                <TableRow key={category.id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedCategoryIds.includes(category.id)}
+                      onChange={() => handleCheckboxChange(category.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Typography
                       variant="body1"
@@ -493,9 +736,9 @@ export default function CategoryList() {
                 </TableRow>
               ))}
 
-              {(!data?.items || data.items.length === 0) && (
+              {(!paginatedItems || paginatedItems.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                     <Typography variant="body1" color="textSecondary">
                       {search ? `No categories found for "${search}"` : "No categories found"}
                     </Typography>
@@ -516,11 +759,11 @@ export default function CategoryList() {
         </TableContainer>
 
         {/* Pagination */}
-        {data?.pagination && data.items.length > 0 && (
+        {data?.pagination && sortedItems.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3 }}>
             <Typography variant="body2" color="textSecondary">
               Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of{" "}
-              {data.pagination.totalCount} products
+              {data.pagination.totalCount} categories
             </Typography>
             <Pagination
               count={data.pagination.totalPages}
@@ -574,6 +817,8 @@ export default function CategoryList() {
                   value={formData.name || ""}
                   onChange={handleInputChange}
                   margin="normal"
+                  error={!!errors.name}
+                  helperText={errors.name}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -594,11 +839,14 @@ export default function CategoryList() {
                   name="description"
                   label="Description"
                   fullWidth
+                  required
                   multiline
                   rows={4}
                   value={formData.description || ""}
                   onChange={handleInputChange}
                   margin="normal"
+                  error={!!errors.description}
+                  helperText={errors.description}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -609,6 +857,8 @@ export default function CategoryList() {
                   value={formData.parentCategoryId || ""}
                   onChange={handleInputChange}
                   margin="normal"
+                  error={!!errors.parentCategoryId}
+                  helperText={errors.parentCategoryId}
                 />
               </Grid>
             </Grid>
@@ -620,7 +870,7 @@ export default function CategoryList() {
             onClick={handleSaveCategory}
             variant="contained"
             startIcon={<SaveIcon />}
-            disabled={isCreating || isUpdating || !formData.name}
+            disabled={isCreating || isUpdating}
           >
             {(isCreating || isUpdating) ? (
               <CircularProgress size={24} color="inherit" />
