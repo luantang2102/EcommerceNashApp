@@ -8,16 +8,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
 {
-    public class OrderController : BaseApiController
+    public class OrdersController : BaseApiController
     {
         private readonly IOrderService _orderService;
 
-        public OrderController(IOrderService orderService)
+        public OrdersController(IOrderService orderService)
         {
             _orderService = orderService;
         }
 
-        [HttpPost("create")]
+        [HttpPost]
         [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderRequest request)
         {

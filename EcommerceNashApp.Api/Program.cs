@@ -13,8 +13,6 @@ using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Infrastructure.Services.Auth;
 using EcommerceNashApp.Infrastructure.Services.External;
 using EcommerceNashApp.Infrastructure.Settings;
-using EcommerceNashApp.Shared.Paginations.Service;
-using EcommerceNashApp.Shared.Paginations.Service.Impl;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;

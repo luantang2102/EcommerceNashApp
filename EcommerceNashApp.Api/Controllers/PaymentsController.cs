@@ -7,16 +7,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
 {
-    public class PaymentController : BaseApiController
+    public class PaymentsController : BaseApiController
     {
         private readonly IPaymentService _paymentService;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentsController(IPaymentService paymentService)
         {
             _paymentService = paymentService;
         }
 
-        [HttpPost("intent")]
+        [HttpPost("me/intent")]
         [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> CreateOrUpdatePaymentIntent()
         {

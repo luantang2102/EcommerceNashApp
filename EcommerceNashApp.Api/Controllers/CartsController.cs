@@ -9,11 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceNashApp.Api.Controllers
 {
-    public class CartController : BaseApiController
+    public class CartsController : BaseApiController
     {
         private readonly ICartService _cartService;
 
-        public CartController(ICartService cartService)
+        public CartsController(ICartService cartService)
         {
             _cartService = cartService;
         }
@@ -27,7 +27,7 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<CartResponse>(200, "Cart retrieved successfully", cart));
         }
 
-        [HttpPost("items")]
+        [HttpPost("me/items")]
         [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> AddItemToCart([FromBody] CartItemRequest request)
         {
@@ -36,7 +36,7 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<CartItemResponse>(200, "Item added to cart successfully", cartItem));
         }
 
-        [HttpPut("items/{cartItemId}")]
+        [HttpPut("me/items/{cartItemId}")]
         [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> UpdateCartItem(Guid cartItemId, [FromBody] CartItemRequest request)
         {
@@ -44,7 +44,7 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<CartItemResponse>(200, "Cart item updated successfully", cartItem));
         }
 
-        [HttpDelete("items/{cartItemId}")]
+        [HttpDelete("me/items/{cartItemId}")]
         [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> DeleteCartItem(Guid cartItemId)
         {
@@ -52,7 +52,7 @@ namespace EcommerceNashApp.Api.Controllers
             return Ok(new ApiResponse<string>(200, "Cart item deleted successfully", "Deleted"));
         }
 
-        [HttpDelete]
+        [HttpDelete("me")]
         [Authorize(Policy = "RequireUserRole")]
         public async Task<IActionResult> ClearCart()
         {
