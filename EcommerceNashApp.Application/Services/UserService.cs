@@ -2,15 +2,12 @@
 using EcommerceNashApp.Core.Helpers.Params;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
-using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Shared.Paginations.Service;
-using EcommerceNashApp.Shared.Paginations.Service.Impl;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Application.Services
 {
     public class UserService : IUserService
     {

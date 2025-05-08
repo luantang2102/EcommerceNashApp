@@ -10,7 +10,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace EcommerceNashApp.Infrastructure.Services.Auth
+namespace EcommerceNashApp.Application.Services.Auth
 {
     public class JwtService : IJwtService
     {

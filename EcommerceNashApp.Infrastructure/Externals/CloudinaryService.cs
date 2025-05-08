@@ -2,13 +2,13 @@
 using CloudinaryDotNet.Actions;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IServices;
+using EcommerceNashApp.Infrastructure.Configurations;
 using EcommerceNashApp.Infrastructure.Exceptions;
-using EcommerceNashApp.Infrastructure.Settings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
 
-namespace EcommerceNashApp.Infrastructure.Services.External
+namespace EcommerceNashApp.Infrastructure.Externals
 {
     public class CloudinaryService : IMediaService
     {

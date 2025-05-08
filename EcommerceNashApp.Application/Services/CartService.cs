@@ -7,7 +7,7 @@ using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Response;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Application.Services
 {
     public class CartService : ICartService
     {

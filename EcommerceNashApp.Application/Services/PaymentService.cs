@@ -2,9 +2,9 @@
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Infrastructure.Exceptions;
-using EcommerceNashApp.Infrastructure.Services.External;
+using EcommerceNashApp.Infrastructure.Externals;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Application.Services
 {
     public class PaymentService : IPaymentService
     {

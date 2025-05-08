@@ -1,5 +1,4 @@
-﻿
-namespace EcommerceNashApp.Infrastructure.Settings
+﻿namespace EcommerceNashApp.Infrastructure.Configurations
 {
     public class StripeConfig
     {

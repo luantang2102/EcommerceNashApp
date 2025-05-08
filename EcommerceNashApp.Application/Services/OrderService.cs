@@ -9,7 +9,7 @@ using EcommerceNashApp.Shared.DTOs.Response;
 using Stripe;
 using System.Text;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Application.Services
 {
     public class OrderService : IOrderService
     {

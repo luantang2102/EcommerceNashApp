@@ -8,9 +8,8 @@ using EcommerceNashApp.Infrastructure.Helpers.Params;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Shared.Paginations.Service;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Application.Services
 {
     public class ProductService : IProductService
     {

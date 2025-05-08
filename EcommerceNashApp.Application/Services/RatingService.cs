@@ -8,10 +8,8 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Shared.Paginations.Service;
-using EcommerceNashApp.Shared.Paginations.Service.Impl;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Application.Services
 {
     public class RatingService : IRatingService
     {

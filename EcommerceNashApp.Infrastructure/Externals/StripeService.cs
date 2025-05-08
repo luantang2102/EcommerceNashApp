@@ -1,9 +1,9 @@
 ﻿using EcommerceNashApp.Core.Models;
-using EcommerceNashApp.Infrastructure.Settings;
+using EcommerceNashApp.Infrastructure.Configurations;
 using Microsoft.Extensions.Options;
 using Stripe;
 
-namespace EcommerceNashApp.Infrastructure.Services.External
+namespace EcommerceNashApp.Infrastructure.Externals
 {
     public class StripeService
     {

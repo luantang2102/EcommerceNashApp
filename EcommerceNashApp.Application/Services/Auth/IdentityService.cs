@@ -8,7 +8,7 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Auth.Request;
 using EcommerceNashApp.Shared.DTOs.Auth.Response;
 
-namespace EcommerceNashApp.Infrastructure.Services.Auth
+namespace EcommerceNashApp.Application.Services.Auth
 {
     public class IdentityService : IIdentityService
     {

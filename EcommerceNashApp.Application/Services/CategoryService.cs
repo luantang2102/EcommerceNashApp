@@ -8,11 +8,9 @@ using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Shared.Paginations.Service;
-using EcommerceNashApp.Shared.Paginations.Service.Impl;
 using Microsoft.EntityFrameworkCore;
 
-namespace EcommerceNashApp.Infrastructure.Services
+namespace EcommerceNashApp.Application.Services
 {
     public class CategoryService : ICategoryService
     {
@@ -167,9 +165,17 @@ namespace EcommerceNashApp.Infrastructure.Services
                 category.Level = 0;
             }
 
+            if(!categoryRequest.IsActive)
+            {
+                await DeactiveCategoriesBranch(categoryId);
+            }
+            else
+            {
+                category.IsActive = categoryRequest.IsActive;
+            }
+
             category.Name = categoryRequest.Name;
             category.Description = categoryRequest.Description;
-            category.IsActive = categoryRequest.IsActive;
             category.ParentCategoryId = categoryRequest.ParentCategoryId;
             category.UpdatedDate = DateTime.UtcNow;
 
@@ -201,6 +207,36 @@ namespace EcommerceNashApp.Infrastructure.Services
 
             await _categoryRepository.DeleteAsync(category);
             return true;
+        }
+
+        private async Task DeactiveCategoriesBranch(Guid parentCategoryId)
+        {
+            var parentCategory = await _categoryRepository.GetWithSubCategoriesAsync(parentCategoryId);
+            if (parentCategory == null) return;
+
+            // Recursively deactivate the branch
+            await DeactiveCategoryAndSubcategories(parentCategory);
+        }
+
+        private async Task DeactiveCategoryAndSubcategories(Category category)
+        {
+            category.IsActive = false;
+            category.UpdatedDate = DateTime.UtcNow;
+
+            await _categoryRepository.UpdateAsync(category);
+
+            if (category.SubCategories != null && category.SubCategories.Any())
+            {
+                foreach (var subCategory in category.SubCategories)
+                {
+                    // Fetch the subcategory with its own subcategories
+                    var subCategoryWithChildren = await _categoryRepository.GetWithSubCategoriesAsync(subCategory.Id);
+                    if (subCategoryWithChildren != null)
+                    {
+                        await DeactiveCategoryAndSubcategories(subCategoryWithChildren);
+                    }
+                }
+            }
         }
     }
 }

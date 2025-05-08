@@ -44,12 +44,29 @@ namespace EcommerceNashApp.Infrastructure.Repositories
 
         public IQueryable<Category> GetRootCategoriesAsync()
         {
-            return _context.Categories
-                .Include(c => c.ParentCategory)
-                .Include(c => c.SubCategories)
-                    .ThenInclude(sc => sc.SubCategories)
-                        .ThenInclude(ssc => ssc.SubCategories)
+            var rootCategories = _context.Categories
                 .Where(c => c.ParentCategoryId == null);
+
+            LoadSubCategories(rootCategories);
+
+            return rootCategories;
+        }
+
+        private void LoadSubCategories(IQueryable<Category> categoriesQuery)
+        {
+            var categories = categoriesQuery
+                .Include(c => c.SubCategories)
+                .ToList(); 
+
+            foreach (var category in categories)
+            {
+                if (category.SubCategories != null && category.SubCategories.Any())
+                {
+                    // Recursively load subcategories for each category
+                    LoadSubCategories(_context.Categories
+                        .Where(c => c.ParentCategoryId == category.Id));
+                }
+            }
         }
 
         public async Task<bool> ParentCategoryExistsAsync(Guid parentCategoryId)
