@@ -1,4 +1,6 @@
-﻿namespace EcommerceNashApp.Shared.DTOs.Response
+﻿using System;
+
+namespace EcommerceNashApp.Shared.DTOs.Response
 {
     public class OrderItemResponse
     {

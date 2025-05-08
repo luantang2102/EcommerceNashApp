@@ -1,4 +1,6 @@
-﻿namespace EcommerceNashApp.Shared.DTOs.Request
+﻿using System;
+
+namespace EcommerceNashApp.Shared.DTOs.Request
 {
     public class RatingRequest
     {

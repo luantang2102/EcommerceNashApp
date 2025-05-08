@@ -4,7 +4,7 @@ namespace EcommerceNashApp.Shared.DTOs.Auth.Response
 {
     public class AuthResponse
     {
-        public required string CsrfToken { get; set; }
+        public string CsrfToken { get; set; } = string.Empty;
         public UserResponse User { get; set; } = null!;
     }
 }

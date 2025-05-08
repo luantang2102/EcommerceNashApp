@@ -2,9 +2,9 @@
 {
     public class TokenResponse
     {
-        public required string AccessToken { get; set; }
-        public required string RefreshToken { get; set; }
-        public required string CsrfToken { get; set; }
-        public required AuthResponse AuthResponse { get; set; }
+        public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+        public string CsrfToken { get; set; } = string.Empty;
+        public AuthResponse AuthResponse { get; set; } = null!;
     }
 }
