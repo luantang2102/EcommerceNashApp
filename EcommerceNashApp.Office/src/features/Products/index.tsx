@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   TextField,
@@ -25,7 +25,7 @@ import {
   DialogActions,
   Switch,
   FormControlLabel,
-  Grid, 
+  Grid,
   CircularProgress,
   Alert,
   Snackbar,
@@ -33,8 +33,9 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
-  Collapse,
+  Popover,
   Button,
+  Checkbox,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -49,6 +50,8 @@ import {
   ContentCopy as ContentCopyIcon,
   ExpandMore as ExpandMoreIcon,
   Clear as ClearIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
 } from "@mui/icons-material";
 import {
   setParams,
@@ -81,12 +84,19 @@ interface CategoryMenuProps {
 }
 
 const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: CategoryMenuProps) => {
-  const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
+  const [openMenus, setOpenMenus] = useState<{ [key: string]: HTMLElement | null }>({});
 
-  const toggleMenu = (categoryId: string) => {
+  const toggleMenu = (categoryId: string, anchorEl: HTMLElement | null) => {
     setOpenMenus((prev) => ({
       ...prev,
-      [categoryId]: !prev[categoryId],
+      [categoryId]: anchorEl,
+    }));
+  };
+
+  const closeMenu = (categoryId: string) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [categoryId]: null,
     }));
   };
 
@@ -107,11 +117,11 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
                 backgroundColor: isSelected ? "action.selected" : "inherit",
               }}
               selected={isSelected}
-              onClick={() => {
+              onClick={(e) => {
                 if (isLeaf) {
                   onSelect(category.id, category.name);
                 } else {
-                  toggleMenu(category.id);
+                  toggleMenu(category.id, e.currentTarget);
                 }
               }}
             >
@@ -122,7 +132,7 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleMenu(category.id);
+                      toggleMenu(category.id, e.currentTarget);
                     }}
                     sx={{ ml: "auto" }}
                   >
@@ -137,14 +147,29 @@ const CategoryMenu = ({ categories, depth, selectedCategoryIds, onSelect }: Cate
               </Box>
             </MenuItem>
             {hasChildren && (
-              <Collapse in={openMenus[category.id]} timeout="auto" unmountOnExit>
+              <Popover
+                open={Boolean(openMenus[category.id])}
+                anchorEl={openMenus[category.id]}
+                onClose={() => closeMenu(category.id)}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "left",
+                }}
+                PaperProps={{
+                  sx: { minWidth: 200 },
+                }}
+              >
                 <CategoryMenu
                   categories={category.subCategories}
                   depth={depth + 1}
                   selectedCategoryIds={selectedCategoryIds}
                   onSelect={onSelect}
                 />
-              </Collapse>
+              </Popover>
             )}
           </Box>
         );
@@ -157,7 +182,7 @@ const formatVND = (price: number) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
-    minimumFractionDigits: 0, // No decimals for VND
+    minimumFractionDigits: 0,
   }).format(price);
 };
 
@@ -168,6 +193,9 @@ export default function ProductList() {
   );
   const { data, isLoading, error, refetch, isFetching } = useFetchProductsQuery(params);
   const [search, setSearch] = useState(params.searchTerm || "");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { data: selectedProduct, isLoading: isLoadingProduct } = useFetchProductByIdQuery(
     selectedProductId || "",
@@ -182,7 +210,6 @@ export default function ProductList() {
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
-  // Form state
   const [formData, setFormData] = useState<Partial<Product>>({
     name: "",
     description: "",
@@ -192,34 +219,35 @@ export default function ProductList() {
     categories: [],
   });
 
-  // File uploads
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-
-  // Track deleted image IDs
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
-
-  // Notification state
   const [notification, setNotification] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error" | "info" | "warning",
   });
-
-  // Category selection state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<{ id: string; name: string }[]>([]);
 
-  // Debounced search handler
+  // Validation state
+  const [errors, setErrors] = useState<{
+    name?: string;
+    description?: string;
+    price?: string;
+    stockQuantity?: string;
+    formImages?: string;
+    existingImages?: string;
+  }>({});
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       dispatch(setParams({ searchTerm: value.trim() || undefined }));
-      dispatch(setPageNumber(1)); // Reset to first page on new search
+      dispatch(setPageNumber(1));
     }, 500),
     [dispatch]
   );
 
-  // Reset form when dialog opens/closes or selected product changes
   useEffect(() => {
     if (isCreateFormOpen && selectedProductId && selectedProduct) {
       setFormData({
@@ -235,6 +263,7 @@ export default function ProductList() {
       );
       setSelectedFiles([]);
       setDeletedImageIds([]);
+      setErrors({});
     } else if (isCreateFormOpen && !selectedProductId) {
       setFormData({
         name: "",
@@ -247,29 +276,87 @@ export default function ProductList() {
       setSelectedCategoryIds([]);
       setSelectedFiles([]);
       setDeletedImageIds([]);
+      setErrors({});
     }
   }, [isCreateFormOpen, selectedProductId, selectedProduct]);
 
-  // Sync search input with params.search
   useEffect(() => {
     setSearch(params.searchTerm || "");
   }, [params.searchTerm]);
 
-  // Form handlers
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    // Name validation
+    if (!formData.name?.trim()) {
+      newErrors.name = "Product name is required.";
+    }
+
+    // Description validation
+    if (!formData.description?.trim()) {
+      newErrors.description = "Product description is required.";
+    }
+
+    // Price validation
+    if (formData.price === undefined || formData.price <= 0) {
+      newErrors.price = "Price must be greater than 0.";
+    }
+
+    // StockQuantity validation
+    if (formData.stockQuantity === undefined || formData.stockQuantity < 0) {
+      newErrors.stockQuantity = "Stock quantity cannot be negative.";
+    }
+
+    // FormImages validation
+    if (selectedFiles.length > 0) {
+      const maxSize = 5 * 1024 * 1024; // 5 MB
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+
+      if (selectedFiles.some((file) => file.size === 0)) {
+        newErrors.formImages = "All uploaded images must have content.";
+      } else if (selectedFiles.some((file) => file.size > maxSize)) {
+        newErrors.formImages = "Each image must be less than 5 MB.";
+      } else if (selectedFiles.some((file) => !allowedTypes.includes(file.type))) {
+        newErrors.formImages = "Only JPEG, PNG, and GIF images are allowed.";
+      }
+    }
+
+    // Existing images validation
+    if (selectedProductId && selectedProduct?.productImages) {
+      const retainedImages = selectedProduct.productImages.filter(
+        (image) => !deletedImageIds.includes(image.id)
+      );
+      if (
+        retainedImages.some(
+          (image) => !image.id || image.isMain === null || image.isMain === undefined
+        )
+      ) {
+        newErrors.existingImages =
+          "All existing images must have a valid ID and IsMain specified.";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    // Clear error for the field when user starts typing
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleNumericInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: parseFloat(value),
+      [name]: value === "" ? 0 : parseFloat(value),
     }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,11 +412,13 @@ export default function ProductList() {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       setSelectedFiles((prev) => [...prev, ...newFiles]);
+      setErrors((prev) => ({ ...prev, formImages: undefined }));
     }
   };
 
   const handleDeleteExistingImage = (imageId: string) => {
     setDeletedImageIds((prev) => [...prev, imageId]);
+    setErrors((prev) => ({ ...prev, existingImages: undefined }));
   };
 
   const handleCopyId = (id: string) => {
@@ -350,6 +439,15 @@ export default function ProductList() {
   };
 
   const handleSaveProduct = async () => {
+    if (!validateForm()) {
+      setNotification({
+        open: true,
+        message: "Please fix the errors in the form before saving.",
+        severity: "error",
+      });
+      return;
+    }
+
     try {
       const productFormData = new FormData();
       if (formData.name) productFormData.append("Name", formData.name);
@@ -411,6 +509,7 @@ export default function ProductList() {
       try {
         await deleteProduct(selectedProductId).unwrap();
         dispatch(setSelectedProductId(null));
+        setSelectedProductIds((prev) => prev.filter((id) => id !== selectedProductId));
         setNotification({
           open: true,
           message: "Product deleted successfully",
@@ -428,6 +527,101 @@ export default function ProductList() {
     }
   };
 
+  const handleDeleteAllSelected = async () => {
+    try {
+      for (const id of selectedProductIds) {
+        await deleteProduct(id).unwrap();
+      }
+      setSelectedProductIds([]);
+      setNotification({
+        open: true,
+        message: `${selectedProductIds.length} product(s) deleted successfully`,
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("Failed to delete products:", err);
+      setNotification({
+        open: true,
+        message: "Failed to delete some products",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleCheckboxChange = (id: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allProductIds = data?.items.map((product) => product.id) || [];
+      setSelectedProductIds(allProductIds);
+    } else {
+      setSelectedProductIds([]);
+    }
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedItems = useMemo(() => {
+    if (!data?.items || !sortField) return data?.items || [];
+
+    const items = [...data.items];
+
+    return items.sort((a, b) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let valueA: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let valueB: any;
+
+      switch (sortField) {
+        case "name":
+          valueA = a.name?.toLowerCase() || "";
+          valueB = b.name?.toLowerCase() || "";
+          break;
+        case "description":
+          valueA = a.description?.toLowerCase() || "";
+          valueB = b.description?.toLowerCase() || "";
+          break;
+        case "price":
+          valueA = a.price ?? 0;
+          valueB = b.price ?? 0;
+          break;
+        case "stockQuantity":
+          valueA = a.stockQuantity ?? 0;
+          valueB = b.stockQuantity ?? 0;
+          break;
+        case "averageRating":
+          valueA = a.averageRating ?? 0;
+          valueB = b.averageRating ?? 0;
+          break;
+        case "createdDate":
+          valueA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+          valueB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+          break;
+        case "updatedDate":
+          valueA = a.updatedDate ? new Date(a.updatedDate).getTime() : 0;
+          valueB = b.updatedDate ? new Date(b.updatedDate).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [data?.items, sortField, sortDirection]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
@@ -436,6 +630,8 @@ export default function ProductList() {
 
   const handleClearSearch = () => {
     setSearch("");
+    setSortField(undefined);
+    setSortDirection("asc");
     dispatch(setParams({ searchTerm: undefined }));
     dispatch(setPageNumber(1));
   };
@@ -474,6 +670,7 @@ export default function ProductList() {
     setDeletedImageIds([]);
     setSelectedCategoryIds([]);
     setAnchorEl(null);
+    setErrors({});
   };
 
   const handleCloseDeleteDialog = () => {
@@ -498,6 +695,14 @@ export default function ProductList() {
     const endIndex = pagination.currentPage * pagination.pageSize;
     return endIndex > pagination.totalCount ? pagination.totalCount : endIndex;
   };
+
+  // Paginate sorted items
+  const paginatedItems = useMemo(() => {
+    if (!data?.pagination) return sortedItems;
+    const startIndex = (data.pagination.currentPage - 1) * data.pagination.pageSize;
+    const endIndex = startIndex + data.pagination.pageSize;
+    return sortedItems.slice(startIndex, endIndex);
+  }, [sortedItems, data?.pagination]);
 
   if (isLoading) {
     return (
@@ -536,7 +741,6 @@ export default function ProductList() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Notification */}
       <Snackbar
         open={notification.open}
         autoHideDuration={6000}
@@ -552,14 +756,11 @@ export default function ProductList() {
         </Alert>
       </Snackbar>
 
-      {/* Page Header */}
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 500 }}>
         Product Management
       </Typography>
 
-      {/* Main Content */}
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-        {/* Search and Add Button */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
           <TextField
             label="Search Products"
@@ -584,41 +785,148 @@ export default function ProductList() {
             }}
             disabled={isFetching}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleCreateClick}
-            startIcon={<AddCircleIcon />}
-            sx={{ borderRadius: "8px", textTransform: "none" }}
-          >
-            Add New Product
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {selectedProductIds.length > 0 && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteAllSelected}
+                startIcon={<DeleteIcon />}
+                sx={{ borderRadius: "8px", textTransform: "none" }}
+                disabled={isDeleting}
+              >
+                Delete Selected ({selectedProductIds.length})
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleCreateClick}
+              startIcon={<AddCircleIcon />}
+              sx={{ borderRadius: "8px", textTransform: "none" }}
+            >
+              Add New Product
+            </Button>
+          </Box>
         </Box>
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* Products Table */}
         <TableContainer component={Paper} elevation={0} sx={{ mb: 2 }}>
           <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Price</TableCell>
-                <TableCell align="center">Stock Status</TableCell>
-                <TableCell>Quantity</TableCell>
-                <TableCell align="center">Rating</TableCell>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={
+                      (data?.items?.length ?? 0) > 0 &&
+                      selectedProductIds.length === data?.items.length
+                    }
+                    indeterminate={
+                      selectedProductIds.length > 0 &&
+                      selectedProductIds.length < (data?.items.length ?? 0)
+                    }
+                    onChange={handleSelectAllChange}
+                  />
+                </TableCell>
+                <TableCell
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => handleSort("name")}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Name
+                    {sortField === "name" && (
+                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => handleSort("description")}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Description
+                    {sortField === "description" && (
+                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => handleSort("price")}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Price
+                    {sortField === "price" && (
+                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell
+                  align="center"
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    Stock Status
+                  </Box>
+                </TableCell>
+                <TableCell
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => handleSort("stockQuantity")}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Quantity
+                    {sortField === "stockQuantity" && (
+                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell
+                  align="center"
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => handleSort("averageRating")}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    Rating
+                    {sortField === "averageRating" && (
+                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                    )}
+                  </Box>
+                </TableCell>
                 <TableCell>Categories</TableCell>
-                <TableCell>Created Date</TableCell>
-                <TableCell>Updated Date</TableCell>
+                <TableCell
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => handleSort("createdDate")}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Created Date
+                    {sortField === "createdDate" && (
+                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => handleSort("updatedDate")}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Updated Date
+                    {sortField === "updatedDate" && (
+                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                    )}
+                  </Box>
+                </TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {data?.items.map((product) => (
-                <TableRow
-                  key={product.id}
-                >
+              {paginatedItems.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedProductIds.includes(product.id)}
+                      onChange={() => handleCheckboxChange(product.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Tooltip title={product.name}>
                       <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -627,7 +935,13 @@ export default function ProductList() {
                             component="img"
                             src={product.productImages[0].imageUrl}
                             alt={product.name}
-                            sx={{ width: 40, height: 40, mr: 1, objectFit: "cover", borderRadius: "4px" }}
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              mr: 1,
+                              objectFit: "cover",
+                              borderRadius: "4px",
+                            }}
                           />
                         ) : (
                           <Box
@@ -648,7 +962,7 @@ export default function ProductList() {
                         <Typography
                           variant="body1"
                           sx={{
-                            maxWidth: "5vw",
+                            maxWidth: "3vw",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
@@ -664,7 +978,7 @@ export default function ProductList() {
                       <Typography
                         variant="body2"
                         sx={{
-                          maxWidth: "7vw",
+                          maxWidth: "3vw",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -710,7 +1024,7 @@ export default function ProductList() {
                           key={category.id}
                           label={category.name}
                           size="small"
-                          sx={{ fontSize: "0.7rem" }}
+                          sx={{ fontSize: "0.5rem" }}
                           color={category.subCategories.length > 0 ? "error" : "success"}
                         />
                       ))}
@@ -756,9 +1070,9 @@ export default function ProductList() {
                 </TableRow>
               ))}
 
-              {(!data?.items || data.items.length === 0) && (
+              {(!paginatedItems || paginatedItems.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
                     <Typography variant="body1" color="textSecondary">
                       {search ? `No products found for "${search}"` : "No products found"}
                     </Typography>
@@ -778,8 +1092,7 @@ export default function ProductList() {
           </Table>
         </TableContainer>
 
-        {/* Pagination */}
-        {data?.pagination && data.items.length > 0 && (
+        {data?.pagination && sortedItems.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3 }}>
             <Typography variant="body2" color="textSecondary">
               Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of{" "}
@@ -796,7 +1109,6 @@ export default function ProductList() {
         )}
       </Paper>
 
-      {/* Create/Edit Form Dialog */}
       <Dialog open={isCreateFormOpen} onClose={handleCloseForm} fullWidth maxWidth="md">
         <DialogTitle>
           {selectedProductId ? "Edit Product" : "Create New Product"}
@@ -837,12 +1149,14 @@ export default function ProductList() {
                   value={formData.name || ""}
                   onChange={handleInputChange}
                   margin="normal"
+                  error={!!errors.name}
+                  helperText={errors.name}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+                <TextField
                   name="price"
-                  label="Price (VND)" // Updated label to reflect VND
+                  label="Price (VND)"
                   type="number"
                   fullWidth
                   required
@@ -850,9 +1164,11 @@ export default function ProductList() {
                   onChange={handleNumericInputChange}
                   margin="normal"
                   InputProps={{
-                    endAdornment: <InputAdornment position="end">₫</InputAdornment>, // Changed to VND symbol
-                    inputProps: { step: 1, min: 0 }, // Ensure whole numbers
+                    endAdornment: <InputAdornment position="end">₫</InputAdornment>,
+                    inputProps: { step: 1, min: 0 },
                   }}
+                  error={!!errors.price}
+                  helperText={errors.price}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
@@ -865,6 +1181,8 @@ export default function ProductList() {
                   value={formData.description || ""}
                   onChange={handleInputChange}
                   margin="normal"
+                  error={!!errors.description}
+                  helperText={errors.description}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -889,6 +1207,11 @@ export default function ProductList() {
                         ))}
                       </Box>
                     )}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: { minWidth: 200 },
+                      },
+                    }}
                   >
                     <CategoryMenu
                       categories={categoriesData || []}
@@ -922,6 +1245,8 @@ export default function ProductList() {
                   onChange={handleNumericInputChange}
                   margin="normal"
                   disabled={!formData.inStock}
+                  error={!!errors.stockQuantity}
+                  helperText={errors.stockQuantity}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
@@ -936,10 +1261,15 @@ export default function ProductList() {
                     type="file"
                     hidden
                     multiple
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif"
                     onChange={handleFileChange}
                   />
                 </Button>
+                {errors.formImages && (
+                  <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                    {errors.formImages}
+                  </Typography>
+                )}
                 {selectedFiles.length > 0 && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2">
@@ -953,6 +1283,7 @@ export default function ProductList() {
                           size="small"
                           onDelete={() => {
                             setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+                            setErrors((prev) => ({ ...prev, formImages: undefined }));
                           }}
                         />
                       ))}
@@ -964,6 +1295,11 @@ export default function ProductList() {
                   selectedProduct.productImages.length > 0 && (
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="body2">Current Images:</Typography>
+                      {errors.existingImages && (
+                        <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                          {errors.existingImages}
+                        </Typography>
+                      )}
                       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
                         {selectedProduct.productImages
                           .filter((image) => !deletedImageIds.includes(image.id))
@@ -1009,7 +1345,7 @@ export default function ProductList() {
             onClick={handleSaveProduct}
             variant="contained"
             startIcon={<SaveIcon />}
-            disabled={isCreating || isUpdating || !formData.name || formData.price === undefined}
+            disabled={isCreating || isUpdating}
           >
             {(isCreating || isUpdating) ? (
               <CircularProgress size={24} color="inherit" />
@@ -1022,7 +1358,6 @@ export default function ProductList() {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
