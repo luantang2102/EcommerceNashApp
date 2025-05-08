@@ -1,4 +1,5 @@
 using CloudinaryDotNet.Actions;
+using EcommerceNashApp.Application.Services;
 using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
@@ -6,18 +7,11 @@ using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extentions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
-using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Shared.Paginations.Service;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace EcommerceNashApp.Test.Services
 {
@@ -27,13 +21,15 @@ namespace EcommerceNashApp.Test.Services
         private readonly Mock<IMediaService> _mediaServiceMock;
         private readonly ProductService _productService;
         private readonly Mock<IPaginationService> _paginationServiceMock;
+        private readonly Mock<ICartRepository> _cartRepositoryMock;
 
         public ProductServiceTests()
         {
             _productRepositoryMock = new Mock<IProductRepository>();
             _mediaServiceMock = new Mock<IMediaService>();
             _paginationServiceMock = new Mock<IPaginationService>();
-            _productService = new ProductService(_productRepositoryMock.Object, _mediaServiceMock.Object, _paginationServiceMock.Object);
+            _cartRepositoryMock = new Mock<ICartRepository>();
+            _productService = new ProductService(_productRepositoryMock.Object, _mediaServiceMock.Object, _paginationServiceMock.Object, _cartRepositoryMock.Object);
         }
 
         [Fact]

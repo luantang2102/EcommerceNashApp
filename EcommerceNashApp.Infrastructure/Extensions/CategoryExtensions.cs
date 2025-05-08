@@ -19,7 +19,13 @@ namespace EcommerceNashApp.Infrastructure.Extensions
         {
             if (string.IsNullOrEmpty(searchTerm)) return query;
             var lowerCaseTerm = searchTerm.Trim().ToLower();
-            return query.Where(x => x.Name.ToLower().Contains(lowerCaseTerm) || x.Description.ToLower().Contains(lowerCaseTerm));
+            return query.Where(x => x.Name.ToLower().Contains(lowerCaseTerm)
+            || x.Description.ToLower().Contains(lowerCaseTerm)
+            || x.Level.ToString().Contains(lowerCaseTerm)
+            || (x.IsActive && "active".Contains(lowerCaseTerm))
+            || x.ParentCategory.Name.ToLower().Contains(lowerCaseTerm)
+            || x.CreatedDate.ToString()!.Contains(lowerCaseTerm)
+            || (x.UpdatedDate != null && x.UpdatedDate.ToString()!.Contains(lowerCaseTerm)));
         }
 
         public static IQueryable<Category> Filter(this IQueryable<Category> query, string? level, bool? isActive)

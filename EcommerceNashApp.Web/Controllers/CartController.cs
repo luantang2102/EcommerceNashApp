@@ -1,6 +1,8 @@
-﻿using EcommerceNashApp.Web.Models.Views;
+﻿using EcommerceNashApp.Web.Models;
+using EcommerceNashApp.Web.Models.Views;
 using EcommerceNashApp.Web.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace EcommerceNashApp.Web.Controllers
 {
@@ -61,7 +63,7 @@ namespace EcommerceNashApp.Web.Controllers
             if (!IsAuthenticated())
             {
                 _logger.LogWarning("User not authenticated, returning Unauthorized for AddItem");
-                return Unauthorized();
+                return Unauthorized(new { success = false, message = "Vui lòng đăng nhập để thêm vào giỏ hàng." });
             }
 
             try
@@ -69,17 +71,17 @@ namespace EcommerceNashApp.Web.Controllers
                 _logger.LogInformation("Adding item to cart: ProductId={ProductId}, Quantity={Quantity}, Size={Size}",
                     request.ProductId, request.Quantity, request.Size);
                 var cartItem = await _cartService.AddItemToCartAsync(Guid.Parse(request.ProductId), request.Quantity);
-                return Ok(new { Message = "Product added to cart" });
+                return Ok(new { success = true, message = "Đã thêm sản phẩm vào giỏ hàng." });
             }
-            catch (UnauthorizedAccessException)
+            catch (InvalidOperationException ex) when (ex.Message.Contains("stock"))
             {
-                _logger.LogWarning("Unauthorized access when adding to cart");
-                return Unauthorized();
+                _logger.LogWarning("Insufficient stock for product {ProductId}, Quantity={Quantity}", request.ProductId, request.Quantity);
+                return BadRequest(new { success = false, message = "Số lượng yêu cầu vượt quá tồn kho.", errorCode = "InsufficientStock" });
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error adding to cart: {Error}", ex.Message);
-                return StatusCode(500, new { Message = "Failed to add product to cart" });
+                return StatusCode(500, new { success = false, message = "Không thể thêm sản phẩm vào giỏ hàng." });
             }
         }
 
@@ -90,26 +92,43 @@ namespace EcommerceNashApp.Web.Controllers
             if (!IsAuthenticated())
             {
                 _logger.LogWarning("User not authenticated, redirecting to login");
-                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Unauthorized(new { success = false, message = "Vui lòng đăng nhập để thêm vào giỏ hàng." });
+                }
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "ProductDetails", new { id = productId }) });
             }
 
             try
             {
                 _logger.LogInformation("Adding item to cart: ProductId={ProductId}, Quantity={Quantity}", productId, quantity);
                 await _cartService.AddItemToCartAsync(productId, quantity);
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = true, message = "Đã thêm sản phẩm vào giỏ hàng." });
+                }
                 TempData["Success"] = "Đã thêm sản phẩm vào giỏ hàng.";
                 return RedirectToAction("Index");
             }
-            catch (UnauthorizedAccessException ex)
+            catch (InvalidOperationException ex) when (ex.Message.Contains("stock"))
             {
-                _logger.LogWarning("Unauthorized access in AddItemToCartAsync: {Message}", ex.Message);
-                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("Index", "Cart") });
+                _logger.LogWarning("Insufficient stock for product {ProductId}, Quantity={Quantity}", productId, quantity);
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return BadRequest(new { success = false, message = "Số lượng yêu cầu vượt quá tồn kho.", errorCode = "InsufficientStock" });
+                }
+                TempData["Error"] = "Số lượng yêu cầu vượt quá tồn kho.";
+                return RedirectToAction("Index", "ProductDetails", new { id = productId });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding item to cart");
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return StatusCode(500, new { success = false, message = "Không thể thêm sản phẩm vào giỏ hàng." });
+                }
                 TempData["Error"] = "Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.";
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "ProductDetails", new { id = productId });
             }
         }
 

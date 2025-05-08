@@ -47,7 +47,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="price-code">
-                                                    <span class="product-price fs-6">$@item.Price.ToString("N2")</span>
+                                                    <span class="product-price fs-6">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:N0}", item.Price) ₫</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -58,7 +58,7 @@
                         <div class="mini-cart-total d-flex justify-content-between py-4">
                             <span class="fs-6">Tổng Cộng:</span>
                             <span class="special-price-code">
-                                <span class="price-amount amount fs-6">$@(Model?.Subtotal.ToString("N2") ?? "0.00")</span>
+                                <span class="price-amount amount fs-6">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:N0}", Model?.Subtotal ?? 0) ₫</span>
                             </span>
                         </div>
                         <div class="modal-footer my-4 justify-content-center">

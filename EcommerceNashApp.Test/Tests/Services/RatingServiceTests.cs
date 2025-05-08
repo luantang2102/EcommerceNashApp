@@ -1,15 +1,15 @@
-﻿using EcommerceNashApp.Core.Exeptions;
+﻿using EcommerceNashApp.Application.Services;
+using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
+using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Models.Extended;
 using EcommerceNashApp.Infrastructure.Exceptions;
 using EcommerceNashApp.Infrastructure.Extensions;
-using EcommerceNashApp.Infrastructure.Services;
 using EcommerceNashApp.Shared.DTOs.Request;
 using EcommerceNashApp.Shared.DTOs.Response;
 using EcommerceNashApp.Shared.Paginations;
-using EcommerceNashApp.Shared.Paginations.Service;
 using Moq;
 
 namespace EcommerceNashApp.Test.Tests.Services

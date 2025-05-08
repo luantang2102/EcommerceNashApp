@@ -148,9 +148,12 @@ coverage*.json
 coverage*.xml
 coverage*.info
 
+
 # Visual Studio code coverage results
 *.coverage
 *.coveragexml
+
+EcommerceNashApp.Test/BuildReports/Coverage
 
 # NCrunch
 _NCrunch_*

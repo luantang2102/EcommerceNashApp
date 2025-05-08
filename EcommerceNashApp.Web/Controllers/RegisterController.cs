@@ -1,8 +1,10 @@
 ﻿using EcommerceNashApp.Shared.DTOs.Auth.Request;
 using EcommerceNashApp.Shared.DTOs.Auth.Response;
 using EcommerceNashApp.Shared.DTOs.Wrapper;
+using EcommerceNashApp.Web.Models.OverrideValidation;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text;
 
@@ -11,12 +13,10 @@ namespace EcommerceNashApp.Web.Controllers
     public class RegisterController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<RegisterController> _logger;
 
-        public RegisterController(IHttpClientFactory httpClientFactory, ILogger<RegisterController> logger)
+        public RegisterController(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
-            _logger = logger;
         }
 
         [HttpGet]
@@ -28,7 +28,7 @@ namespace EcommerceNashApp.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index([FromForm] RegisterRequest model, string returnUrl = null)
+        public async Task<IActionResult> Index([FromForm] RegisterRequestCli model, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
             if (!ModelState.IsValid)
@@ -38,7 +38,7 @@ namespace EcommerceNashApp.Web.Controllers
 
             if (model.Password != model.ConfirmPassword)
             {
-                ModelState.AddModelError("", "Mật khẩu và xác nhận mật khẩu không khớp.");
+                TempData["Error"] = "Mật khẩu và xác nhận mật khẩu không khớp.";
                 return View(model);
             }
 
@@ -57,14 +57,12 @@ namespace EcommerceNashApp.Web.Controllers
                     formData.Add(new StringContent(model.ImageUrl), "ImageUrl");
                 }
 
-                _logger.LogInformation("Calling /api/Auth/register for email: {Email}", model.Email);
                 var response = await client.PostAsync("/api/Auth/register", formData);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var apiResponse = JsonConvert.DeserializeObject<ApiResponse<AuthResponse>>(responseContent);
-                    _logger.LogInformation("Registration successful for user: {UserId}", apiResponse.Body.User.Id);
 
                     // Propagate API cookies to browser and CookieContainer
                     if (response.Headers.TryGetValues("Set-Cookie", out var setCookies))
@@ -95,7 +93,6 @@ namespace EcommerceNashApp.Web.Controllers
                                         }
                                     }
                                     cookieContainer.Add(new Uri("https://localhost:5001"), cookie);
-                                    _logger.LogDebug("Added cookie to CookieContainer: {Name}={Value}", cookie.Name, cookie.Value.Substring(0, Math.Min(20, cookie.Value.Length)) + "...");
                                 }
                                 HttpContext.Response.Headers.Append("Set-Cookie", cookieHeader);
                             }
@@ -108,10 +105,6 @@ namespace EcommerceNashApp.Web.Controllers
                             }
                         }
                     }
-                    else
-                    {
-                        _logger.LogWarning("No Set-Cookie headers found in /api/Auth/register response");
-                    }
 
                     // Store user info in session
                     var userInfo = new
@@ -121,7 +114,6 @@ namespace EcommerceNashApp.Web.Controllers
                         Roles = apiResponse.Body.User.Roles
                     };
                     HttpContext.Session.SetString("UserInfo", JsonConvert.SerializeObject(userInfo));
-                    _logger.LogInformation("Stored user info in session for UserId: {UserId}", userInfo.UserId);
 
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     {
@@ -132,16 +124,15 @@ namespace EcommerceNashApp.Web.Controllers
 
                 var errorContent = await response.Content.ReadAsStringAsync();
                 var errorResponse = JsonConvert.DeserializeObject<ApiResponse<AuthResponse>>(errorContent);
-                _logger.LogWarning("Registration failed: {Message}", errorResponse?.Message);
-                ModelState.AddModelError("", errorResponse?.Message ?? "Email đã được sử dụng.");
+                TempData["Error"] = errorResponse?.Message ?? "Email đã được sử dụng.";
                 return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during registration for email: {Email}", model.Email);
-                ModelState.AddModelError("", "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.");
+                TempData["Error"] = "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.";
                 return View(model);
             }
         }
     }
+
 }

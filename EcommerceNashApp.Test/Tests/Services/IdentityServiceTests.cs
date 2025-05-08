@@ -1,9 +1,9 @@
-﻿using EcommerceNashApp.Core.Exeptions;
+﻿using EcommerceNashApp.Application.Services.Auth;
+using EcommerceNashApp.Core.Exeptions;
 using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices.Auth;
 using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Infrastructure.Exceptions;
-using EcommerceNashApp.Infrastructure.Services.Auth;
 using EcommerceNashApp.Shared.DTOs.Auth.Request;
 using Moq;
 

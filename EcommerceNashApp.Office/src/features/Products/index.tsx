@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -50,8 +50,6 @@ import {
   ContentCopy as ContentCopyIcon,
   ExpandMore as ExpandMoreIcon,
   Clear as ClearIcon,
-  ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
 } from "@mui/icons-material";
 import {
   setParams,
@@ -194,8 +192,6 @@ export default function ProductList() {
   const { data, isLoading, error, refetch, isFetching } = useFetchProductsQuery(params);
   const [search, setSearch] = useState(params.searchTerm || "");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
-  const [sortField, setSortField] = useState<string | undefined>(undefined);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { data: selectedProduct, isLoading: isLoadingProduct } = useFetchProductByIdQuery(
     selectedProductId || "",
@@ -220,6 +216,7 @@ export default function ProductList() {
   });
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
   const [notification, setNotification] = useState({
     open: false,
@@ -239,7 +236,16 @@ export default function ProductList() {
     existingImages?: string;
   }>({});
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Clean up preview URLs to prevent memory leaks
+  useEffect(() => {
+    const urls = selectedFiles.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [selectedFiles]);
+
+  // Debounced search
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       dispatch(setParams({ searchTerm: value.trim() || undefined }));
@@ -287,29 +293,24 @@ export default function ProductList() {
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
-    // Name validation
     if (!formData.name?.trim()) {
       newErrors.name = "Product name is required.";
     }
 
-    // Description validation
     if (!formData.description?.trim()) {
       newErrors.description = "Product description is required.";
     }
 
-    // Price validation
     if (formData.price === undefined || formData.price <= 0) {
       newErrors.price = "Price must be greater than 0.";
     }
 
-    // StockQuantity validation
     if (formData.stockQuantity === undefined || formData.stockQuantity < 0) {
       newErrors.stockQuantity = "Stock quantity cannot be negative.";
     }
 
-    // FormImages validation
     if (selectedFiles.length > 0) {
-      const maxSize = 5 * 1024 * 1024; // 5 MB
+      const maxSize = 5 * 1024 * 1024;
       const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
 
       if (selectedFiles.some((file) => file.size === 0)) {
@@ -321,7 +322,6 @@ export default function ProductList() {
       }
     }
 
-    // Existing images validation
     if (selectedProductId && selectedProduct?.productImages) {
       const retainedImages = selectedProduct.productImages.filter(
         (image) => !deletedImageIds.includes(image.id)
@@ -346,7 +346,6 @@ export default function ProductList() {
       ...prev,
       [name]: value,
     }));
-    // Clear error for the field when user starts typing
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -414,6 +413,11 @@ export default function ProductList() {
       setSelectedFiles((prev) => [...prev, ...newFiles]);
       setErrors((prev) => ({ ...prev, formImages: undefined }));
     }
+  };
+
+  const handleDeleteUploadedImage = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setErrors((prev) => ({ ...prev, formImages: undefined }));
   };
 
   const handleDeleteExistingImage = (imageId: string) => {
@@ -563,65 +567,6 @@ export default function ProductList() {
     }
   };
 
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  const sortedItems = useMemo(() => {
-    if (!data?.items || !sortField) return data?.items || [];
-
-    const items = [...data.items];
-
-    return items.sort((a, b) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let valueA: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let valueB: any;
-
-      switch (sortField) {
-        case "name":
-          valueA = a.name?.toLowerCase() || "";
-          valueB = b.name?.toLowerCase() || "";
-          break;
-        case "description":
-          valueA = a.description?.toLowerCase() || "";
-          valueB = b.description?.toLowerCase() || "";
-          break;
-        case "price":
-          valueA = a.price ?? 0;
-          valueB = b.price ?? 0;
-          break;
-        case "stockQuantity":
-          valueA = a.stockQuantity ?? 0;
-          valueB = b.stockQuantity ?? 0;
-          break;
-        case "averageRating":
-          valueA = a.averageRating ?? 0;
-          valueB = b.averageRating ?? 0;
-          break;
-        case "createdDate":
-          valueA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
-          valueB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
-          break;
-        case "updatedDate":
-          valueA = a.updatedDate ? new Date(a.updatedDate).getTime() : 0;
-          valueB = b.updatedDate ? new Date(b.updatedDate).getTime() : 0;
-          break;
-        default:
-          return 0;
-      }
-
-      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
-      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [data?.items, sortField, sortDirection]);
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
@@ -630,8 +575,6 @@ export default function ProductList() {
 
   const handleClearSearch = () => {
     setSearch("");
-    setSortField(undefined);
-    setSortDirection("asc");
     dispatch(setParams({ searchTerm: undefined }));
     dispatch(setPageNumber(1));
   };
@@ -695,14 +638,6 @@ export default function ProductList() {
     const endIndex = pagination.currentPage * pagination.pageSize;
     return endIndex > pagination.totalCount ? pagination.totalCount : endIndex;
   };
-
-  // Paginate sorted items
-  const paginatedItems = useMemo(() => {
-    if (!data?.pagination) return sortedItems;
-    const startIndex = (data.pagination.currentPage - 1) * data.pagination.pageSize;
-    const endIndex = startIndex + data.pagination.pageSize;
-    return sortedItems.slice(startIndex, endIndex);
-  }, [sortedItems, data?.pagination]);
 
   if (isLoading) {
     return (
@@ -829,97 +764,20 @@ export default function ProductList() {
                     onChange={handleSelectAllChange}
                   />
                 </TableCell>
-                <TableCell
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleSort("name")}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Name
-                    {sortField === "name" && (
-                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleSort("description")}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Description
-                    {sortField === "description" && (
-                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleSort("price")}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Price
-                    {sortField === "price" && (
-                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell
-                  align="center"
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    Stock Status
-                  </Box>
-                </TableCell>
-                <TableCell
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleSort("stockQuantity")}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Quantity
-                    {sortField === "stockQuantity" && (
-                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleSort("averageRating")}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    Rating
-                    {sortField === "averageRating" && (
-                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
-                    )}
-                  </Box>
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Price</TableCell>
+                <TableCell align="center">Stock Status</TableCell>
+                <TableCell align="center">Quantity</TableCell>
+                <TableCell align="center">Rating</TableCell>
                 <TableCell>Categories</TableCell>
-                <TableCell
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleSort("createdDate")}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Created Date
-                    {sortField === "createdDate" && (
-                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => handleSort("updatedDate")}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Updated Date
-                    {sortField === "updatedDate" && (
-                      sortDirection === "asc" ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
-                    )}
-                  </Box>
-                </TableCell>
+                <TableCell>Created Date</TableCell>
+                <TableCell>Updated Date</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedItems.map((product) => (
+              {data?.items.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -1070,7 +928,7 @@ export default function ProductList() {
                 </TableRow>
               ))}
 
-              {(!paginatedItems || paginatedItems.length === 0) && (
+              {(!data?.items || data.items.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
                     <Typography variant="body1" color="textSecondary">
@@ -1092,7 +950,7 @@ export default function ProductList() {
           </Table>
         </TableContainer>
 
-        {data?.pagination && sortedItems.length > 0 && (
+        {data?.pagination && data.items.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3 }}>
             <Typography variant="body2" color="textSecondary">
               Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of{" "}
@@ -1272,20 +1130,35 @@ export default function ProductList() {
                 )}
                 {selectedFiles.length > 0 && (
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2">
-                      {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""} selected
-                    </Typography>
+                    <Typography variant="body2">Uploaded Images:</Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
                       {selectedFiles.map((file, index) => (
-                        <Chip
-                          key={index}
-                          label={file.name}
-                          size="small"
-                          onDelete={() => {
-                            setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-                            setErrors((prev) => ({ ...prev, formImages: undefined }));
-                          }}
-                        />
+                        <Box key={index} sx={{ position: "relative" }}>
+                          <Box
+                            component="img"
+                            src={previewUrls[index]}
+                            alt={file.name}
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              objectFit: "cover",
+                              borderRadius: 1,
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteUploadedImage(index)}
+                            sx={{
+                              position: "absolute",
+                              top: 0,
+                              right: 0,
+                              bgcolor: "rgba(255, 255, 255, 0.7)",
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                       ))}
                     </Box>
                   </Box>

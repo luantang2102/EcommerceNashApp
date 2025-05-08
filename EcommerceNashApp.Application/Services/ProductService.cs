@@ -3,6 +3,7 @@ using EcommerceNashApp.Core.Interfaces.IRepositories;
 using EcommerceNashApp.Core.Interfaces.IServices;
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Exceptions;
+using EcommerceNashApp.Infrastructure.Extensions;
 using EcommerceNashApp.Infrastructure.Extentions;
 using EcommerceNashApp.Infrastructure.Helpers.Params;
 using EcommerceNashApp.Shared.DTOs.Request;
@@ -16,13 +17,19 @@ namespace EcommerceNashApp.Application.Services
         private readonly IProductRepository _productRepository;
         private readonly IMediaService _mediaService;
         private readonly IPaginationService _paginationService;
-        public ProductService(IProductRepository productRepository, IMediaService mediaService, IPaginationService paginationService)
+        private readonly ICartRepository _cartRepository;
+
+        public ProductService(
+            IProductRepository productRepository,
+            IMediaService mediaService,
+            IPaginationService paginationService,
+            ICartRepository cartRepository)
         {
             _productRepository = productRepository;
             _mediaService = mediaService;
             _paginationService = paginationService;
+            _cartRepository = cartRepository;
         }
-
 
         public async Task<PagedList<ProductResponse>> GetProductsAsync(ProductParams productParams)
         {
@@ -149,7 +156,6 @@ namespace EcommerceNashApp.Application.Services
                 }
             }
 
-            // Update Categories
             if (productRequest.CategoryIds.Count > 0)
             {
                 var categories = await _productRepository.GetCategoriesByIdsAsync(productRequest.CategoryIds);
@@ -194,7 +200,6 @@ namespace EcommerceNashApp.Application.Services
                 product.Categories = productWithCategories.Categories;
             }
 
-            // Update IsMain for existing images
             foreach (var existing in product.ProductImages)
             {
                 var match = productRequest.Images.FirstOrDefault(i => i.Id == existing.Id);
@@ -236,11 +241,23 @@ namespace EcommerceNashApp.Application.Services
                 throw new AppException(ErrorCode.PRODUCT_NOT_FOUND, attributes);
             }
 
+            // Check if the product exists in any cart using the repository
+            if (await _cartRepository.HasProductAsync(productId))
+            {
+                var attributes = new Dictionary<string, object>
+                {
+                    { "productId", productId }
+                };
+                throw new AppException(ErrorCode.PRODUCT_IN_CART, attributes);
+            }
+
+            // Delete associated images
             foreach (var image in product.ProductImages)
             {
                 await _mediaService.DeleteImageAsync(image.PublicId);
             }
 
+            // Delete the product
             await _productRepository.DeleteAsync(product);
         }
     }

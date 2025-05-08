@@ -2,6 +2,9 @@
 using EcommerceNashApp.Core.Models;
 using EcommerceNashApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace EcommerceNashApp.Infrastructure.Repositories
 {
@@ -57,6 +60,12 @@ namespace EcommerceNashApp.Infrastructure.Repositories
         {
             _context.Carts.Remove(cart);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> HasProductAsync(Guid productId)
+        {
+            return await _context.CartItems
+                .AnyAsync(ci => ci.ProductId == productId);
         }
     }
 }

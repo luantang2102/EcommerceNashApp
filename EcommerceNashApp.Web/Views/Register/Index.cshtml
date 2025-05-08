@@ -7,12 +7,21 @@
     <div class="row justify-content-center">
         <div class="col-lg-6">
             <h2 class="text-center mb-4">Đăng Ký</h2>
+            @if (TempData["Error"] != null)
+            {
+                <div class=" 있고alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
             <form asp-action="Index" asp-controller="Register" method="post">
                 <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
                 <div class="mb-3">
                     <label asp-for="UserName" class="form-label">Tên Người Dùng *</label>
                     <input asp-for="UserName" class="form-control" placeholder="Tên Người Dùng" required />
                     <span asp-validation-for="UserName" class="text-danger"></span>
+                    <br>
+                    <small class="form-text text-muted">Tên người dùng không được chứa khoảng trắng.</small>
                 </div>
                 <div class="mb-3">
                     <label asp-for="Email" class="form-label">Email *</label>
@@ -23,6 +32,17 @@
                     <label asp-for="Password" class="form-label">Mật Khẩu *</label>
                     <input asp-for="Password" class="form-control" type="password" placeholder="Mật Khẩu" required />
                     <span asp-validation-for="Password" class="text-danger"></span>
+                    <br>
+                    <small class="form-text text-muted">
+                        Mật khẩu phải:
+                        <ul>
+                            <li>Có ít nhất 6 ký tự.</li>
+                            <li>Chứa ít nhất một chữ cái in hoa (A-Z).</li>
+                            <li>Chứa ít nhất một chữ cái thường (a-z).</li>
+                            <li>Chứa ít nhất một số (0-9).</li>
+                            <li>Chứa ít nhất một ký tự đặc biệt (ví dụ: !#$%).</li>
+                        </ul>
+                    </small>
                 </div>
                 <div class="mb-3">
                     <label asp-for="ConfirmPassword" class="form-label">Xác Nhận Mật Khẩu *</label>
@@ -34,15 +54,7 @@
                     <input asp-for="ImageUrl" class="form-control" placeholder="URL Ảnh Đại Diện" />
                     <span asp-validation-for="ImageUrl" class="text-danger"></span>
                 </div>
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div class="text-danger mb-3">
-                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                        {
-                            <p>@error.ErrorMessage</p>
-                        }
-                    </div>
-                }
+              
                 <div class="d-flex justify-content-center">
                     <button type="submit" class="btn btn-red hvr-sweep-to-right dark-sweep">Đăng Ký</button>
                 </div>

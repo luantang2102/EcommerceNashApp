@@ -32,10 +32,10 @@ namespace EcommerceNashApp.Web.Controllers
 
             var client = _httpClientFactory.CreateClient("NashApp.Api");
             var formContent = new MultipartFormDataContent
-            {
-                { new StringContent(email), "Email" },
-                { new StringContent(password), "Password" }
-            };
+    {
+        { new StringContent(email), "Email" },
+        { new StringContent(password), "Password" }
+    };
 
             _logger.LogInformation("Calling /api/Auth/login for email: {Email}", email);
             var response = await client.PostAsync("/api/Auth/login", formContent);
@@ -112,7 +112,7 @@ namespace EcommerceNashApp.Web.Controllers
 
             var errorContent = await response.Content.ReadAsStringAsync();
             _logger.LogError("Login failed: StatusCode={StatusCode}, Response={Content}", response.StatusCode, errorContent);
-            ViewData["Error"] = "Invalid email or password.";
+            TempData["Error"] = "Invalid email or password."; // Changed from ViewData to TempData
             return View();
         }
 

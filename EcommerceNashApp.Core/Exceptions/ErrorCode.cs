@@ -12,7 +12,7 @@ namespace EcommerceNashApp.Core.Exeptions
         public static readonly ErrorCode INVALID_CREDENTIALS = new(101, "Invalid credentials", StatusCodes.Status401Unauthorized);
         public static readonly ErrorCode DUPLICATE_EMAIL = new(101, "Email already exists", StatusCodes.Status409Conflict);
         public static readonly ErrorCode PASSWORDS_DO_NOT_MATCH = new(102, "Passwords do not match", StatusCodes.Status400BadRequest);
-        public static readonly ErrorCode IDENTITY_CREATION_FAILED = new(103, "Identity creation failed", StatusCodes.Status500InternalServerError);
+        public static readonly ErrorCode IDENTITY_CREATION_FAILED = new(103, "Username cannot have spaces", StatusCodes.Status500InternalServerError);
 
         // Access and token related errors (400-499)
         public static readonly ErrorCode UNAUTHORIZED_ACCESS = new(401, "Unauthorized access", StatusCodes.Status401Unauthorized);
@@ -25,6 +25,7 @@ namespace EcommerceNashApp.Core.Exeptions
         // Product related errors (600-699)
         public static readonly ErrorCode PRODUCT_NOT_FOUND = new(600, "Product not found", StatusCodes.Status404NotFound);
         public static readonly ErrorCode DUPLICATE_PRODUCT = new(601, "Product already existed", StatusCodes.Status409Conflict);
+        public static readonly ErrorCode PRODUCT_IN_CART = new(602, "Cannot delete product because it exists in one or more carts", StatusCodes.Status400BadRequest);
 
         // Cloudinary related errors (700-799)
         public static readonly ErrorCode CLOUDINARY_UPLOAD_FAILED = new(700, "Cloudinary upload failed", StatusCodes.Status500InternalServerError);

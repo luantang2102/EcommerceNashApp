@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EcommerceNashApp.Application\EcommerceNashApp.Application.csproj" />
     <ProjectReference Include="..\EcommerceNashApp.Core\EcommerceNashApp.Core.csproj" />
     <ProjectReference Include="..\EcommerceNashApp.Infrastructure\EcommerceNashApp.Infrastructure.csproj" />
     <ProjectReference Include="..\EcommerceNashApp.Shared\EcommerceNashApp.Shared.csproj" />

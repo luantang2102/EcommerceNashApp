@@ -10,5 +10,6 @@ namespace EcommerceNashApp.Core.Interfaces.IRepositories
         Task<Cart> CreateAsync(Cart cart);
         Task UpdateAsync(Cart cart);
         Task DeleteAsync(Cart cart);
+        Task<bool> HasProductAsync(Guid productId);
     }
 }

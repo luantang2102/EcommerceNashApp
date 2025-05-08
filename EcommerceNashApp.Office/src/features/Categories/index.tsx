@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -41,8 +41,6 @@ import {
   Save as SaveIcon,
   ContentCopy as ContentCopyIcon,
   Clear as ClearIcon,
-  ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
 } from "@mui/icons-material";
 import {
   setParams,
@@ -72,8 +70,6 @@ export default function CategoryList() {
   const { data, isLoading, error, refetch, isFetching } = useFetchCategoriesQuery(params);
   const [search, setSearch] = useState(params.searchTerm || "");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [sortField, setSortField] = useState<string | undefined>(undefined);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { data: selectedCategory, isLoading: isLoadingCategory } = useFetchCategoryByIdQuery(
     selectedCategoryId || "",
@@ -308,71 +304,6 @@ export default function CategoryList() {
     }
   };
 
-  // Sorting handler
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  // Sorted items
-  const sortedItems = useMemo(() => {
-    if (!data?.items || !sortField) return data?.items || [];
-
-    const items = [...data.items];
-
-    return items.sort((a, b) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let valueA: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let valueB: any;
-
-      switch (sortField) {
-        case "name":
-          valueA = a.name?.toLowerCase() || "";
-          valueB = b.name?.toLowerCase() || "";
-          break;
-        case "description":
-          valueA = a.description?.toLowerCase() || "";
-          valueB = b.description?.toLowerCase() || "";
-          break;
-        case "level":
-          valueA = a.level ?? 0;
-          valueB = b.level ?? 0;
-          break;
-        case "isActive":
-          valueA = a.isActive ? 1 : 0;
-          valueB = b.isActive ? 1 : 0;
-          break;
-        case "createdDate":
-          valueA = a.createdDate ? new Date(a.createdDate).getTime() : 0;
-          valueB = b.createdDate ? new Date(b.createdDate).getTime() : 0;
-          break;
-        case "updatedDate":
-          valueA = a.updatedDate ? new Date(a.updatedDate).getTime() : 0;
-          valueB = b.updatedDate ? new Date(b.updatedDate).getTime() : 0;
-          break;
-        default:
-          return 0;
-      }
-
-      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
-      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [data?.items, sortField, sortDirection]);
-
-  // Paginate sorted items
-  const paginatedItems = useMemo(() => {
-    if (!data?.pagination) return sortedItems;
-    const startIndex = (data.pagination.currentPage - 1) * data.pagination.pageSize;
-    const endIndex = startIndex + data.pagination.pageSize;
-    return sortedItems.slice(startIndex, endIndex);
-  }, [sortedItems, data?.pagination]);
-
   // Search and pagination
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -382,8 +313,6 @@ export default function CategoryList() {
 
   const handleClearSearch = () => {
     setSearch("");
-    setSortField(undefined);
-    setSortDirection("asc");
     dispatch(setParams({ searchTerm: undefined }));
     dispatch(setPageNumber(1));
   };
@@ -573,78 +502,18 @@ export default function CategoryList() {
                     onChange={handleSelectAllChange}
                   />
                 </TableCell>
-                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("name")}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Name
-                    {sortField === "name" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUpwardIcon fontSize="small" />
-                      ) : (
-                        <ArrowDownwardIcon fontSize="small" />
-                      ))}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("description")}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Description
-                    {sortField === "description" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUpwardIcon fontSize="small" />
-                      ) : (
-                        <ArrowDownwardIcon fontSize="small" />
-                      ))}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("level")}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Level
-                    {sortField === "level" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUpwardIcon fontSize="small" />
-                      ) : (
-                        <ArrowDownwardIcon fontSize="small" />
-                      ))}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("isActive")} align="center">
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    Status
-                    {sortField === "isActive" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUpwardIcon fontSize="small" />
-                      ) : (
-                        <ArrowDownwardIcon fontSize="small" />
-                      ))}
-                  </Box>
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Level</TableCell>
+                <TableCell align="center">Status</TableCell>
                 <TableCell>Parent Category</TableCell>
-                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("createdDate")}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Created Date
-                    {sortField === "createdDate" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUpwardIcon fontSize="small" />
-                      ) : (
-                        <ArrowDownwardIcon fontSize="small" />
-                      ))}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ cursor: "pointer" }} onClick={() => handleSort("updatedDate")}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    Updated Date
-                    {sortField === "updatedDate" &&
-                      (sortDirection === "asc" ? (
-                        <ArrowUpwardIcon fontSize="small" />
-                      ) : (
-                        <ArrowDownwardIcon fontSize="small" />
-                      ))}
-                  </Box>
-                </TableCell>
+                <TableCell>Created Date</TableCell>
+                <TableCell>Updated Date</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedItems.map((category) => (
+              {data?.items.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -736,7 +605,7 @@ export default function CategoryList() {
                 </TableRow>
               ))}
 
-              {(!paginatedItems || paginatedItems.length === 0) && (
+              {(!data?.items || data.items.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                     <Typography variant="body1" color="textSecondary">
@@ -759,7 +628,7 @@ export default function CategoryList() {
         </TableContainer>
 
         {/* Pagination */}
-        {data?.pagination && sortedItems.length > 0 && (
+        {data?.pagination && data.items.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3 }}>
             <Typography variant="body2" color="textSecondary">
               Showing {calculateStartIndex(data.pagination)} - {calculateEndIndex(data.pagination)} of{" "}

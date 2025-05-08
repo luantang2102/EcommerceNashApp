@@ -9,7 +9,8 @@ namespace EcommerceNashApp.Web.Services.Impl
 {
     public class ProductService : IProductService
     {
-        private readonly HttpClient _httpClient; private readonly ILogger _logger;
+        private readonly HttpClient _httpClient;
+        private readonly ILogger _logger;
 
         public ProductService(IHttpClientFactory httpClientFactory, ILogger<ProductService> logger)
         {

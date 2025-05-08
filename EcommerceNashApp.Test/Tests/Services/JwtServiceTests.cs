@@ -1,6 +1,6 @@
-﻿using EcommerceNashApp.Core.Models.Auth;
+﻿using EcommerceNashApp.Application.Services.Auth;
+using EcommerceNashApp.Core.Models.Auth;
 using EcommerceNashApp.Core.Settings;
-using EcommerceNashApp.Infrastructure.Services.Auth;
 using Microsoft.Extensions.Options;
 using Moq;
 

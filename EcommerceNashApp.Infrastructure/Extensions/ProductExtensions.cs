@@ -24,10 +24,13 @@ namespace EcommerceNashApp.Infrastructure.Extentions
             if (string.IsNullOrEmpty(searchTerm)) return query;
             var lowerCaseTerm = searchTerm.Trim().ToLower();
             return query.Where(x => x.Name.ToLower().Contains(lowerCaseTerm)
-            || x.Description.ToLower().Contains(lowerCaseTerm) 
-            || x.Price.ToString().Contains(lowerCaseTerm) 
-            || x.StockQuantity.ToString().Contains(lowerCaseTerm) 
-            || x.Categories.Any(y => y.Name.ToLower().Contains(lowerCaseTerm)));
+                || x.Description.ToLower().Contains(lowerCaseTerm)
+                || x.Price.ToString().Contains(lowerCaseTerm)
+                || x.StockQuantity.ToString().Contains(lowerCaseTerm)
+                || x.Categories.Any(y => y.Name.ToLower().Contains(lowerCaseTerm))
+                || x.CreatedDate.ToString()!.Contains(lowerCaseTerm)
+                || (x.UpdatedDate != null && x.UpdatedDate.ToString()!.Contains(lowerCaseTerm))
+                || x.Id.ToString().ToLower().Contains(lowerCaseTerm));
         }
 
         public static IQueryable<Product> Filter(this IQueryable<Product> query, string? categories, string? ratings, string? minPrice, string? maxPrice, bool? isFeatured)
