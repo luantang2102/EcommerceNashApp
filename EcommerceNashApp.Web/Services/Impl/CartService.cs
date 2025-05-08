@@ -163,7 +163,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.GetAsync("/api/Cart?IsActive=True");
+                return await _httpClient.GetAsync("/api/Carts");
             }, "GetCartAsync");
 
             response.EnsureSuccessStatusCode();
@@ -186,7 +186,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.PostAsync("/api/Cart/items", content);
+                return await _httpClient.PostAsync("/api/Carts/me/items", content);
             }, "AddItemToCartAsync");
 
             response.EnsureSuccessStatusCode();
@@ -215,7 +215,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.PutAsync($"/api/Cart/items/{cartItemId}", content);
+                return await _httpClient.PutAsync($"/api/Carts/me/items/{cartItemId}", content);
             }, "UpdateCartItemAsync");
 
             response.EnsureSuccessStatusCode();
@@ -235,7 +235,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.DeleteAsync($"/api/Cart/items/{cartItemId}");
+                return await _httpClient.DeleteAsync($"/api/Carts/me/items/{cartItemId}");
             }, "DeleteCartItemAsync");
 
             response.EnsureSuccessStatusCode();
@@ -249,7 +249,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.DeleteAsync("/api/Cart");
+                return await _httpClient.DeleteAsync("/api/Carts/me");
             }, "ClearCartAsync");
 
             response.EnsureSuccessStatusCode();

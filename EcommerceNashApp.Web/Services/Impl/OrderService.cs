@@ -165,7 +165,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.PostAsync("/api/Order/create", content);
+                return await _httpClient.PostAsync("/api/Orders", content);
             }, "CreateOrderAsync");
 
             response.EnsureSuccessStatusCode();

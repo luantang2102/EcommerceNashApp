@@ -160,7 +160,7 @@ namespace EcommerceNashApp.Web.Services.Impl
 
             var response = await ExecuteWithRetryAsync(async () =>
             {
-                return await _httpClient.PostAsync("/api/Payment/intent", null);
+                return await _httpClient.PostAsync("/api/Payments/me/intent", null);
             }, "CreateOrUpdatePaymentIntentAsync");
 
             response.EnsureSuccessStatusCode();
