@@ -37,6 +37,7 @@ namespace EcommerceNashApp.Core.Exeptions
         public static readonly ErrorCode PARENT_CATEGORY_NOT_FOUND = new(802, "Parent category not found", StatusCodes.Status404NotFound);
         public static readonly ErrorCode CATEGORY_CIRCULAR_REFERENCE = new(803, "Category circular reference", StatusCodes.Status400BadRequest);
         public static readonly ErrorCode CATEGORY_HAS_SUBCATEGORIES = new(804, "Category has subcategories, cannot delete", StatusCodes.Status400BadRequest);
+        public static readonly ErrorCode CATEGORY_HAS_PRODUCTS = new(804, "Category has products, cannot delete", StatusCodes.Status400BadRequest);
 
         // Rating related errors (900-999)
         public static readonly ErrorCode RATING_NOT_FOUND = new(900, "Rating not found", StatusCodes.Status404NotFound);

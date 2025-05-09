@@ -93,5 +93,12 @@ namespace EcommerceNashApp.Infrastructure.Repositories
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> HasProduct(Guid categoryId)
+        {
+            return await _context.Categories
+                .Where(c => c.Id == categoryId)
+                .AnyAsync(c => c.Products.Any());
+        }
     }
 }

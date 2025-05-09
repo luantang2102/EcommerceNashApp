@@ -18,7 +18,15 @@ namespace EcommerceNashApp.Infrastructure.Data.Configuration
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(c => c.Products)
-                   .WithMany(p => p.Categories);
+                   .WithMany(p => p.Categories)
+                   .UsingEntity<Dictionary<string, object>>(
+                       "ProductCategories",
+                       j => j.HasOne<Product>().WithMany().HasForeignKey("ProductId").OnDelete(DeleteBehavior.Cascade),
+                       j => j.HasOne<Category>().WithMany().HasForeignKey("CategoryId").OnDelete(DeleteBehavior.Restrict),
+                       j =>
+                       {
+                           j.HasKey("CategoryId", "ProductId");
+                       });
         }
     }
 }

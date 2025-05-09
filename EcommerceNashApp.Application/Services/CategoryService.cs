@@ -205,6 +205,15 @@ namespace EcommerceNashApp.Application.Services
                 throw new AppException(ErrorCode.CATEGORY_HAS_SUBCATEGORIES, attributes);
             }
 
+            if(await _categoryRepository.HasProduct(categoryId))
+            {
+                var attributes = new Dictionary<string, object>
+                {
+                    { "categoryId", categoryId }
+                };
+                throw new AppException(ErrorCode.CATEGORY_HAS_PRODUCTS, attributes);
+            }
+
             await _categoryRepository.DeleteAsync(category);
             return true;
         }
